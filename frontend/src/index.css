@@ -1,0 +1,99 @@
+:root {
+  --bg-color: #ffffff;
+  --text-color: #000000;
+  --accent-color: #000000;
+  --border-color: #000000;
+  --font-mono: 'Source Code Pro', 'Courier New', monospace;
+  --spacing-unit: 8px;
+  --border-width: 2px;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-mono);
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+.hacker-border {
+  border: var(--border-width) solid var(--border-color);
+}
+
+.hacker-button {
+  background: var(--bg-color);
+  color: var(--text-color);
+  border: var(--border-width) solid var(--border-color);
+  padding: calc(var(--spacing-unit) * 1) calc(var(--spacing-unit) * 2);
+  font-family: var(--font-mono);
+  font-weight: bold;
+  cursor: pointer;
+  text-transform: uppercase;
+  transition: all 0.1s;
+}
+
+.hacker-button:hover {
+  background: var(--text-color);
+  color: var(--bg-color);
+}
+
+.hacker-input {
+  background: var(--bg-color);
+  color: var(--text-color);
+  border: var(--border-width) solid var(--border-color);
+  padding: var(--spacing-unit);
+  font-family: var(--font-mono);
+  outline: none;
+}
+
+.hacker-input:focus {
+  box-shadow: 4px 4px 0px var(--border-color);
+}
+
+/* Layout helpers */
+.flex { display: flex; }
+.flex-col { flex-direction: column; }
+.items-center { align-items: center; }
+.justify-between { justify-content: space-between; }
+.gap-1 { gap: var(--spacing-unit); }
+.gap-2 { gap: calc(var(--spacing-unit) * 2); }
+.p-2 { padding: calc(var(--spacing-unit) * 2); }
+
+/* Animations */
+@keyframes scanline {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100%); }
+}
+
+.scanline::after {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(to bottom, transparent, rgba(0,0,0,0.1), transparent);
+  height: 10px;
+  animation: scanline 4s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.blink {
+  animation: blink 1s step-end infinite;
+}
+
+.cursor-pointer { cursor: pointer; }
