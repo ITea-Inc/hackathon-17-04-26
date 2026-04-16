@@ -14,7 +14,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -52,7 +51,7 @@ public class UserServiceImpl implements UserService{
         User newUser = new User();
         newUser.setUsername(user.getUsername());
         newUser.setEmail(user.getEmail());
-        newUser.setPassword_hash(passwordEncoder.encode(user.getPassword()));
+        newUser.setPasswordHash(passwordEncoder.encode(user.getPassword()));
 
         return userMapper.toUserResponse(userRepository.save(newUser));
     }
