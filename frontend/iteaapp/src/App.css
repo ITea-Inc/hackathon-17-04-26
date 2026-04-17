@@ -374,8 +374,8 @@ body {
   font-size: 13px;
 }
 
-/* Sync button — Adwaita pill style */
-.sync-btn {
+/* Sync policy selector — Adwaita pill style */
+.sync-select {
   padding: 4px 10px;
   border-radius: 100px;
   border: none;
@@ -383,28 +383,41 @@ body {
   font-weight: 500;
   cursor: pointer;
   transition: all 0.12s ease;
-  min-width: 70px;
+  min-width: 100px;
   text-align: center;
   font-family: inherit;
+  background: var(--hover-bg);
+  color: var(--text-primary);
+  outline: none;
 }
 
-.sync-btn.always {
+.sync-select.ALWAYS {
   background: color-mix(in srgb, var(--success) 18%, transparent);
   color: var(--success);
 }
 
-.sync-btn.timing {
+.sync-select.SCHEDULED {
   background: color-mix(in srgb, var(--warning) 18%, transparent);
   color: var(--warning);
 }
 
-.sync-btn.never {
+.sync-select.MANUAL {
   background: color-mix(in srgb, var(--destructive) 18%, transparent);
   color: var(--destructive);
 }
 
-.sync-btn:hover {
+.sync-select.ON_DEMAND {
+  background: color-mix(in srgb, var(--accent-color) 18%, transparent);
+  color: var(--accent-color);
+}
+
+.sync-select:hover {
   filter: brightness(1.15);
+}
+
+.sync-select option {
+  background: var(--sidebar-bg);
+  color: var(--text-primary);
 }
 
 /* Refresh button */

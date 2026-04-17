@@ -9,10 +9,32 @@ const API_BASE = 'http://localhost:8080';
 
 function App() {
   const [files, setFiles] = useState([]);
+  const [rules, setRules] = useState([]);
   const [currentPath, setCurrentPath] = useState('/');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [selectedAccountId, setSelectedAccountId] = useState(null);
+  const [activeTab, setActiveTab] = useState('accounts');
+  const [syncFrequency, setSyncFrequency] = useState('1d');
+
+  const getCronByFrequency = (freq) => {
+    switch (freq) {
+      case '1h': return '0 0 * * * *';        // Каждый час
+      case '1d': return '0 0 2 * * *';       // Раз в день (в 2 ночи)
+      case '3d': return '0 0 2 */3 * *';     // Раз в 3 дня
+      case '1w': return '0 0 2 * * 0';       // Раз в неделю (воскресенье)
+      case '2w': return '0 0 2 1,15 * *';    // Дважды в месяц
+      default: return '0 0 2 * * *';
+    }
+  };
+
+  const fetchRules = () => {
+    if (!selectedAccountId) return;
+    fetch(`${API_BASE}/api/rules?accountId=${selectedAccountId}`)
+      .then(res => res.json())
+      .then(data => setRules(data))
+      .catch(err => console.error('[API] Ошибка загрузки правил:', err));
+  };
 
   const refreshFiles = (retryCount = 0) => {
     if (!selectedAccountId) return;
@@ -25,13 +47,16 @@ function App() {
         return res.json();
       })
       .then(data => {
-        setFiles(data);
+        const filesWithRules = data.map(file => {
+          const fullPath = currentPath === '/' ? `/${file.name}` : `${currentPath}${file.name}`;
+          const rule = rules.find(r => r.pathPattern === fullPath);
+          return { ...file, syncRule: rule ? rule.policy : 'NONE' };
+        });
+        setFiles(filesWithRules);
         setLoading(false);
       })
       .catch(err => {
         console.warn(`[API] Попытка ${retryCount + 1}: Ошибка загрузки файлов:`, err);
-        
-        // Если это сетевая ошибка (бэкенд ещё не поднялся), пробуем снова
         if (err.name === 'TypeError' || err.message.includes('Failed to fetch') || err.message.includes('NetworkError')) {
           setTimeout(() => refreshFiles(retryCount + 1), 2000);
         } else {
@@ -42,13 +67,40 @@ function App() {
   };
 
   useEffect(() => {
-    refreshFiles();
-  }, [currentPath, selectedAccountId]);
+    fetchRules();
+  }, [selectedAccountId]);
 
-  const handleSyncChange = (fileName, newRule) => {
-    console.log(`[API MOCK] Обновление статуса: PATCH /api/v1/files/sync -> path: ${currentPath}${fileName}, rule: ${newRule}`);
-    // Update local state directly for mock
-    setFiles(prev => prev.map(f => f.name === fileName ? { ...f, syncRule: newRule } : f));
+  useEffect(() => {
+    refreshFiles();
+  }, [currentPath, selectedAccountId, rules]);
+
+  const handleSyncChange = (fileName, newPolicy) => {
+    if (!selectedAccountId) return;
+    
+    const fullPath = currentPath === '/' ? `/${fileName}` : `${currentPath}${fileName}`;
+    const cron = newPolicy === 'SCHEDULED' ? getCronByFrequency(syncFrequency) : null;
+    
+    fetch(`${API_BASE}/api/rules`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        accountId: selectedAccountId,
+        pathPattern: fullPath,
+        policy: newPolicy,
+        priority: 10,
+        cronExpression: cron
+      })
+    })
+    .then(res => {
+      if (!res.ok) throw new Error('Ошибка сохранения правила');
+      return res.json();
+    })
+    .then(() => {
+      fetchRules();
+    })
+    .catch(err => {
+      alert(`Не удалось обновить правило: ${err.message}`);
+    });
   };
 
   const handleFolderClick = (folderName) => {
@@ -59,13 +111,10 @@ function App() {
   const navigateUp = () => {
     if (currentPath === '/') return;
     const parts = currentPath.split('/').filter(Boolean);
-    parts.pop(); // удаляем последнюю папку
+    parts.pop();
     const newPath = parts.length === 0 ? '/' : `/${parts.join('/')}/`;
     setCurrentPath(newPath);
   };
-
-  const [activeTab, setActiveTab] = useState('accounts');
-  const [syncFrequency, setSyncFrequency] = useState('1d');
 
   const handleFrequencyChange = (newFreq) => {
     setSyncFrequency(newFreq);
@@ -106,11 +155,19 @@ function App() {
                 ))}
               </span>
             </div>
-            <FileExplorer items={files} onSyncChange={handleSyncChange} onFolderClick={handleFolderClick} accountId={selectedAccountId} onRefresh={refreshFiles} />
+            {loading && <div style={{ textAlign: 'center', padding: '1rem' }}><div className="spinner"></div></div>}
+            {!loading && (
+              <FileExplorer 
+                items={files} 
+                onSyncChange={handleSyncChange} 
+                onFolderClick={handleFolderClick} 
+                accountId={selectedAccountId} 
+                onRefresh={refreshFiles} 
+              />
+            )}
           </div>
         )}
 
-        {/* Заглушки для остальных вкладок */}
         {activeTab !== 'accounts' && activeTab !== 'sync-rules' && activeTab !== 'settings' && (
           <div className="accPanel_container">
             <h1 className="accPanel_title">{activeTab.replace('-', ' ').replace(/\b\w/g, c => c.toUpperCase())}</h1>

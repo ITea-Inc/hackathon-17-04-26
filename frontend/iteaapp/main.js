@@ -97,13 +97,13 @@ function createTray() {
   
   const contextMenu = Menu.buildFromTemplate([
     { 
-      label: 'Open App', 
+      label: 'Настройки синхронизации', 
       click: () => {
         mainWindow.show();
       } 
     },
     { 
-      label: 'Quit', 
+      label: 'Выйти', 
       click: () => {
         app.isQuiting = true;
         app.quit();

@@ -1,6 +1,6 @@
 import React from 'react';
 
-const FileItem = ({ name, directory, size, lastModified, syncRule = 'always', onSyncChange, onFolderClick }) => {
+const FileItem = ({ name, directory, size, lastModified, syncRule = 'NONE', onSyncChange, onFolderClick }) => {
   const isFolder = directory === true;
   lastModified = lastModified.replace("T", " ").replace("Z", " ");
   const handleRowDoubleClick = () => {
@@ -9,19 +9,9 @@ const FileItem = ({ name, directory, size, lastModified, syncRule = 'always', on
     }
   };
 
-  const toggleSync = (e) => {
+  const handleSyncChangeInternal = (e) => {
     e.stopPropagation();
-    let newRule = 'always';
-    if (syncRule === 'always') newRule = 'timing';
-    else if (syncRule === 'timing') newRule = 'never';
-
-    onSyncChange(name, newRule);
-  };
-
-  const getSyncTitle = () => {
-    if (syncRule === 'always') return 'Всегда';
-    if (syncRule === 'timing') return 'Тайминг';
-    return 'Никогда';
+    onSyncChange(name, e.target.value);
   };
 
   return (
@@ -43,11 +33,20 @@ const FileItem = ({ name, directory, size, lastModified, syncRule = 'always', on
       </div>
 
       <div className="file-size">{isFolder ? '--' : Math.trunc(size / 1024) + 'Kb'}</div>
-      < div className="file-modified">{lastModified}</div>
+      <div className="file-modified">{lastModified}</div>
       <div className="file-sync" onDoubleClick={(e) => e.stopPropagation()}>
-        <button className={`sync-btn ${syncRule}`} onClick={toggleSync}>
-          {getSyncTitle()}
-        </button>
+        <select 
+          className={`sync-select ${syncRule}`} 
+          value={syncRule} 
+          onChange={handleSyncChangeInternal}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <option value="NONE">Не задано</option>
+          <option value="ALWAYS">Всегда</option>
+          <option value="ON_DEMAND">По запросу</option>
+          <option value="MANUAL">Вручную</option>
+          <option value="SCHEDULED">По расписанию</option>
+        </select>
       </div>
     </div>
   );
