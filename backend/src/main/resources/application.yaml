@@ -1,28 +1,43 @@
-spring:
-  datasource:
-    url: jdbc:postgresql://localhost:5432/streaming_db
-    username: admin
-    password: rootpassword
-    driver-class-name: org.postgresql.Driver
-
-  sql:
-    init:
-      mode: always
-
-  jpa:
-    hibernate:
-      ddl-auto: update
-    show-sql: true
-    properties:
-      hibernate.format_sql: true
 
 server:
   port: 8080
 
+spring:
+  application:
+    name: discohack-backend
+
+  datasource:
+    url: jdbc:sqlite:${user.home}/.discohack/discohack.db
+    driver-class-name: org.sqlite.JDBC
+    username:
+    password:
+
+  jpa:
+    database-platform: org.hibernate.community.dialect.SQLiteDialect
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        show_sql: true
+        format_sql: true
+
+discohack:
+  yandex:
+    client-id: "912b0deaeaed465fa1dd6241aea47d19"
+    client-secret: "716949a771bd4f7d8a2a7884321709d6"
+    redirect-uri: "http://localhost:8080/api/auth/yandex/callback"
+  mount:
+    base-path: "${user.home}/CloudMount"
+
+  cache:
+    path: "${user.home}/.cache/discohack/files"
+    max-size-bytes: 5368709120
+
+
 logging:
   level:
-    org.springframework.security: DEBUG
-
-jwt:
-  secret: "404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970"
-  expiration: 86400000
+    com.discohack: DEBUG
+    org.springframework: INFO
+    org.hibernate.SQL: DEBUG
+  file:
+    name: "${user.home}/.discohack/discohack.log"
