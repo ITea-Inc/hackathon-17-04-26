@@ -13,6 +13,31 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  // ВРЕМЕННЫЙ КОД ДЛЯ ТЕСТИРОВАНИЯ БЭКЕНДА
+  // Отправляем токен при старте приложения
+  useEffect(() => {
+    fetch(`${API_BASE}/api/accounts/yandex`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        accessToken: "токен",
+        username: "Maksim"
+      })
+    })
+    .then(res => {
+      if (!res.ok) {
+        console.error('[API] Ошибка при тестовом подключении к Яндексу:', res.status);
+      } else {
+        console.log('[API] Успешное тестовое подключение к Яндексу!');
+      }
+    })
+    .catch(err => {
+      console.error('[API] Ошибка сети при тестовом подключении:', err);
+    });
+  }, []);
+
   // GET /api/accounts/{accountId}/files?path=... — получаем список файлов
   // Пока нет такого эндпоинта, оставляем мок. Раскомментировать когда бэкенд добавит.
   useEffect(() => {
