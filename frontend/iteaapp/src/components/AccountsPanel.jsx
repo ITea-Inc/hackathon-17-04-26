@@ -52,10 +52,18 @@ function AccountsPanel({ onAccountSelect }) {
   const [ncUsername, setNcUsername] = useState('');
   const [ncPassword, setNcPassword] = useState('');
 
+  const [selectedId, setSelectedId] = useState(null);
   const [connecting, setConnecting] = useState(false);
   const [connectError, setConnectError] = useState(null);
 
-  const fetchAccounts = (retryCount = 0) => {
+  const selectAccount = (id) => {
+    setSelectedId(id);
+    if (onAccountSelect) onAccountSelect(id);
+  };
+
+  // selectId — если передан, выбираем именно его (после добавления нового аккаунта).
+  // Иначе выбираем первый только если ничего не выбрано.
+  const fetchAccounts = (selectId = null, retryCount = 0) => {
     setLoading(true);
     setError(null);
     fetch(`${API_BASE}/api/accounts`)
@@ -66,12 +74,17 @@ function AccountsPanel({ onAccountSelect }) {
       .then(data => {
         setAccounts(data);
         setLoading(false);
-        if (data.length > 0 && onAccountSelect) onAccountSelect(data[0].id);
+        if (data.length === 0) return;
+        if (selectId && data.find(a => a.id === selectId)) {
+          selectAccount(selectId);
+        } else if (!selectedId) {
+          selectAccount(data[0].id);
+        }
       })
       .catch(err => {
         const isNetwork = err.name === 'TypeError' || err.message.includes('fetch') || err.message.includes('NetworkError');
         if (isNetwork) {
-          setTimeout(() => fetchAccounts(retryCount + 1), 2000);
+          setTimeout(() => fetchAccounts(selectId, retryCount + 1), 2000);
         } else {
           setError(err.message);
           setLoading(false);
@@ -79,7 +92,7 @@ function AccountsPanel({ onAccountSelect }) {
       });
   };
 
-  useEffect(() => { fetchAccounts(); }, []);
+  useEffect(() => { fetchAccounts(null); }, []);
 
   const closeModal = () => {
     setConnectingProvider(null);
@@ -94,8 +107,12 @@ function AccountsPanel({ onAccountSelect }) {
   };
 
   const handleRemove = (id) => {
+    const wasSelected = id === selectedId;
     fetch(`${API_BASE}/api/accounts/${id}`, { method: 'DELETE' })
-      .then(() => fetchAccounts())
+      .then(() => {
+        if (wasSelected) setSelectedId(null);
+        fetchAccounts(null);
+      })
       .catch(err => console.error('[API] Ошибка удаления:', err));
   };
 
@@ -128,9 +145,8 @@ function AccountsPanel({ onAccountSelect }) {
       .then(res => res.json())
       .then(data => {
         if (data.error) throw new Error(data.error);
-        if (onAccountSelect) onAccountSelect(data.id);
         closeModal();
-        fetchAccounts();
+        fetchAccounts(data.id);
       })
       .catch(err => {
         setConnectError(err.message);
@@ -157,9 +173,8 @@ function AccountsPanel({ onAccountSelect }) {
         return res.json();
       })
       .then(data => {
-        if (onAccountSelect) onAccountSelect(data.id);
         closeModal();
-        fetchAccounts();
+        fetchAccounts(data.id);
       })
       .catch(err => {
         setConnectError(err.message);
@@ -188,11 +203,20 @@ function AccountsPanel({ onAccountSelect }) {
 
       <div className="accPanel_cardsRow">
         {accounts.map((acc) => (
-          <div className="accPanel_card" key={acc.id}>
+          <div
+            className={`accPanel_card${acc.id === selectedId ? ' accPanel_card--active' : ''}`}
+            key={acc.id}
+            onClick={() => selectAccount(acc.id)}
+            style={{ cursor: 'pointer' }}
+          >
             <div className="accPanel_cardHeader">
               <span className="accPanel_cardIcon">{providerIcon(acc.provider)}</span>
               <span className="accPanel_cardName">{acc.username}</span>
-              <button className="accPanel_cardMenu" onClick={() => handleRemove(acc.id)} title="Удалить">✕</button>
+              <button
+                className="accPanel_cardMenu"
+                onClick={(e) => { e.stopPropagation(); handleRemove(acc.id); }}
+                title="Удалить"
+              >✕</button>
             </div>
             <div className="accPanel_detail">
               <span className="accPanel_detailLabel">Путь:</span>{' '}

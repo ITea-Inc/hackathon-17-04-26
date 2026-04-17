@@ -436,6 +436,12 @@ body {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.accPanel_card--active {
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent-color) 25%, transparent);
 }
 
 .accPanel_cardHeader {
