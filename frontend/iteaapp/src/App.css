@@ -739,3 +739,17 @@ body {
   color: var(--text-primary);
   font-weight: 400;
 }
+
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--hover-bg);
+  border-top: 2px solid var(--accent-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

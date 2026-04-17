@@ -44,7 +44,7 @@ function AccountsPanel({ onAccountSelect }) {
   const [connecting, setConnecting] = useState(false);
   const [connectError, setConnectError] = useState(null);
 
-  const fetchAccounts = () => {
+  const fetchAccounts = (retryCount = 0) => {
     setLoading(true);
     setError(null);
     fetch(`${API_BASE}/api/accounts`)
@@ -60,10 +60,19 @@ function AccountsPanel({ onAccountSelect }) {
           onAccountSelect(data[0].id);
         }
       })
-      .catch(err => { setError(err.message); setLoading(false); });
+      .catch(err => {
+        console.warn(`[API] Попытка ${retryCount + 1}: Ошибка загрузки аккаунтов.`, err);
+        
+        // Если это сетевая ошибка (бэкенд ещё не поднялся), пробуем снова
+        if (err.name === 'TypeError' || err.message.includes('Failed to fetch') || err.message.includes('NetworkError')) {
+          setTimeout(() => fetchAccounts(retryCount + 1), 2000);
+        } else {
+          setError(err.message);
+          setLoading(false);
+        }
+      });
   };
 
-  
   useEffect(() => { fetchAccounts(); }, []);
 
   const handleRemove = (id) => {
@@ -114,10 +123,15 @@ function AccountsPanel({ onAccountSelect }) {
       <h1 className="accPanel_title">Управление Облачными Аккаунтами</h1>
 
       {/* Loading / Error */}
-      {loading && <p style={{ color: 'var(--text-secondary)' }}>Загрузка аккаунтов...</p>}
+      {loading && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, color: 'var(--text-secondary)', marginBottom: 20 }}>
+          <div className="spinner" />
+          <span>Загрузка...</span>
+        </div>
+      )}
       {error && (
-        <div style={{ color: '#f87171', background: 'rgba(248,113,113,0.1)', borderRadius: 8, padding: '12px 16px', marginBottom: 16 }}>
-          ⚠️ Нет связи с бэкендом: {error}
+        <div style={{ color: '#b48e8eff', background: 'rgba(248,113,113,0.1)', borderRadius: 8, padding: '12px 16px', marginBottom: 16 }}>
+          ⚠️ Ошибка связи с бэкендом: {error}
         </div>
       )}
       {!loading && accounts.length === 0 && !error && (

@@ -14,8 +14,7 @@ function App() {
   const [error, setError] = useState(null);
   const [selectedAccountId, setSelectedAccountId] = useState(null);
 
-
-  const refreshFiles = () => {
+  const refreshFiles = (retryCount = 0) => {
     if (!selectedAccountId) return;
     setLoading(true);
     setError(null);
@@ -30,9 +29,15 @@ function App() {
         setLoading(false);
       })
       .catch(err => {
-        console.error('[API] Ошибка загрузки файлов:', err);
-        setError(err.message);
-        setLoading(false);
+        console.warn(`[API] Попытка ${retryCount + 1}: Ошибка загрузки файлов:`, err);
+        
+        // Если это сетевая ошибка (бэкенд ещё не поднялся), пробуем снова
+        if (err.name === 'TypeError' || err.message.includes('Failed to fetch') || err.message.includes('NetworkError')) {
+          setTimeout(() => refreshFiles(retryCount + 1), 2000);
+        } else {
+          setError(err.message);
+          setLoading(false);
+        }
       });
   };
 
