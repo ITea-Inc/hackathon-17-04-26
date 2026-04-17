@@ -1,0 +1,101 @@
+:root {
+  --bg-color: #0f172a;
+  --glass-color: rgba(255, 255, 255, 0.05);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --accent-color: #38bdf8;
+}
+
+body {
+  margin: 0;
+  background-color: var(--bg-color);
+  color: var(--text-primary);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#root {
+  width: 100%;
+  height: 100%;
+}
+
+.explorer-container {
+  max-width: 900px;
+  margin: 2rem auto;
+  background: var(--glass-color);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.explorer-header {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1.5fr;
+  padding: 1rem 1.5rem;
+  background: rgba(255, 255, 255, 0.03);
+  border-bottom: 1px solid var(--glass-border);
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.explorer-list {
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.file-item {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1.5fr;
+  padding: 0.875rem 1.5rem;
+  align-items: center;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+}
+
+.file-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateX(4px);
+}
+
+.file-icon {
+  display: inline-flex;
+  margin-right: 0.75rem;
+  vertical-align: middle;
+}
+
+.file-name {
+  display: flex;
+  align-items: center;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.file-type, .file-size, .file-modified {
+  color: var(--text-secondary);
+  font-size: 0.9375rem;
+}
+
+/* Custom Scrollbar */
+.explorer-list::-webkit-scrollbar {
+  width: 8px;
+}
+.explorer-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+.explorer-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+.explorer-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
