@@ -790,3 +790,7 @@ body {
   color: var(--text-primary);
   font-weight: 500;
 }
+
+.refresh_btn {
+  margin-left: 5px;
+}

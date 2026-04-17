@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 
 const API_BASE = 'http://localhost:8080';
 
-/* ---- Icons ---- */
 const YandexIcon1 = () => (
   <div style={{ width: 48, height: 48, borderRadius: 12 }}>
     <img width="48" height="48" src="/images/YandexDisk.png" />
