@@ -12,47 +12,22 @@ function App() {
   const [currentPath, setCurrentPath] = useState('/');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [selectedAccountId, setSelectedAccountId] = useState(null);
 
-  // ВРЕМЕННЫЙ КОД ДЛЯ ТЕСТИРОВАНИЯ БЭКЕНДА
-  // Отправляем токен при старте приложения
-  useEffect(() => {
-    fetch(`${API_BASE}/api/accounts/yandex`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        accessToken: "токен",
-        username: "Maksim"
-      })
-    })
-    .then(res => {
-      if (!res.ok) {
-        console.error('[API] Ошибка при тестовом подключении к Яндексу:', res.status);
-      } else {
-        console.log('[API] Успешное тестовое подключение к Яндексу!');
-      }
-    })
-    .catch(err => {
-      console.error('[API] Ошибка сети при тестовом подключении:', err);
-    });
-  }, []);
 
   // GET /api/accounts/{accountId}/files?path=... — получаем список файлов
   // Пока нет такого эндпоинта, оставляем мок. Раскомментировать когда бэкенд добавит.
   useEffect(() => {
+    if (!selectedAccountId) return;
     setLoading(true);
     setError(null);
 
-    /*
-    // РЕАЛЬНЫЙ ЗАПРОС — раскомментировать когда бэкенд готов:
-    fetch(`${API_BASE}/api/files?path=${encodeURIComponent(currentPath)}`)
+    fetch(`${API_BASE}/api/files/${selectedAccountId}?path=${encodeURIComponent(currentPath)}`)
       .then(res => {
         if (!res.ok) throw new Error(`Ошибка ${res.status}`);
         return res.json();
       })
       .then(data => {
-        // Ожидаемый формат: [{ name, type, size, modified, syncRule }]
         setFiles(data);
         setLoading(false);
       })
@@ -61,26 +36,7 @@ function App() {
         setError(err.message);
         setLoading(false);
       });
-    */
-
-    // MOCK — убрать когда бэкенд готов:
-    console.log(`[MOCK] GET /api/files?path=${currentPath}`);
-    setTimeout(() => {
-      if (currentPath === '/') {
-        setFiles([
-          { name: 'Documents', type: 'folder', size: '', modified: '2024-03-15', syncRule: 'always' },
-          { name: 'Pictures', type: 'folder', size: '', modified: '2024-03-10', syncRule: 'never' },
-          { name: 'Project_Alpha.pdf', type: 'pdf', size: '2.4 MB', modified: '2024-03-16', syncRule: 'timing' },
-        ]);
-      } else {
-        setFiles([
-          { name: 'subfolder_1', type: 'folder', size: '', modified: '2024-03-17', syncRule: 'always' },
-          { name: 'test_file.txt', type: 'txt', size: '15 B', modified: '2024-03-18', syncRule: 'timing' },
-        ]);
-      }
-      setLoading(false);
-    }, 0);
-  }, [currentPath]);
+  }, [currentPath, selectedAccountId]);
 
   const handleSyncChange = (fileName, newRule) => {
     console.log(`[API MOCK] Обновление статуса: PATCH /api/v1/files/sync -> path: ${currentPath}${fileName}, rule: ${newRule}`);
@@ -113,7 +69,7 @@ function App() {
       <MainMenu activeItem={activeTab} onItemClick={setActiveTab} />
       
       <main className="content-area" style={{ flex: 1, overflowY: 'auto', position: 'relative' }}>
-        {activeTab === 'accounts' && <AccountsPanel />}
+        {activeTab === 'accounts' && <AccountsPanel onAccountSelect={setSelectedAccountId} />}
         {activeTab === 'settings' && (
           <SettingsPanel 
             currentFrequency={syncFrequency} 
@@ -143,7 +99,7 @@ function App() {
                 ))}
               </span>
             </div>
-            <FileExplorer items={files} onSyncChange={handleSyncChange} onFolderClick={handleFolderClick} />
+            <FileExplorer items={files} onSyncChange={handleSyncChange} onFolderClick={handleFolderClick} accountId={selectedAccountId} />
           </div>
         )}
 

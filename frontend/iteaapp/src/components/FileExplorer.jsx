@@ -1,16 +1,7 @@
 import React from 'react';
 import FileItem from './FileItem';
 
-const fetchFiles = () => {
-  fetch(`http://localhost:8080/api/files/705962e5-a5d1-4a6b-b3c6-7e9882430927?path=/`)
-    .then(res => {
-      if (!res.ok) throw new Error(`Ошибка ${res.status}`);
-      return res;
-    })
-};
-
-const FileExplorer = ({ items, onSyncChange, onFolderClick }) => {
-  console.log(fetchFiles());
+const FileExplorer = ({ items, onSyncChange, onFolderClick, accountId }) => {
   return (
     <div className="explorer-container">
       <div className="explorer-header">
@@ -21,6 +12,11 @@ const FileExplorer = ({ items, onSyncChange, onFolderClick }) => {
         <div className="header-sync">Sync</div>
       </div>
       <div className="explorer-list">
+        {items.length === 0 && (
+          <div style={{ padding: '1.5rem', color: 'var(--text-secondary)', textAlign: 'center' }}>
+            {accountId ? 'Нет файлов' : 'Выберите аккаунт в разделе «Аккаунты»'}
+          </div>
+        )}
         {items.map((item, index) => (
           <FileItem key={index} {...item} onSyncChange={onSyncChange} onFolderClick={onFolderClick} />
         ))}

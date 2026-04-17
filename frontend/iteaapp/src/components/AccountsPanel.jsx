@@ -33,7 +33,7 @@ const availableProviders = [
   { id: 'nextcloud', name: 'NextCloud', icon: <NextCloudIcon1 /> },
 ];
 
-function AccountsPanel() {
+function AccountsPanel({ onAccountSelect }) {
   const [accounts, setAccounts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -53,7 +53,14 @@ function AccountsPanel() {
         if (!res.ok) throw new Error(`Ошибка ${res.status}`);
         return res.json();
       })
-      .then(data => { setAccounts(data); setLoading(false); })
+      .then(data => {
+        setAccounts(data);
+        setLoading(false);
+        // Автовыбор первого аккаунта
+        if (data.length > 0 && onAccountSelect) {
+          onAccountSelect(data[0].id);
+        }
+      })
       .catch(err => { setError(err.message); setLoading(false); });
   };
 
@@ -89,7 +96,8 @@ function AccountsPanel() {
         return res.json(); // вернёт { id, provider, username, mountPath, connected }
       })
       .then(data => {
-        console.log('[API] Аккаунт подключён:', data); // data.id тут доступен
+        console.log('[API] Аккаунт подключён:', data);
+        if (onAccountSelect) onAccountSelect(data.id);
         setConnectingProvider(null);
         setTokenInput('');
         setUsernameInput('');
