@@ -55,7 +55,10 @@ body {
   margin: 0;
   letter-spacing: -0.2px;
 }
-
+.mainLogo{
+  object-fit: contain;
+  max-height: 100%;
+}
 .app-subtitle {
   color: var(--text-secondary);
   margin-top: 0.5rem;

@@ -66,9 +66,9 @@ function MainMenu({ activeItem: controlledActive, onItemClick }) {
       {/* Logo */}
       <div className="mainMenu_logoBlock">
         <div className="mainMenu_logoIcon">
-          <span className="mainMenu_logoFallback">DH</span>
+          <img className="mainLogo" src="public/images/logo.png" alt="logo"/>
         </div>
-        <span className="mainMenu_logoText">DiscoHack</span>
+        <span className="mainMenu_logoText">ITeaCloud</span>
       </div>
 
       {/* Navigation */}
