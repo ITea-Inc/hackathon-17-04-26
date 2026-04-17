@@ -26,19 +26,31 @@ function getGnomeAccentColor() {
 
   // 1) GNOME 47+: accent-color
   try {
-    const result = execSync('gsettings get org.gnome.desktop.interface accent-color 2>/dev/null')
+    const result = execSync('gsettings get org.gnome.desktop.interface accent-color', { stdio: ['pipe', 'pipe', 'pipe'] })
       .toString().trim().replace(/'/g, '');
+    console.log('[Accent] GNOME accent-color:', result);
     if (colorMap[result]) return colorMap[result];
-  } catch {}
+  } catch (e) {
+    console.log('[Accent] accent-color not available:', e.message);
+  }
 
   // 2) Ubuntu Yaru: accent color from theme name (e.g. Yaru-purple-dark)
   try {
-    const theme = execSync('gsettings get org.gnome.desktop.interface gtk-theme 2>/dev/null')
+    const theme = execSync('gsettings get org.gnome.desktop.interface gtk-theme', { stdio: ['pipe', 'pipe', 'pipe'] })
       .toString().trim().replace(/'/g, '');
+    console.log('[Accent] GTK theme:', theme);
     const match = theme.match(/[Yy]aru-(\w+)/);
-    if (match && colorMap[match[1]]) return colorMap[match[1]];
-  } catch {}
+    if (match) {
+      // Handle suffixes like "Yaru-purple-dark" → "purple"
+      const colorName = match[1].replace(/-?dark$/, '').replace(/-?light$/, '');
+      console.log('[Accent] Yaru color extracted:', colorName);
+      if (colorMap[colorName]) return colorMap[colorName];
+    }
+  } catch (e) {
+    console.log('[Accent] gtk-theme not available:', e.message);
+  }
 
+  console.log('[Accent] Using fallback blue');
   return '#78aeed'; // Adwaita blue fallback
 }
 
