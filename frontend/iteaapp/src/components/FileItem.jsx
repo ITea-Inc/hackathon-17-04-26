@@ -1,7 +1,12 @@
 import React from 'react';
 
-const FileItem = ({ name, type, size, modified, syncRule = 'always', onSyncChange, onFolderClick }) => {
-  const isFolder = type === 'folder';
+const FileItem = ({ name, directory, size, modified, syncRule = 'always', onSyncChange, onFolderClick }) => {
+  
+  let notRealName=name;
+  if (name.length > 10) {
+    notRealName = name.substring(0, 10) + '...';  
+  }
+  const isFolder = directory ==true;
 
   const handleRowDoubleClick = () => {
     if (isFolder && onFolderClick) {
@@ -40,10 +45,10 @@ const FileItem = ({ name, type, size, modified, syncRule = 'always', onSyncChang
             </svg>
           )}
         </div>
-        <div className="file-name">{name}</div>
+        <div className="file-name">{notRealName}</div>
       </div>
 
-      <div className="file-type">{isFolder ? 'Folder' : type.toUpperCase()}</div>
+      <div className="file-type">{isFolder ? 'Папка' : 'Файл'}</div>
       <div className="file-size">{isFolder ? '--' : size}</div>
       <div className="file-modified">{modified}</div>
       <div className="file-sync" onDoubleClick={(e) => e.stopPropagation()}>

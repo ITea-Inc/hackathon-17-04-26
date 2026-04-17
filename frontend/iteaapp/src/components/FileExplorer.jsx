@@ -2,6 +2,7 @@ import React from 'react';
 import FileItem from './FileItem';
 
 const FileExplorer = ({ items, onSyncChange, onFolderClick, accountId }) => {
+  console.log("items", items  );
   return (
     <div className="explorer-container">
       <div className="explorer-header">
