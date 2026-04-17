@@ -1,69 +1,40 @@
-:root {
-  --bg-color: #1e1e1e;
-  --container-bg: #242424;
-  --border-color: #313131;
-  --text-primary: #ffffff;
-  --text-secondary: #a1a1a1;
-  --row-hover: #333333;
-  --bg-color: #12121a;
-  --glass-color: rgba(255, 255, 255, 0.05);
-  --glass-border: rgba(255, 255, 255, 0.08);
-  --text-primary: #e8e6ef;
-  --text-secondary: #8b8898;
-  --accent-color: #7c3aed;
-  --accent-hover: #8b5cf6;
-  --card-bg: rgba(255, 255, 255, 0.04);
-  --card-border: rgba(255, 255, 255, 0.07);
+/* ========== GNOME Adwaita Dark Theme ========== */
 
+:root {
+  /* Adwaita Dark palette */
+  --bg-color: #242424;
+  --sidebar-bg: #303030;
+  --headerbar-bg: #303030;
+  --card-bg: #303030;
+  --card-border: rgba(255, 255, 255, 0.06);
+  --text-primary: #ffffff;
+  --text-secondary: #999999;
+  --border-color: rgba(255, 255, 255, 0.06);
+  --hover-bg: rgba(255, 255, 255, 0.04);
+  --hover-bg-strong: rgba(255, 255, 255, 0.07);
+  --accent-color: var(--gnome-accent, #78aeed);
+  --accent-bg: color-mix(in srgb, var(--accent-color) 20%, transparent);
+  --accent-bg-strong: color-mix(in srgb, var(--accent-color) 35%, transparent);
+  --destructive: #e55c5c;
+  --success: #8cb854;
+  --warning: #d4a54a;
 }
+
+/* ========== Base ========== */
 
 body {
   margin: 0;
   background-color: var(--bg-color);
   color: var(--text-primary);
   font-family: 'Cantarell', 'Inter', system-ui, -apple-system, sans-serif;
+  font-size: 14px;
   height: 100vh;
-
   overflow: hidden;
-  /* Prevent body scroll */
-
-
 }
 
 #root {
   width: 100%;
   height: 100%;
-}
-
-
-.app-main {
-  width: 100%;
-  height: 100%;
-  overflow-y: auto;
-}
-
-.app-header {
-  /* text-align: center; */
-
-  margin: 2rem
-}
-
-.app-title {
-  font-size: 22px;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin: 0;
-  letter-spacing: -0.2px;
-}
-
-.mainLogo {
-  object-fit: contain;
-  max-height: 100%;
-}
-
-.app-subtitle {
-  color: var(--text-secondary);
-  margin-top: 0.5rem;
 }
 
 .app_layout {
@@ -72,141 +43,19 @@ body {
   overflow: hidden;
 }
 
-.explorer-container {
-  background: var(--card-bg);
-  border: 1px solid var(--card-border);
-  border-radius: 12px;
-  overflow: hidden;
-}
-
-.explorer-header {
-  display: grid;
-  grid-template-columns: 2.5fr 0.8fr 0.8fr 1.2fr 1fr;
-  column-gap: 12px;
-  padding: 0.8rem 1.5rem;
-  background: rgba(255, 255, 255, 0.02);
-  border-bottom: 1px solid var(--card-border);
-  color: var(--text-secondary);
-  font-size: 0.8rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-
-.file-item {
-  display: grid;
-  grid-template-columns: 2.5fr 0.8fr 0.8fr 1.2fr 1fr;
-  column-gap: 12px;
-  padding: 0.6rem 1.5rem;
-  align-items: center;
-  transition: background 0.15s ease;
-  cursor: pointer;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
-}
-
-.file-item:hover {
-  background: rgba(139, 92, 246, 0.06);
-}
-
-.file-name-container {
-  display: flex;
-  align-items: center;
-}
-
-.file-icon {
-  display: inline-flex;
-  margin-right: 0.75rem;
-  vertical-align: middle;
-}
-
-.file-icon svg {
-  width: 20px;
-  height: 20px;
-  opacity: 0.9;
-}
-
-.file-name {
-  color: var(--text-primary);
-  font-weight: 400;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.file-type,
-.file-size,
-.file-modified {
-  color: var(--text-secondary);
-  font-size: 0.9rem;
-}
-
-/* Custom Scrollbar */
-.explorer-list::-webkit-scrollbar {
-  width: 8px;
-}
-
-.explorer-list::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.explorer-list::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
-}
-
-.explorer-list::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.2);
-}
-
-.sync-btn {
-  padding: 5px 12px;
-  border-radius: 6px;
-  border: 1px solid transparent;
-  font-size: 11px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  min-width: 76px;
-  text-align: center;
-  font-family: inherit;
-}
-
-.sync-btn.always {
-  background: rgba(74, 222, 128, 0.12);
-  color: #4ade80;
-  border-color: rgba(74, 222, 128, 0.2);
-}
-
-.sync-btn.timing {
-  background: rgba(251, 191, 36, 0.12);
-  color: #fbbf24;
-  border-color: rgba(251, 191, 36, 0.2);
-}
-
-.sync-btn.never {
-  background: rgba(248, 113, 113, 0.12);
-  color: #f87171;
-  border-color: rgba(248, 113, 113, 0.2);
-}
-
-.sync-btn:hover {
-  filter: brightness(1.2);
-}
-
-/* ========== MainMenu Sidebar ========== */
+/* ========== Sidebar (Nautilus style) ========== */
 
 .mainMenu_sidebar {
-  width: 200px;
+  width: 220px;
   height: 100vh;
-  background: #161620;
-  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  background: var(--sidebar-bg);
+  border-right: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
   padding: 0;
   box-sizing: border-box;
   user-select: none;
-  font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  font-family: inherit;
   flex-shrink: 0;
 }
 
@@ -215,12 +64,13 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
+  padding: 12px 14px 8px;
 }
 
 .mainMenu_logoIcon {
-  width: 96px;
-  height: 96px;
-  border-radius: 14px;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -228,35 +78,24 @@ body {
   overflow: hidden;
 }
 
-.mainMenu_logoImg {
+.mainLogo {
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  border-radius: 14px;
-}
-
-.mainMenu_logoFallback {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 18px;
-  font-weight: 800;
-  color: #fff;
-  letter-spacing: 1px;
-  width: 100%;
-  height: 100%;
+  object-fit: contain;
+  border-radius: 10px;
 }
 
 .mainMenu_logoText {
   font-size: 15px;
   font-weight: 700;
-  color: #e2d9f3;
+  color: var(--text-primary);
   letter-spacing: 0.2px;
 }
 
 /* ---- Navigation ---- */
 .mainMenu_nav {
-  padding: 0 8px;
+  padding: 4px 8px;
+  flex: 1;
 }
 
 .mainMenu_navList {
@@ -265,44 +104,43 @@ body {
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: 2px;
 }
 
 .mainMenu_navItem {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   width: 100%;
-  padding: 9px 12px;
+  padding: 8px 12px;
   border: none;
   border-radius: 8px;
   background: transparent;
-  color: #a99fc4;
-  font-size: 13px;
-  font-weight: 500;
+  color: var(--text-secondary);
+  font-size: 13.5px;
+  font-weight: 400;
   cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
+  transition: background 0.12s ease, color 0.12s ease;
   text-align: left;
   font-family: inherit;
   line-height: 1.3;
 }
 
 .mainMenu_navItem:hover {
-  background: rgba(139, 92, 246, 0.1);
-  color: #d4c8ef;
+  background: var(--hover-bg);
+  color: var(--text-primary);
 }
 
 .mainMenu_navItem--active {
-  background: #6d28d9;
-  color: #fff;
+  background: var(--accent-bg);
+  color: var(--text-primary);
 }
 
 .mainMenu_navItem--active:hover {
-  background: #7c3aed;
-  color: #fff;
+  background: var(--accent-bg-strong);
+  color: var(--text-primary);
 }
 
-/* ---- Nav Icons ---- */
 .mainMenu_navIcon {
   display: inline-flex;
   align-items: center;
@@ -310,19 +148,12 @@ body {
   width: 18px;
   height: 18px;
   flex-shrink: 0;
-}
-
-.mainMenu_navIconImg {
-  width: 18px;
-  height: 18px;
-  object-fit: contain;
   opacity: 0.7;
-  /* Placeholder: серый квадрат пока нет иконки */
 }
 
-.mainMenu_navItem--active .mainMenu_navIconImg {
+.mainMenu_navItem--active .mainMenu_navIcon {
   opacity: 1;
-  filter: brightness(2);
+  color: var(--accent-color);
 }
 
 .mainMenu_navLabel {
@@ -331,106 +162,93 @@ body {
   text-overflow: ellipsis;
 }
 
-/* ---- Spacer ---- */
 .mainMenu_spacer {
   flex: 1 1 auto;
 }
 
-/* ---- Add Cloud Button ---- */
-.mainMenu_addButton {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 12px 10px;
-  padding: 9px 0;
-  border: 1px solid rgba(139, 92, 246, 0.3);
-  border-radius: 8px;
-  background: transparent;
-  color: #b8a9d4;
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  font-family: inherit;
-  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
-}
-
-.mainMenu_addButton:hover {
-  background: rgba(139, 92, 246, 0.1);
-  border-color: rgba(139, 92, 246, 0.5);
-  color: #d4c8ef;
-}
-
 /* ---- Status Bar ---- */
 .mainMenu_statusBar {
-  padding: 8px 12px;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
-  background: rgba(0, 0, 0, 0.12);
+  padding: 10px 14px;
+  border-top: 1px solid var(--border-color);
 }
 
 .mainMenu_statusText {
-  font-size: 10px;
-  color: #6b6580;
+  font-size: 11px;
+  color: var(--text-secondary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   display: block;
 }
 
-/* ========== AccountsPanel ========== */
+/* ---- Add Cloud Button (Adwaita flat) ---- */
+.mainMenu_addButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 10px 8px;
+  padding: 8px 0;
+  border: none;
+  border-radius: 8px;
+  background: var(--hover-bg);
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.mainMenu_addButton:hover {
+  background: var(--hover-bg-strong);
+  color: var(--text-primary);
+}
+
+/* ========== Content Area ========== */
 
 .accPanel_container {
   flex: 1;
   height: 100vh;
   overflow-y: auto;
-  padding: 28px 32px;
+  padding: 24px 28px;
   box-sizing: border-box;
   background: var(--bg-color);
 }
 
 .accPanel_title {
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 700;
   color: var(--text-primary);
-  margin: 0 0 8px;
+  margin: 0 0 6px;
   letter-spacing: -0.2px;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 
 .accPanel_subtitle {
   font-size: 13px;
   color: var(--text-secondary);
-  margin: 0 0 24px;
+  margin: 0 0 20px;
 }
 
-.accPanel_backBtn {
-  padding: 6px 14px;
-  border: 1px solid var(--card-border);
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.03);
-  color: var(--text-secondary);
-  font-size: 12px;
-  font-weight: 500;
-  cursor: pointer;
-  font-family: inherit;
-  transition: background 0.15s ease, color 0.15s ease;
-}
-
-.accPanel_backBtn:hover {
-  background: rgba(139, 92, 246, 0.12);
+.accPanel_sectionTitle {
+  font-size: 15px;
+  font-weight: 600;
   color: var(--text-primary);
+  margin: 0 0 12px;
 }
 
-/* ---- Breadcrumb ---- */
+/* ========== Breadcrumb (Nautilus path bar) ========== */
+
 .accPanel_breadcrumb {
   display: flex;
   align-items: center;
-  gap: 6px;
-  margin-bottom: 20px;
-  padding: 8px 14px;
-  background: var(--card-bg);
-  border: 1px solid var(--card-border);
+  gap: 8px;
+  margin-bottom: 16px;
+  padding: 6px 12px;
+  background: rgba(0, 0, 0, 0.15);
+  border: 1px solid var(--border-color);
   border-radius: 8px;
   font-size: 13px;
   color: var(--text-secondary);
@@ -440,26 +258,25 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
-  border: 1px solid var(--card-border);
+  width: 26px;
+  height: 26px;
+  border: none;
   border-radius: 6px;
-  background: rgba(255, 255, 255, 0.03);
+  background: transparent;
   color: var(--text-secondary);
   cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
+  transition: background 0.12s ease, color 0.12s ease;
   flex-shrink: 0;
   padding: 0;
 }
 
 .accPanel_breadcrumbBack:hover {
-  background: rgba(139, 92, 246, 0.15);
+  background: var(--hover-bg-strong);
   color: var(--text-primary);
-  border-color: rgba(139, 92, 246, 0.3);
 }
 
 .accPanel_breadcrumbBack--disabled {
-  opacity: 0.3;
+  opacity: 0.25;
   cursor: default;
   pointer-events: none;
 }
@@ -473,7 +290,7 @@ body {
 
 .accPanel_breadcrumbSep {
   color: rgba(255, 255, 255, 0.2);
-  margin: 0 2px;
+  margin: 0 3px;
 }
 
 .accPanel_breadcrumbCurrent {
@@ -481,28 +298,158 @@ body {
   font-weight: 600;
 }
 
-/* ---- Account Cards Row ---- */
+/* ========== File Explorer (Nautilus list view) ========== */
+
+.explorer-container {
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  overflow: hidden;
+}
+
+.explorer-header {
+  display: grid;
+  grid-template-columns: 3fr 1fr 1.5fr 1fr;
+  column-gap: 8px;
+  padding: 6px 16px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  border-bottom: 1px solid var(--border-color);
+  letter-spacing: 0.02em;
+}
+
+.file-item {
+  display: grid;
+  grid-template-columns: 3fr 1fr 1.5fr 1fr;
+  column-gap: 8px;
+  padding: 6px 16px;
+  align-items: center;
+  transition: background 0.08s ease;
+  cursor: pointer;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  border-radius: 0;
+}
+
+.file-item:hover {
+  background: var(--hover-bg);
+}
+
+.file-item:active {
+  background: var(--accent-bg);
+}
+
+.file-name-container {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.file-icon {
+  display: inline-flex;
+  margin-right: 10px;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
+.file-icon svg {
+  width: 20px;
+  height: 20px;
+  opacity: 0.85;
+}
+
+.file-name {
+  color: var(--text-primary);
+  font-weight: 400;
+  font-size: 13.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-type,
+.file-size,
+.file-modified {
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+/* Sync button — Adwaita pill style */
+.sync-btn {
+  padding: 4px 10px;
+  border-radius: 100px;
+  border: none;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.12s ease;
+  min-width: 70px;
+  text-align: center;
+  font-family: inherit;
+}
+
+.sync-btn.always {
+  background: color-mix(in srgb, var(--success) 18%, transparent);
+  color: var(--success);
+}
+
+.sync-btn.timing {
+  background: color-mix(in srgb, var(--warning) 18%, transparent);
+  color: var(--warning);
+}
+
+.sync-btn.never {
+  background: color-mix(in srgb, var(--destructive) 18%, transparent);
+  color: var(--destructive);
+}
+
+.sync-btn:hover {
+  filter: brightness(1.15);
+}
+
+/* Refresh button */
+.refresh_btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-secondary);
+  display: inline-flex;
+  padding: 2px;
+  border-radius: 4px;
+  transition: color 0.12s ease, background 0.12s ease;
+  margin-left: 6px;
+}
+
+.refresh_btn:hover {
+  color: var(--text-primary);
+  background: var(--hover-bg);
+}
+
+/* ========== Account Cards (Adwaita preference groups) ========== */
+
 .accPanel_cardsRow {
   display: flex;
-  gap: 16px;
-  margin-bottom: 28px;
+  gap: 12px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
 }
 
 .accPanel_card {
   flex: 1;
+  min-width: 240px;
   background: var(--card-bg);
   border: 1px solid var(--card-border);
   border-radius: 12px;
   padding: 16px 18px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
 .accPanel_cardHeader {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 
 .accPanel_cardIcon {
@@ -512,7 +459,7 @@ body {
 }
 
 .accPanel_cardName {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--text-primary);
   flex: 1;
@@ -522,15 +469,16 @@ body {
   background: none;
   border: none;
   color: var(--text-secondary);
-  font-size: 18px;
+  font-size: 16px;
   cursor: pointer;
-  padding: 2px 6px;
-  border-radius: 4px;
+  padding: 4px 6px;
+  border-radius: 6px;
   line-height: 1;
+  transition: background 0.12s ease, color 0.12s ease;
 }
 
 .accPanel_cardMenu:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--hover-bg-strong);
   color: var(--text-primary);
 }
 
@@ -538,31 +486,31 @@ body {
 .accPanel_storageInfo {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 5px;
 }
 
 .accPanel_storageText {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
 }
 
 .accPanel_progressBar {
-  height: 6px;
-  border-radius: 3px;
+  height: 4px;
+  border-radius: 2px;
   background: rgba(255, 255, 255, 0.08);
   overflow: hidden;
 }
 
 .accPanel_progressFill {
   height: 100%;
-  border-radius: 3px;
-  background: #7c3aed;
+  border-radius: 2px;
+  background: var(--accent-color);
   transition: width 0.4s ease;
 }
 
 .accPanel_progressFill--warn {
-  background: #f59e0b;
+  background: var(--warning);
 }
 
 /* ---- Detail rows ---- */
@@ -580,51 +528,43 @@ body {
 }
 
 .accPanel_statusOk {
-  color: #4ade80;
+  color: var(--success);
 }
 
 .accPanel_statusErr {
-  color: #f87171;
+  color: var(--destructive);
 }
 
-/* ---- Card action buttons ---- */
+/* ---- Card actions ---- */
 .accPanel_cardActions {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   margin-top: 4px;
   flex-wrap: wrap;
 }
 
 .accPanel_actionBtn {
   padding: 6px 14px;
-  border: 1px solid var(--card-border);
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.03);
+  border: none;
+  border-radius: 8px;
+  background: var(--hover-bg);
   color: var(--text-secondary);
   font-size: 12px;
   font-weight: 500;
   cursor: pointer;
   font-family: inherit;
-  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  transition: background 0.12s ease, color 0.12s ease;
 }
 
 .accPanel_actionBtn:hover {
-  background: rgba(139, 92, 246, 0.12);
-  border-color: rgba(139, 92, 246, 0.3);
+  background: var(--hover-bg-strong);
   color: var(--text-primary);
 }
 
 /* ---- Providers Section ---- */
-.accPanel_sectionTitle {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin: 0 0 16px;
-}
-
 .accPanel_providersRow {
   display: flex;
-  gap: 14px;
+  gap: 12px;
   margin-bottom: 24px;
   flex-wrap: wrap;
 }
@@ -633,18 +573,18 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
-  padding: 14px 12px 10px;
+  gap: 8px;
+  padding: 16px 14px 12px;
   background: var(--card-bg);
   border: 1px solid var(--card-border);
   border-radius: 12px;
-  min-width: 90px;
-  transition: background 0.15s ease, border-color 0.15s ease;
+  min-width: 100px;
+  transition: background 0.12s ease, border-color 0.12s ease;
 }
 
 .accPanel_providerCard:hover {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 255, 255, 0.12);
+  background: var(--hover-bg-strong);
+  border-color: rgba(255, 255, 255, 0.1);
 }
 
 .accPanel_providerIcon {
@@ -654,7 +594,7 @@ body {
 }
 
 .accPanel_providerName {
-  font-size: 11.5px;
+  font-size: 12px;
   font-weight: 500;
   color: var(--text-primary);
   text-align: center;
@@ -664,97 +604,106 @@ body {
 .accPanel_providerBtn {
   font-size: 11px;
   font-weight: 500;
-  padding: 4px 12px;
+  padding: 5px 14px;
   border: none;
-  border-radius: 5px;
-  background: rgba(139, 92, 246, 0.15);
-  color: #c4b5fd;
+  border-radius: 100px;
+  background: var(--accent-bg);
+  color: var(--accent-color);
   cursor: pointer;
   font-family: inherit;
-  transition: background 0.15s ease, color 0.15s ease;
+  transition: background 0.12s ease, color 0.12s ease;
 }
 
 .accPanel_providerBtn:hover {
-  background: rgba(139, 92, 246, 0.3);
-  color: #e0d4ff;
+  background: var(--accent-bg-strong);
 }
 
-/* ---- Log / Terminal ---- */
-.accPanel_logBox {
-  background: rgba(0, 0, 0, 0.3);
-  border: 1px solid var(--card-border);
-  border-radius: 10px;
-  padding: 14px 16px;
-  font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
-  font-size: 11.5px;
-  line-height: 1.7;
-  color: #9ca3af;
-  max-height: 180px;
-  overflow-y: auto;
+/* ---- Back button ---- */
+.accPanel_backBtn {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 8px;
+  background: var(--hover-bg);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.12s ease, color 0.12s ease;
 }
 
-.accPanel_logLine {
-  white-space: pre-wrap;
-  word-break: break-all;
+.accPanel_backBtn:hover {
+  background: var(--hover-bg-strong);
+  color: var(--text-primary);
 }
 
-/* ---- Scrollbar (accounts panel) ---- */
-.accPanel_container::-webkit-scrollbar,
-.accPanel_logBox::-webkit-scrollbar {
+/* ========== Scrollbar (Nautilus overlay style) ========== */
+
+.accPanel_container::-webkit-scrollbar {
   width: 6px;
 }
 
-.accPanel_container::-webkit-scrollbar-track,
-.accPanel_logBox::-webkit-scrollbar-track {
+.accPanel_container::-webkit-scrollbar-track {
   background: transparent;
 }
 
-.accPanel_container::-webkit-scrollbar-thumb,
-.accPanel_logBox::-webkit-scrollbar-thumb {
+.accPanel_container::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.08);
   border-radius: 3px;
 }
 
-.accPanel_container::-webkit-scrollbar-thumb:hover,
-.accPanel_logBox::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.15);
+.accPanel_container::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.14);
 }
 
-/* ========== Settings Panel ========== */
+.explorer-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.explorer-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.explorer-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 3px;
+}
+
+/* ========== Settings Panel (Adwaita groups) ========== */
 
 .settings_group {
   background: var(--card-bg);
   border: 1px solid var(--card-border);
   border-radius: 12px;
-  padding: 24px;
-  margin-bottom: 24px;
+  padding: 20px;
+  margin-bottom: 20px;
 }
 
 .settings_options_list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 4px;
 }
 
 .settings_option_item {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 12px 16px;
-  background: rgba(255, 255, 255, 0.02);
+  padding: 10px 14px;
+  background: transparent;
   border: 1px solid transparent;
   border-radius: 8px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background 0.12s ease;
 }
 
 .settings_option_item:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--hover-bg);
 }
 
 .settings_option_item.active {
-  background: rgba(139, 92, 246, 0.1);
-  border-color: rgba(139, 92, 246, 0.3);
+  background: var(--accent-bg);
+  border-color: transparent;
 }
 
 .settings_radio {
@@ -765,20 +714,20 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s ease;
+  transition: border-color 0.15s ease;
 }
 
 .settings_option_item.active .settings_radio {
-  border-color: #a855f7;
+  border-color: var(--accent-color);
 }
 
 .settings_radio_inner {
   width: 10px;
   height: 10px;
-  background: #a855f7;
+  background: var(--accent-color);
   border-radius: 50%;
   transform: scale(0);
-  transition: transform 0.2s ease;
+  transition: transform 0.15s ease;
 }
 
 .settings_option_item.active .settings_radio_inner {
@@ -788,9 +737,5 @@ body {
 .settings_option_label {
   font-size: 14px;
   color: var(--text-primary);
-  font-weight: 500;
-}
-
-.refresh_btn {
-  margin-left: 5px;
+  font-weight: 400;
 }

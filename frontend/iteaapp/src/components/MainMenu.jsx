@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-/* ---- SVG иконки для навигации ---- */
+/* ---- SVG icons (Adwaita-style, 20px) ---- */
 const IconAccounts = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
     <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
@@ -19,25 +19,6 @@ const IconSyncRules = () => (
   </svg>
 );
 
-const IconSyncStatus = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="23 4 23 10 17 10" />
-    <polyline points="1 20 1 14 7 14" />
-    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10" />
-    <path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14" />
-  </svg>
-);
-
-const IconShares = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="18" cy="5" r="3" />
-    <circle cx="6" cy="12" r="3" />
-    <circle cx="18" cy="19" r="3" />
-    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
-    <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
-  </svg>
-);
-
 const IconSettings = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
     <circle cx="12" cy="12" r="3" />
@@ -46,10 +27,9 @@ const IconSettings = () => (
 );
 
 const menuItems = [
-  { id: 'accounts',    label: 'Аккаунты',               icon: <IconAccounts /> },
-  { id: 'sync-rules',  label: 'Правила Синхронизации',   icon: <IconSyncRules /> },
-  // { id: 'sync-status', label: 'Статус Синхронизации',    icon: <IconSyncStatus /> },
-  { id: 'settings',    label: 'Настройки',               icon: <IconSettings /> },
+  { id: 'accounts',   label: 'Аккаунты',             icon: <IconAccounts /> },
+  { id: 'sync-rules', label: 'Правила синхронизации', icon: <IconSyncRules /> },
+  { id: 'settings',   label: 'Настройки',            icon: <IconSettings /> },
 ];
 
 function MainMenu({ activeItem: controlledActive, onItemClick }) {
@@ -66,7 +46,7 @@ function MainMenu({ activeItem: controlledActive, onItemClick }) {
       {/* Logo */}
       <div className="mainMenu_logoBlock">
         <div className="mainMenu_logoIcon">
-          <img className="mainLogo" src="public/images/logo.png" alt="logo"/>
+          <img className="mainLogo" src="/images/logo.png" alt="logo" />
         </div>
         <span className="mainMenu_logoText">ITeaCloud</span>
       </div>
@@ -93,18 +73,6 @@ function MainMenu({ activeItem: controlledActive, onItemClick }) {
 
       {/* Spacer */}
       <div className="mainMenu_spacer" />
-
-      {/* Add Cloud Button */}
-      {/* <button className="mainMenu_addButton">
-        Добавить Облако
-      </button> */}
-
-      {/* Status Bar */}
-      <div className="mainMenu_statusBar">
-        <span className="mainMenu_statusText">
-          Connection status: Connection синхронизация ТВбчнесто: 750 OK
-        </span>
-      </div>
     </aside>
   );
 }
