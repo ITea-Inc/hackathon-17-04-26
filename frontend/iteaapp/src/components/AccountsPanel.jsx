@@ -3,34 +3,24 @@ import React from 'react';
 /* ---- SVG-иконки для провайдеров ---- */
 
 const YandexIcon1 = () => (
-  <div style={{ width: 48, height: 48, borderRadius: 12, background: '#e4322b', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-    <span style={{ color: '#fff', fontSize: 22, fontWeight: 800 }}>Я</span>
+  <div style={{ width: 48, height: 48, borderRadius: 12 }}>
+    <img width="48" height="48" src="/public/images/YandexDisk.png" />
   </div>
 );
 
 const NextCloudIcon1 = () => (
-  <div style={{ width: 48, height: 48, borderRadius: 12, background: '#0e7490', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-    <svg width="28" height="20" viewBox="0 0 28 20" fill="none">
-      <circle cx="7" cy="10" r="5" stroke="#fff" strokeWidth="2" fill="none" />
-      <circle cx="14" cy="10" r="5" stroke="#fff" strokeWidth="2" fill="none" />
-      <circle cx="21" cy="10" r="5" stroke="#fff" strokeWidth="2" fill="none" />
-    </svg>
+  <div style={{ width: 48, height: 48, borderRadius: 12 }}>
+    <img width="48" height="48" src="/public/images/cloud.jpg" />
   </div>
 );
 
 /* Card-level icons */
 const YandexDiskCardIcon = () => (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z" />
-  </svg>
+  <img width="22" height="22" src="public/images/YandexDisk.png" />
 );
 
 const NextCloudCardIcon = () => (
-  <svg width="28" height="16" viewBox="0 0 28 16" fill="none">
-    <circle cx="7" cy="8" r="5" stroke="currentColor" strokeWidth="1.8" fill="none" />
-    <circle cx="14" cy="8" r="5" stroke="currentColor" strokeWidth="1.8" fill="none" />
-    <circle cx="21" cy="8" r="5" stroke="currentColor" strokeWidth="1.8" fill="none" />
-  </svg>
+  <img width="22" height="22" src="/public/images/cloud.jpg" />
 );
 
 /* ---- Data ---- */
