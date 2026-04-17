@@ -57,6 +57,7 @@ function AccountsPanel() {
       .catch(err => { setError(err.message); setLoading(false); });
   };
 
+  
   useEffect(() => { fetchAccounts(); }, []);
 
   const handleRemove = (id) => {
@@ -85,6 +86,7 @@ function AccountsPanel() {
     })
       .then(res => {
         if (!res.ok) throw new Error(`Ошибка сервера: ${res.status}`);
+        console.log(res.json())
         return res.json();
       })
       .then(() => {
