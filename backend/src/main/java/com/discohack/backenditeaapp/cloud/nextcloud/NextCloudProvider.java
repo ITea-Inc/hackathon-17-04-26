@@ -130,7 +130,13 @@ public class NextCloudProvider implements CloudProvider {
             // для простоты скачиваем весь файл и пропускаем offset байт.
             InputStream stream = sardine.get(url);
             if (offset > 0) {
-                stream.skip(offset);
+                // skip() не гарантирует пропуск нужного числа байт за один вызов
+                long remaining = offset;
+                while (remaining > 0) {
+                    long skipped = stream.skip(remaining);
+                    if (skipped <= 0) break; // EOF или ошибка чтения
+                    remaining -= skipped;
+                }
             }
             return stream;
         } catch (IOException e) {

@@ -47,7 +47,7 @@ public class SettingsController {
      * Принимает JSON с любыми из полей: syncFrequency, cacheSizeBytes.
      */
     @PutMapping
-    public ResponseEntity<Map<String, Object>> updateSettings(
+    public synchronized ResponseEntity<Map<String, Object>> updateSettings(
         @RequestBody Map<String, Object> body
     ) {
         if (body.containsKey("syncFrequency")) {

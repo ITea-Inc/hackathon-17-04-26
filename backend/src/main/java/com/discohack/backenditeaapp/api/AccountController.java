@@ -159,7 +159,9 @@ public class AccountController {
             .provider("nextcloud")
             .username(request.username())
             .serverUrl(request.serverUrl())
-            .accessToken(request.password())  // храним пароль в поле accessToken
+            // На хакатоне пароль хранится в поле accessToken.
+            // В продакшене необходимо шифрование (например, Spring Security PasswordEncoder).
+            .accessToken(request.password())
             .mountPath(mountPath)
             .build();
         accountRepository.save(entity);

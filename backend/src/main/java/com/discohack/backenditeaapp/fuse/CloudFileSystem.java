@@ -250,8 +250,14 @@ public class CloudFileSystem extends FuseStubFS {
             // Накапливаем в writeBuffers.
             // Размер буфера = max(существующий размер, offset + size),
             // чтобы корректно обрабатывать неупорядоченные записи.
+            // Ограничение: Java arrays ≤ Integer.MAX_VALUE (~2 ГБ).
             byte[] existing = writeBuffers.getOrDefault(path, new byte[0]);
-            int newSize = (int) Math.max(existing.length, offset + size);
+            long newSizeLong = Math.max(existing.length, offset + size);
+            if (newSizeLong > Integer.MAX_VALUE) {
+                log.error("write: файл {} слишком большой для буфера ({} байт)", path, newSizeLong);
+                return -ErrorCodes.EIO();
+            }
+            int newSize = (int) newSizeLong;
             byte[] combined = new byte[newSize];
             System.arraycopy(existing, 0, combined, 0, existing.length);
             System.arraycopy(bytes, 0, combined, (int) offset, (int) size);

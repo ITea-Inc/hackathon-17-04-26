@@ -6,6 +6,7 @@ import com.discohack.backenditeaapp.persistance.entities.SyncRuleEntity;
 import com.discohack.backenditeaapp.persistance.repository.SyncRuleRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -75,7 +76,20 @@ public class RulesController {
         rule.setPolicy(request.policy());
         rule.setPriority(request.priority());
 
-        return ResponseEntity.ok(ruleRepository.save(rule));
+        try {
+            return ResponseEntity.ok(ruleRepository.save(rule));
+        } catch (DataIntegrityViolationException e) {
+            // Одновременный запрос успел создать правило с тем же accountId+pathPattern.
+            // Повторно ищем и обновляем.
+            log.warn("upsertRule: конкурентная вставка для {}/{}, повторная попытка", request.accountId(), request.pathPattern());
+            return ruleRepository.findByAccountIdAndPathPattern(request.accountId(), request.pathPattern())
+                .map(existing -> {
+                    existing.setPolicy(request.policy());
+                    existing.setPriority(request.priority());
+                    return ResponseEntity.ok(ruleRepository.save(existing));
+                })
+                .orElseGet(() -> ResponseEntity.status(409).build());
+        }
     }
 
     /**
