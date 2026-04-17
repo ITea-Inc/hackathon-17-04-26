@@ -1,8 +1,8 @@
 import React from 'react';
 
-const FileItem = ({ name, directory, size, modified, syncRule = 'always', onSyncChange, onFolderClick }) => {
+const FileItem = ({ name, directory, size, lastModified, syncRule = 'always', onSyncChange, onFolderClick }) => {
   const isFolder = directory === true;
-
+  lastModified = lastModified.replace("T", " ").replace("Z", " ");
   const handleRowDoubleClick = () => {
     if (isFolder && onFolderClick) {
       onFolderClick(name);
@@ -30,12 +30,12 @@ const FileItem = ({ name, directory, size, modified, syncRule = 'always', onSync
         <div className="file-icon">
           {isFolder ? (
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <path d="M10 4H4C2.895 4 2 4.895 2 6V18C2 19.105 2.895 20 4 20H20C21.105 20 22 19.105 22 18V8C22 6.895 21.105 6 20 6H12L10 4Z" fill="#e8a33d"/>
+              <path d="M10 4H4C2.895 4 2 4.895 2 6V18C2 19.105 2.895 20 4 20H20C21.105 20 22 19.105 22 18V8C22 6.895 21.105 6 20 6H12L10 4Z" fill="#e8a33d" />
             </svg>
           ) : (
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <path d="M13 2H6C4.895 2 4 2.895 4 4V20C4 21.105 4.895 22 6 22H18C19.105 22 20 21.105 20 20V9L13 2Z" fill="#78aeed"/>
-              <path d="M13 2V9H20" stroke="rgba(0,0,0,0.15)" strokeWidth="1.5"/>
+              <path d="M13 2H6C4.895 2 4 2.895 4 4V20C4 21.105 4.895 22 6 22H18C19.105 22 20 21.105 20 20V9L13 2Z" fill="#78aeed" />
+              <path d="M13 2V9H20" stroke="rgba(0,0,0,0.15)" strokeWidth="1.5" />
             </svg>
           )}
         </div>
@@ -43,7 +43,7 @@ const FileItem = ({ name, directory, size, modified, syncRule = 'always', onSync
       </div>
 
       <div className="file-size">{isFolder ? '--' : size}</div>
-      <div className="file-modified">{modified}</div>
+      <div className="file-modified">{lastModified}</div>
       <div className="file-sync" onDoubleClick={(e) => e.stopPropagation()}>
         <button className={`sync-btn ${syncRule}`} onClick={toggleSync}>
           {getSyncTitle()}
