@@ -1,6 +1,9 @@
-const { app, BrowserWindow, Menu } = require('electron');
+const { app, BrowserWindow, Menu, Tray, nativeImage } = require('electron');
 const path = require('path');
 const { execSync } = require('child_process');
+
+let mainWindow;
+let tray;
 
 // Menu.setApplicationMenu(null);
 
@@ -48,7 +51,7 @@ function getGnomeAccentColor() {
 }
 
 function createWindow() {
-  const win = new BrowserWindow({
+  mainWindow = new BrowserWindow({
     width: 900,
     height: 650,
     webPreferences: {
@@ -58,25 +61,68 @@ function createWindow() {
   });
 
   if (isDev) {
-    win.loadURL('http://localhost:5173');
+    mainWindow.loadURL('http://localhost:5173');
   } else {
-    win.loadFile(path.join(__dirname, 'dist', 'index.html'));
+    mainWindow.loadFile(path.join(__dirname, 'dist', 'index.html'));
   }
 
   const accent = getGnomeAccentColor();
   const accentCSS = `:root { --gnome-accent: ${accent} !important; }`;
 
-  win.webContents.on('dom-ready', () => {
-    win.webContents.insertCSS(accentCSS);
+  mainWindow.webContents.on('dom-ready', () => {
+    mainWindow.webContents.insertCSS(accentCSS);
   });
 
-  win.webContents.on('did-navigate-in-page', () => {
-    win.webContents.insertCSS(accentCSS);
+  mainWindow.webContents.on('did-navigate-in-page', () => {
+    mainWindow.webContents.insertCSS(accentCSS);
+  });
+
+  mainWindow.on('close', (event) => {
+    if (!app.isQuiting) {
+      event.preventDefault();
+      mainWindow.hide();
+    }
+    return false;
+  });
+}
+
+function createTray() {
+  const iconPath = path.join(__dirname, 'public', 'images', 'logo.png');
+  const icon = nativeImage.createFromPath(iconPath);
+  
+  tray = new Tray(icon.resize({ width: 16, height: 16 }));
+  
+  const contextMenu = Menu.buildFromTemplate([
+    { 
+      label: 'Open App', 
+      click: () => {
+        mainWindow.show();
+      } 
+    },
+    { 
+      label: 'Quit', 
+      click: () => {
+        app.isQuiting = true;
+        app.quit();
+      } 
+    }
+  ]);
+
+  tray.setToolTip('ITea App');
+  tray.setContextMenu(contextMenu);
+
+  tray.on('click', () => {
+    if (mainWindow.isVisible()) {
+      mainWindow.hide();
+    } else {
+      mainWindow.show();
+    }
   });
 }
 
 app.whenReady().then(() => {
   createWindow();
+  createTray();
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
