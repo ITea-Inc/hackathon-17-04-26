@@ -1,5 +1,6 @@
 package com.discohack.backenditeaapp.persistance.repository;
 
+import com.discohack.backenditeaapp.domain.SyncPolicy;
 import com.discohack.backenditeaapp.persistance.entities.SyncRuleEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -18,4 +19,7 @@ public interface SyncRuleRepository extends JpaRepository<SyncRuleEntity, String
 
     /** Удалить все правила аккаунта (при удалении аккаунта). */
     void deleteByAccountId(String accountId);
+
+    /** Все правила с заданной политикой — используется планировщиком. */
+    List<SyncRuleEntity> findByPolicy(SyncPolicy policy);
 }

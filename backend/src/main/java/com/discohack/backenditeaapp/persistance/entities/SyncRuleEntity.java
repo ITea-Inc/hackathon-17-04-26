@@ -39,17 +39,18 @@ public class SyncRuleEntity {
     @Column(name = "path_pattern", nullable = false)
     private String pathPattern;
 
-    /** Политика синхронизации. */
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 16)
     private SyncPolicy policy;
 
-    /**
-     * Приоритет правила: чем выше число — тем выше приоритет.
-     * При конфликте (несколько совпадающих правил) победит правило с наибольшим priority.
-     */
     @Column(nullable = false)
     private int priority;
+
+    // Cron-выражение для политики SCHEDULED. Null для остальных политик.
+    // Формат Spring: "секунды минуты часы день_месяца месяц день_недели"
+    // Пример: "0 0 2 * * *" = каждый день в 02:00
+    @Column(name = "cron_expression")
+    private String cronExpression;
 
     @Column(nullable = false, updatable = false)
     private Instant createdAt;

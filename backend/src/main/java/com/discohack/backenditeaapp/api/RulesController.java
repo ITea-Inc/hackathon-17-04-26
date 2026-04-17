@@ -33,12 +33,17 @@ public class RulesController {
     private final SyncRuleRepository ruleRepository;
     private final RuleEngine ruleEngine;
 
-    /** Тело запроса для создания/обновления правила. */
     record SyncRuleRequest(
         String accountId,
         String pathPattern,
         SyncPolicy policy,
-        int priority
+        int priority,
+        String cronExpression   // только для SCHEDULED, для остальных null
+    ) {}
+
+    record PresetRequest(
+        String accountId,
+        String presetType   // "documents_always" | "media_on_demand" | "backups_scheduled"
     ) {}
 
     /**
@@ -75,21 +80,86 @@ public class RulesController {
 
         rule.setPolicy(request.policy());
         rule.setPriority(request.priority());
+        rule.setCronExpression(request.cronExpression());
 
         try {
             return ResponseEntity.ok(ruleRepository.save(rule));
         } catch (DataIntegrityViolationException e) {
-            // Одновременный запрос успел создать правило с тем же accountId+pathPattern.
-            // Повторно ищем и обновляем.
             log.warn("upsertRule: конкурентная вставка для {}/{}, повторная попытка", request.accountId(), request.pathPattern());
             return ruleRepository.findByAccountIdAndPathPattern(request.accountId(), request.pathPattern())
                 .map(existing -> {
                     existing.setPolicy(request.policy());
                     existing.setPriority(request.priority());
+                    existing.setCronExpression(request.cronExpression());
                     return ResponseEntity.ok(ruleRepository.save(existing));
                 })
                 .orElseGet(() -> ResponseEntity.status(409).build());
         }
+    }
+
+    /**
+     * POST /api/rules/presets
+     * Применить пресет — создать набор типовых правил одним запросом.
+     *
+     * Типы пресетов:
+     *   "documents_always"   — Documents/Документы всегда синхронизировать
+     *   "media_on_demand"    — Фото/Видео только по запросу
+     *   "backups_scheduled"  — Backup папка синхронизируется каждую ночь в 02:00
+     */
+    @PostMapping("/presets")
+    public ResponseEntity<?> applyPreset(@RequestBody PresetRequest request) {
+        log.info("applyPreset: accountId={} preset={}", request.accountId(), request.presetType());
+
+        List<SyncRuleEntity> toSave;
+        try {
+            toSave = switch (request.presetType()) {
+                case "documents_always" -> List.of(
+                    buildRule(request.accountId(), "/Documents",  SyncPolicy.ALWAYS, 10, null),
+                    buildRule(request.accountId(), "/Документы", SyncPolicy.ALWAYS, 10, null)
+                );
+                case "media_on_demand" -> List.of(
+                    buildRule(request.accountId(), "/Photos", SyncPolicy.ON_DEMAND, 5, null),
+                    buildRule(request.accountId(), "/Фото",   SyncPolicy.ON_DEMAND, 5, null),
+                    buildRule(request.accountId(), "/Videos", SyncPolicy.ON_DEMAND, 5, null),
+                    buildRule(request.accountId(), "/Видео",  SyncPolicy.ON_DEMAND, 5, null)
+                );
+                case "backups_scheduled" -> List.of(
+                    buildRule(request.accountId(), "/Backup", SyncPolicy.SCHEDULED, 8, "0 0 2 * * *"),
+                    buildRule(request.accountId(), "/backup", SyncPolicy.SCHEDULED, 8, "0 0 2 * * *"),
+                    buildRule(request.accountId(), "/Бэкап", SyncPolicy.SCHEDULED, 8, "0 0 2 * * *")
+                );
+                default -> throw new IllegalArgumentException("Неизвестный пресет: " + request.presetType());
+            };
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+
+        List<SyncRuleEntity> saved = toSave.stream()
+            .map(rule -> ruleRepository
+                .findByAccountIdAndPathPattern(rule.getAccountId(), rule.getPathPattern())
+                .map(existing -> {
+                    existing.setPolicy(rule.getPolicy());
+                    existing.setPriority(rule.getPriority());
+                    existing.setCronExpression(rule.getCronExpression());
+                    return ruleRepository.save(existing);
+                })
+                .orElseGet(() -> ruleRepository.save(rule))
+            )
+            .toList();
+
+        return ResponseEntity.ok(saved);
+    }
+
+    private SyncRuleEntity buildRule(String accountId, String path,
+                                     SyncPolicy policy, int priority, String cron) {
+        return SyncRuleEntity.builder()
+            .id(UUID.randomUUID().toString())
+            .accountId(accountId)
+            .pathPattern(path)
+            .policy(policy)
+            .priority(priority)
+            .cronExpression(cron)
+            .build();
     }
 
     /**

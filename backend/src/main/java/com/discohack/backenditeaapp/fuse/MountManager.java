@@ -1,6 +1,9 @@
 package com.discohack.backenditeaapp.fuse;
 
 import com.discohack.backenditeaapp.cloud.CloudProvider;
+import com.discohack.backenditeaapp.domain.RuleEngine;
+import com.discohack.backenditeaapp.ws.EventBroadcaster;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -30,17 +33,15 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class MountManager {
 
-    // Базовая папка для всех монтирований (из application.yml)
-    // "${user.home}/CloudMount" → "/home/username/CloudMount"
     @Value("${discohack.mount.base-path}")
     private String baseMountPath;
 
-    // Хранит активные FUSE файловые системы.
-    // Ключ: имя провайдера ("yandex", "nextcloud")
-    // Значение: экземпляр CloudFileSystem
-    // ConcurrentHashMap — потокобезопасно (монтирование может быть из разных потоков)
+    private final EventBroadcaster broadcaster;
+    private final RuleEngine ruleEngine;
+
     private final ConcurrentHashMap<String, CloudFileSystem> activeMounts
             = new ConcurrentHashMap<>();
 
@@ -53,7 +54,7 @@ public class MountManager {
      * @param provider провайдер облака (Яндекс, NextCloud)
      * @throws IllegalStateException если уже смонтирован
      */
-    public void mountProvider(CloudProvider provider) {
+    public void mountProvider(CloudProvider provider, String accountId) {
         String providerName = provider.getProviderName();
 
         if (activeMounts.containsKey(providerName)) {
@@ -61,11 +62,9 @@ public class MountManager {
             return;
         }
 
-        // Определяем путь точки монтирования
         Path mountPoint = Paths.get(baseMountPath, providerName);
 
         try {
-            // Создаём папку если не существует
             Files.createDirectories(mountPoint);
             log.info("Точка монтирования создана: {}", mountPoint);
         } catch (IOException e) {
@@ -73,8 +72,7 @@ public class MountManager {
             throw new RuntimeException("Ошибка создания точки монтирования", e);
         }
 
-        // Создаём FUSE файловую систему
-        CloudFileSystem fs = new CloudFileSystem(provider);
+        CloudFileSystem fs = new CloudFileSystem(provider, broadcaster, ruleEngine, accountId);
 
         // mount() — блокирующий вызов! Поэтому запускаем в отдельном потоке.
         // В противном случае Spring-приложение "зависнет" на этой строке.

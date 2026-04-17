@@ -3,6 +3,9 @@ package com.discohack.backenditeaapp.fuse;
 import com.discohack.backenditeaapp.cloud.CloudProvider;
 import com.discohack.backenditeaapp.cloud.CloudProviderException;
 import com.discohack.backenditeaapp.domain.CloudFile;
+import com.discohack.backenditeaapp.domain.RuleEngine;
+import com.discohack.backenditeaapp.domain.SyncPolicy;
+import com.discohack.backenditeaapp.ws.EventBroadcaster;
 import jnr.ffi.Pointer;
 import jnr.ffi.types.off_t;
 import jnr.ffi.types.size_t;
@@ -40,29 +43,27 @@ import java.util.concurrent.ConcurrentHashMap;
 @Slf4j
 public class CloudFileSystem extends FuseStubFS {
 
-    // Провайдер облака (Яндекс, NextCloud и т.д.)
     private final CloudProvider provider;
+    private final EventBroadcaster broadcaster;
+    private final RuleEngine ruleEngine;
+    private final String accountId;
 
-    // ─────────────────────────────────────────────────
-    // In-memory кеш метаданных файлов (для фазы 3)
-    // Ключ: путь файла. Значение: CloudFile + время кеширования.
-    // ConcurrentHashMap — потокобезопасная Map (FUSE вызывает методы из разных потоков!)
-    // ─────────────────────────────────────────────────
     private final ConcurrentHashMap<String, CachedEntry<CloudFile>> fileInfoCache
             = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, CachedEntry<List<CloudFile>>> dirCache
             = new ConcurrentHashMap<>();
 
-    // Время жизни кеша метаданных: 60 секунд
     private static final long CACHE_TTL_MS = 60_000;
 
-    // Буфер записи: собираем байты при write(), загружаем при flush()
-    // Ключ: путь файла (или handle). Значение: буфер байт.
     private final ConcurrentHashMap<String, byte[]> writeBuffers
             = new ConcurrentHashMap<>();
 
-    public CloudFileSystem(CloudProvider provider) {
+    public CloudFileSystem(CloudProvider provider, EventBroadcaster broadcaster,
+                           RuleEngine ruleEngine, String accountId) {
         this.provider = provider;
+        this.broadcaster = broadcaster;
+        this.ruleEngine = ruleEngine;
+        this.accountId = accountId;
     }
 
     // ════════════════════════════════════════════════════
@@ -88,9 +89,16 @@ public class CloudFileSystem extends FuseStubFS {
         log.debug("getattr: {}", path);
 
         try {
-            // Корень "/" — всегда папка
             if ("/".equals(path)) {
                 fillDirStat(stat, Instant.now());
+                return 0;
+            }
+
+            // Файл сейчас пишется — возвращаем размер буфера, не идём в облако.
+            // Без этого новосозданный файл получал бы ENOENT пока не загружен.
+            byte[] inProgress = writeBuffers.get(path);
+            if (inProgress != null) {
+                fillFileStat(stat, inProgress.length, Instant.now());
                 return 0;
             }
 
@@ -203,7 +211,13 @@ public class CloudFileSystem extends FuseStubFS {
         log.debug("read: {} size={} offset={}", path, size, offset);
 
         try {
-            // Скачиваем нужный кусок файла
+            // MANUAL — файл заблокирован для автоматического скачивания
+            SyncPolicy policy = ruleEngine.resolvePolicy(accountId, path);
+            if (policy == SyncPolicy.MANUAL) {
+                log.debug("read: {} заблокирован политикой MANUAL", path);
+                return -ErrorCodes.EACCES();
+            }
+
             InputStream stream = provider.downloadFile(path, offset, size);
 
             // Читаем байты из потока в массив
@@ -304,19 +318,34 @@ public class CloudFileSystem extends FuseStubFS {
         return uploadBuffer(path, data);
     }
 
-    /**
-     * Загружает буфер в облако и инвалидирует кеш.
-     */
+    @Override
+    public int truncate(String path, long size) {
+        log.debug("truncate: {} → {} байт", path, size);
+        if (size == 0) {
+            writeBuffers.put(path, new byte[0]);
+        } else {
+            byte[] existing = writeBuffers.getOrDefault(path, new byte[0]);
+            byte[] resized = new byte[(int) size];
+            System.arraycopy(existing, 0, resized, 0, Math.min(existing.length, (int) size));
+            writeBuffers.put(path, resized);
+        }
+        invalidateCache(path);
+        return 0;
+    }
+
     private int uploadBuffer(String path, byte[] data) {
         try {
+            broadcaster.publishProgress(accountId, path, 0);
             provider.uploadFile(path,
                 new java.io.ByteArrayInputStream(data),
                 data.length
             );
             invalidateCache(path);
+            broadcaster.publishFileSynced(accountId, path);
             log.info("uploadBuffer: {} загружен в облако ({} байт)", path, data.length);
             return 0;
         } catch (CloudProviderException e) {
+            broadcaster.publishError(accountId, path, e.getMessage());
             log.error("uploadBuffer ошибка для {}: {}", path, e.getMessage());
             return e.toFuseErrorCode();
         }
