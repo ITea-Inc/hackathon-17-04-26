@@ -86,9 +86,10 @@ function AccountsPanel() {
     })
       .then(res => {
         if (!res.ok) throw new Error(`Ошибка сервера: ${res.status}`);
-        return res.json();
+        return res.json(); // вернёт { id, provider, username, mountPath, connected }
       })
-      .then(() => {
+      .then(data => {
+        console.log('[API] Аккаунт подключён:', data); // data.id тут доступен
         setConnectingProvider(null);
         setTokenInput('');
         setUsernameInput('');
