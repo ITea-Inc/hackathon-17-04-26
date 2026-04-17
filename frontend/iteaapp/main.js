@@ -76,8 +76,49 @@ function createWindow() {
   });
 }
 
+function setupLocalServer() {
+  const http = require('http');
+  const server = http.createServer((req, res) => {
+    // Разрешаем CORS (на всякий случай)
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    
+    // Ответ для "пинга" (расширение Nautilus проверяет, запущено ли приложение)
+    if (req.method === 'GET' && req.url === '/api/ping') {
+      res.writeHead(200);
+      res.end('pong');
+      return;
+    }
+
+    // Обработка клика "Получить ссылку" в Наутилус
+    if (req.method === 'POST' && req.url === '/api/share-from-nautilus') {
+      let body = '';
+      req.on('data', chunk => { body += chunk.toString(); });
+      req.on('end', () => {
+        const params = new URLSearchParams(body);
+        const filePath = params.get('file_path');
+        
+        console.log('\n[Nautilus Hook] Пользователь хочет поделиться файлом:', filePath);
+        // TODO: Чуть позже мы заставим Electron послать это событие в React Frontend
+        
+        res.writeHead(200);
+        res.end('Shared');
+      });
+      return;
+    }
+    
+    res.writeHead(404);
+    res.end();
+  });
+
+  // Слушаем порт 5174, который мы указали в нашем Python-коде
+  server.listen(5174, '127.0.0.1', () => {
+    console.log('[Local Server] Слушаем команды от Nautilus на порту 5174');
+  });
+}
+
 app.whenReady().then(() => {
   createWindow();
+  setupLocalServer(); // <-- Запускаем сервер при старте
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
