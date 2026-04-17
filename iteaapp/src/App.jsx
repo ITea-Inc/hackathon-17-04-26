@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import React, { useState, useEffect } from 'react';
 import FileExplorer from './components/FileExplorer';
 import './App.css';
@@ -65,8 +66,21 @@ function App() {
         <p className="app-subtitle">Путь: {currentPath}</p>
       </div>
       <FileExplorer items={files} onSyncChange={handleSyncChange} onFolderClick={handleFolderClick} />
+=======
+import React from 'react';
+import MainMenu from './components/MainMenu';
+import AccountsPanel from './components/AccountsPanel';
+import './App.css';
+
+function App() {
+  return (
+    <div className="app_layout">
+      <MainMenu />
+      <AccountsPanel />
+>>>>>>> bcdac9bbe09a517d4166e079514d11aa7f43ea68
     </div>
   );
 }
 
 export default App;
+
