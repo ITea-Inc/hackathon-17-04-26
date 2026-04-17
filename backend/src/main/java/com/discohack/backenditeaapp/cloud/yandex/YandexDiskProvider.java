@@ -346,6 +346,21 @@ public class YandexDiskProvider implements CloudProvider {
         }
     }
 
+    /**
+     * Возвращает логин пользователя Яндекса.
+     * GET /v1/disk → { "user": { "login": "ivan.petrov" } }
+     */
+    public String getLogin() {
+        try {
+            JsonNode response = executeGet(API_BASE);
+            String login = response.path("user").path("login").asText("");
+            return login.isEmpty() ? "yandex-user" : login;
+        } catch (Exception e) {
+            log.warn("Не удалось получить логин Яндекса: {}", e.getMessage());
+            return "yandex-user";
+        }
+    }
+
     // ════════════════════════════════════════════════════
     // ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ
     // ════════════════════════════════════════════════════
