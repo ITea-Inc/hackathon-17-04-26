@@ -68,39 +68,40 @@ body {
 }
 
 .explorer-container {
-  max-width: 900px;
-  margin: 2rem auto;
-  background: var(--container-bg);
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
   overflow: hidden;
 }
 
 .explorer-header {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1.2fr 1fr;
+  grid-template-columns: 2.5fr 0.8fr 0.8fr 1.2fr 1fr;
+  column-gap: 12px;
   padding: 0.8rem 1.5rem;
-  background: var(--container-bg);
-  border-bottom: 1px solid var(--border-color);
+  background: rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid var(--card-border);
   color: var(--text-secondary);
-  font-size: 0.85rem;
-  font-weight: 500;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 
 .file-item {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1.2fr 1fr;
-  padding: 0.4rem 1.5rem;
+  grid-template-columns: 2.5fr 0.8fr 0.8fr 1.2fr 1fr;
+  column-gap: 12px;
+  padding: 0.6rem 1.5rem;
   align-items: center;
-  transition: background-color 0.1s ease;
+  transition: background 0.15s ease;
   cursor: pointer;
-  border-bottom: 1px solid transparent;
-  /* No border for clean look */
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
 }
 
 .file-item:hover {
-  background: var(--row-hover);
+  background: rgba(139, 92, 246, 0.06);
 }
 
 .file-name-container {
@@ -123,6 +124,9 @@ body {
 .file-name {
   color: var(--text-primary);
   font-weight: 400;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .file-type,
@@ -151,37 +155,38 @@ body {
 }
 
 .sync-btn {
-  padding: 0.3rem 0.6rem;
-  border-radius: 4px;
+  padding: 5px 12px;
+  border-radius: 6px;
   border: 1px solid transparent;
-  font-size: 0.75rem;
+  font-size: 11px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.1s ease;
-  width: 80px;
+  transition: all 0.15s ease;
+  min-width: 76px;
   text-align: center;
+  font-family: inherit;
 }
 
 .sync-btn.always {
-  background: #204b30;
-  color: #a4e5bc;
-  border-color: #2b613e;
+  background: rgba(74, 222, 128, 0.12);
+  color: #4ade80;
+  border-color: rgba(74, 222, 128, 0.2);
 }
 
 .sync-btn.timing {
-  background: #544415;
-  color: #fce6a8;
-  border-color: #6a571c;
+  background: rgba(251, 191, 36, 0.12);
+  color: #fbbf24;
+  border-color: rgba(251, 191, 36, 0.2);
 }
 
 .sync-btn.never {
-  background: #5b2121;
-  color: #f7aab1;
-  border-color: #742a2a;
+  background: rgba(248, 113, 113, 0.12);
+  color: #f87171;
+  border-color: rgba(248, 113, 113, 0.2);
 }
 
 .sync-btn:hover {
-  filter: brightness(1.15);
+  filter: brightness(1.2);
 }
 
 /* ========== MainMenu Sidebar ========== */
@@ -383,8 +388,35 @@ body {
   font-size: 22px;
   font-weight: 700;
   color: var(--text-primary);
-  margin: 0 0 24px;
+  margin: 0 0 8px;
   letter-spacing: -0.2px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.accPanel_subtitle {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin: 0 0 24px;
+}
+
+.accPanel_backBtn {
+  padding: 6px 14px;
+  border: 1px solid var(--card-border);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.accPanel_backBtn:hover {
+  background: rgba(139, 92, 246, 0.12);
+  color: var(--text-primary);
 }
 
 /* ---- Account Cards Row ---- */

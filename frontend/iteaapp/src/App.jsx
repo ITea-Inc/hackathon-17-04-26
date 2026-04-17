@@ -74,39 +74,23 @@ function App() {
         )}
         
         {activeTab === 'sync-rules' && (
-          <div className="app-main">
-            <div className="app-header">
+          <div className="accPanel_container">
+            <h1 className="accPanel_title">
               {currentPath !== '/' && (
-                <button 
-                  onClick={navigateUp}
-                  style={{ 
-                    position: 'absolute', 
-                    left: '2rem', 
-                    top: '3rem', 
-                    padding: '0.4rem 1rem', 
-                    background: '#333', 
-                    color: '#fff', 
-                    border: '1px solid #444', 
-                    borderRadius: '4px', 
-                    cursor: 'pointer',
-                    zIndex: 10
-                  }}
-                >
-                  ← Назад
-                </button>
+                <button className="accPanel_backBtn" onClick={navigateUp}>← Назад</button>
               )}
-              <h1 className="app-title">Правила синхронизации</h1>
-              <p className="app-subtitle">Пусть: {currentPath}</p>
-            </div>
+              Правила синхронизации
+            </h1>
+            <p className="accPanel_subtitle">Путь: {currentPath}</p>
             <FileExplorer items={files} onSyncChange={handleSyncChange} onFolderClick={handleFolderClick} />
           </div>
         )}
 
         {/* Заглушки для остальных вкладок */}
-        {activeTab !== 'accounts' && activeTab !== 'sync-rules' && (
-          <div style={{ padding: '2rem', color: '#666' }}>
-            <h2>{activeTab.replace('-', ' ').toUpperCase()}</h2>
-            <p>Этот раздел находится в разработке...</p>
+        {activeTab !== 'accounts' && activeTab !== 'sync-rules' && activeTab !== 'settings' && (
+          <div className="accPanel_container">
+            <h1 className="accPanel_title">{activeTab.replace('-', ' ').replace(/\b\w/g, c => c.toUpperCase())}</h1>
+            <p className="accPanel_subtitle">Этот раздел находится в разработке...</p>
           </div>
         )}
       </main>
