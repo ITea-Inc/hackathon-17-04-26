@@ -42,6 +42,7 @@ function AccountsPanel({ onAccountSelect }) {
   const [usernameInput, setUsernameInput] = useState('');
   const [connecting, setConnecting] = useState(false);
   const [connectError, setConnectError] = useState(null);
+  const [oauthPending, setOauthPending] = useState(false);
 
   const fetchAccounts = (retryCount = 0) => {
     setLoading(true);
@@ -60,6 +61,27 @@ function AccountsPanel({ onAccountSelect }) {
   };
 
   useEffect(() => { fetchAccounts(); }, []);
+
+  // Poll for new accounts during OAuth
+  useEffect(() => {
+    if (!oauthPending) return;
+    const interval = setInterval(() => {
+      fetch(`${API_BASE}/api/accounts`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.length > accounts.length) {
+            setAccounts(data);
+            setOauthPending(false);
+            if (onAccountSelect) {
+              const newAcc = data.find(newObj => !accounts.some(oldObj => oldObj.id === newObj.id));
+              if (newAcc) onAccountSelect(newAcc.id);
+            }
+          }
+        })
+        .catch(console.error);
+    }, 2000);
+    return () => clearInterval(interval);
+  }, [oauthPending, accounts]);
 
   const handleRemove = (id) => {
     fetch(`${API_BASE}/api/accounts/${id}`, { method: 'DELETE' })
@@ -94,6 +116,21 @@ function AccountsPanel({ onAccountSelect }) {
       .catch(err => {
         setConnectError(`Error: ${err}`);
         setConnecting(false);
+      });
+  };
+
+  const handleYandexOAuth = () => {
+    fetch(`${API_BASE}/api/auth/yandex/authorize`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.url) {
+          const { shell } = window.require('electron');
+          shell.openExternal(data.url);
+          setOauthPending(true);
+        }
+      })
+      .catch(err => {
+        setError(`Ошибка OAuth: ${err}`);
       });
   };
 
@@ -146,13 +183,49 @@ function AccountsPanel({ onAccountSelect }) {
             <span className="accPanel_providerName">{prov.name}</span>
             <button
               className="accPanel_providerBtn"
-              onClick={() => { setConnectingProvider(prov.id); setConnectError(null); }}
+              onClick={() => {
+                if (prov.id === 'yandex') {
+                  handleYandexOAuth();
+                } else {
+                  setConnectingProvider(prov.id);
+                  setConnectError(null);
+                }
+              }}
             >
               Подключить
             </button>
           </div>
         ))}
       </div>
+
+      {oauthPending && (
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100,
+        }}>
+          <div style={{
+            background: '#1e1e2e', border: '1px solid rgba(255,255,255,0.1)',
+            borderRadius: 16, padding: 32, width: 420, display: 'flex',
+            flexDirection: 'column', gap: 16, textAlign: 'center'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: -8 }}>
+              <div className="spinner" style={{ borderColor: 'rgba(255,255,255,0.2)', borderTopColor: '#6d28d9', width: 36, height: 36, borderWidth: 4 }} />
+            </div>
+            <h2 style={{ margin: 0, color: '#e2d9f3', fontSize: 18 }}>
+              Авторизация Яндекс.Диска
+            </h2>
+            <p style={{ color: '#aaa', fontSize: 14, margin: '0 0 8px 0' }}>
+              Мы открыли окно в вашем браузере. Пожалуйста, разрешите доступ к Яндекс.Диску. Мы ожидаем...
+            </p>
+            <button
+              onClick={() => { setOauthPending(false); fetchAccounts(); }}
+              style={{ padding: '8px 18px', background: 'transparent', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 8, color: '#aaa', cursor: 'pointer' }}
+            >
+              Отмена
+            </button>
+          </div>
+        </div>
+      )}
 
       {connectingProvider && (
         <div style={{
@@ -177,7 +250,7 @@ function AccountsPanel({ onAccountSelect }) {
               }}
             />
             <input
-              placeholder="OAuth токен"
+              placeholder="OAuth токен (или пароль)"
               value={tokenInput}
               onChange={e => setTokenInput(e.target.value)}
               style={{
