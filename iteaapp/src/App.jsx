@@ -1,15 +1,25 @@
-import React, { useState } from 'react';
+import React from 'react';
+import FileExplorer from './components/FileExplorer';
+import './App.css';
 
 function App() {
-  const [count, setCount] = useState(0);
+  const dummyFiles = [
+    { name: 'Documents', type: 'folder', size: '', modified: '2024-03-15' },
+    { name: 'Pictures', type: 'folder', size: '', modified: '2024-03-10' },
+    { name: 'Project_Alpha.pdf', type: 'pdf', size: '2.4 MB', modified: '2024-03-16' },
+    { name: 'config.json', type: 'json', size: '12 KB', modified: '2024-03-17' },
+    { name: 'vacation_photo.jpg', type: 'jpg', size: '4.8 MB', modified: '2024-02-28' },
+    { name: 'budget_2024.xlsx', type: 'xlsx', size: '1.1 MB', modified: '2024-03-01' },
+    { name: 'Notes.txt', type: 'txt', size: '156 B', modified: '2024-03-18' },
+  ];
 
   return (
-    <div style={{ padding: '2rem', fontFamily: 'system-ui, sans-serif' }}>
-      <h1>Привет из Electron + React!</h1>
-      <p>
-        <button onClick={() => setCount((c) => c + 1)}>Счетчик: {count}</button>
-      </p>
-      <p>Отредактируй <code>src/App.jsx</code> и сохрани для проверки HMR (hot module replacement).</p>
+    <div className="app-main">
+      <div style={{ textAlign: 'center', marginBottom: '2rem', paddingTop: '3rem' }}>
+        <h1 style={{ color: '#fff', fontSize: '2.5rem', fontWeight: '800', margin: 0 }}>My Files</h1>
+        <p style={{ color: '#94a3b8', marginTop: '0.5rem' }}>Modern Desktop File Management</p>
+      </div>
+      <FileExplorer items={dummyFiles} />
     </div>
   );
 }
