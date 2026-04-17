@@ -88,7 +88,6 @@ public class MountManager {
                     false,               // debug — включи true для отладки FUSE вызовов
                     new String[]{
                         "-o", "auto_unmount",  // автоматически размонтировать при завершении
-                        "-o", "allow_other"    // разрешить доступ другим пользователям
                     }
                 );
 
