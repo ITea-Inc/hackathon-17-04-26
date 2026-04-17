@@ -15,9 +15,7 @@ function App() {
   const [selectedAccountId, setSelectedAccountId] = useState(null);
 
 
-  // GET /api/accounts/{accountId}/files?path=... — получаем список файлов
-  // Пока нет такого эндпоинта, оставляем мок. Раскомментировать когда бэкенд добавит.
-  useEffect(() => {
+  const refreshFiles = () => {
     if (!selectedAccountId) return;
     setLoading(true);
     setError(null);
@@ -36,6 +34,10 @@ function App() {
         setError(err.message);
         setLoading(false);
       });
+  };
+
+  useEffect(() => {
+    refreshFiles();
   }, [currentPath, selectedAccountId]);
 
   const handleSyncChange = (fileName, newRule) => {
@@ -67,16 +69,16 @@ function App() {
   return (
     <div className="app_layout">
       <MainMenu activeItem={activeTab} onItemClick={setActiveTab} />
-      
+
       <main className="content-area" style={{ flex: 1, overflowY: 'auto', position: 'relative' }}>
         {activeTab === 'accounts' && <AccountsPanel onAccountSelect={setSelectedAccountId} />}
         {activeTab === 'settings' && (
-          <SettingsPanel 
-            currentFrequency={syncFrequency} 
-            onFrequencyChange={handleFrequencyChange} 
+          <SettingsPanel
+            currentFrequency={syncFrequency}
+            onFrequencyChange={handleFrequencyChange}
           />
         )}
-        
+
         {activeTab === 'sync-rules' && (
           <div className="accPanel_container">
             <h1 className="accPanel_title">Правила синхронизации</h1>
@@ -99,7 +101,7 @@ function App() {
                 ))}
               </span>
             </div>
-            <FileExplorer items={files} onSyncChange={handleSyncChange} onFolderClick={handleFolderClick} accountId={selectedAccountId} />
+            <FileExplorer items={files} onSyncChange={handleSyncChange} onFolderClick={handleFolderClick} accountId={selectedAccountId} onRefresh={refreshFiles} />
           </div>
         )}
 

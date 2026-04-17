@@ -1,7 +1,7 @@
 import React from 'react';
 import FileItem from './FileItem';
 
-const FileExplorer = ({ items, onSyncChange, onFolderClick, accountId }) => {
+const FileExplorer = ({ items, onSyncChange, onFolderClick, accountId, onRefresh }) => {
   console.log("items", items  );
   return (
     <div className="explorer-container">
@@ -10,7 +10,29 @@ const FileExplorer = ({ items, onSyncChange, onFolderClick, accountId }) => {
         <div className="header-type">Type</div>
         <div className="header-size">Size</div>
         <div className="header-modified">Modified</div>
-        <div className="header-sync">Sync</div>
+        <div className="header-sync" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          Sync
+          {onRefresh && (
+            <button
+              onClick={onRefresh}
+              title="Обновить"
+              style={{
+                background: 'none', border: 'none', cursor: 'pointer',
+                color: 'var(--text-secondary)', display: 'inline-flex',
+                padding: 2, borderRadius: 4, transition: 'color 0.15s',
+              }}
+              onMouseEnter={e => e.currentTarget.style.color = 'var(--text-primary)'}
+              onMouseLeave={e => e.currentTarget.style.color = 'var(--text-secondary)'}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="23 4 23 10 17 10" />
+                <polyline points="1 20 1 14 7 14" />
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10" />
+                <path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14" />
+              </svg>
+            </button>
+          )}
+        </div>
       </div>
       <div className="explorer-list">
         {items.length === 0 && (
