@@ -84,15 +84,17 @@ function AccountsPanel() {
       }),
     })
       .then(res => {
-        if (!res.ok) throw new Error(`Ошибка сервера: ${res.status}`);
-        return res.json();
+        if (!res.ok) {
+          return res.text().then(text => { throw new Error(`Ошибка сервера: ${res.status} ${text}`); });
+        }
+        return res.text();
       })
       .then(() => {
         setConnectingProvider(null);
         setTokenInput('');
         setUsernameInput('');
         setConnecting(false);
-        fetchAccounts(); // Обновляем список
+        fetchAccounts();
       })
       .catch(err => {
         setConnectError(err.message);
