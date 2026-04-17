@@ -46,10 +46,16 @@ function createWindow() {
 
   // Inject GNOME accent color as CSS variable
   const accent = getGnomeAccentColor();
-  win.webContents.on('did-finish-load', () => {
-    win.webContents.executeJavaScript(
-      `document.documentElement.style.setProperty('--gnome-accent', '${accent}');`
-    );
+  const accentCSS = `:root { --gnome-accent: ${accent} !important; }`;
+
+  // insertCSS is the most reliable way — survives HMR reloads
+  win.webContents.on('dom-ready', () => {
+    win.webContents.insertCSS(accentCSS);
+  });
+
+  // Also inject on any navigation (Vite HMR sometimes triggers this)
+  win.webContents.on('did-navigate-in-page', () => {
+    win.webContents.insertCSS(accentCSS);
   });
 }
 
