@@ -2,7 +2,7 @@ const { app, BrowserWindow, Menu } = require('electron');
 const path = require('path');
 const { execSync } = require('child_process');
 
-Menu.setApplicationMenu(null);
+// Menu.setApplicationMenu(null);
 
 const isDev = process.env.NODE_ENV !== 'production';
 

@@ -68,8 +68,8 @@ body {
 }
 
 .mainMenu_logoIcon {
-  width: 36px;
-  height: 36px;
+  width: 4rem;
+  height: 4rem;
   border-radius: 10px;
   display: flex;
   align-items: center;
