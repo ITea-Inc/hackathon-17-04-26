@@ -1,6 +1,7 @@
-<<<<<<< HEAD
 import React, { useState, useEffect } from 'react';
 import FileExplorer from './components/FileExplorer';
+import MainMenu from './components/MainMenu';
+import AccountsPanel from './components/AccountsPanel';
 import './App.css';
 
 function App() {
@@ -15,7 +16,7 @@ function App() {
       .then(res => res.json())
       .then(data => setFiles(data));
     */
-    
+
     // Сгенерируем фейковые данные в зависимости от пути для наглядности
     if (currentPath === '/') {
       setFiles([
@@ -51,36 +52,54 @@ function App() {
     setCurrentPath(newPath);
   };
 
-  return (
-    <div className="app-main">
-      <div className="app-header" style={{ position: 'relative' }}>
-        {currentPath !== '/' && (
-          <button 
-            onClick={navigateUp}
-            style={{ position: 'absolute', left: '2rem', top: '3rem', padding: '0.4rem 1rem', background: '#333', color: '#fff', border: '1px solid #444', borderRadius: '4px', cursor: 'pointer' }}
-          >
-            ← Назад
-          </button>
-        )}
-        <h1 className="app-title">Правила синхронизации</h1>
-        <p className="app-subtitle">Путь: {currentPath}</p>
-      </div>
-      <FileExplorer items={files} onSyncChange={handleSyncChange} onFolderClick={handleFolderClick} />
-=======
-import React from 'react';
-import MainMenu from './components/MainMenu';
-import AccountsPanel from './components/AccountsPanel';
-import './App.css';
+  const [activeTab, setActiveTab] = useState('accounts');
 
-function App() {
   return (
     <div className="app_layout">
-      <MainMenu />
-      <AccountsPanel />
->>>>>>> bcdac9bbe09a517d4166e079514d11aa7f43ea68
+      <MainMenu activeItem={activeTab} onItemClick={setActiveTab} />
+      
+      <main className="content-area" style={{ flex: 1, overflowY: 'auto', position: 'relative' }}>
+        {activeTab === 'accounts' && <AccountsPanel />}
+        
+        {activeTab === 'sync-rules' && (
+          <div className="app-main">
+            <div className="app-header">
+              {currentPath !== '/' && (
+                <button 
+                  onClick={navigateUp}
+                  style={{ 
+                    position: 'absolute', 
+                    left: '2rem', 
+                    top: '3rem', 
+                    padding: '0.4rem 1rem', 
+                    background: '#333', 
+                    color: '#fff', 
+                    border: '1px solid #444', 
+                    borderRadius: '4px', 
+                    cursor: 'pointer',
+                    zIndex: 10
+                  }}
+                >
+                  ← Назад
+                </button>
+              )}
+              <h1 className="app-title">Правила синхронизации</h1>
+              <p className="app-subtitle">Пусть: {currentPath}</p>
+            </div>
+            <FileExplorer items={files} onSyncChange={handleSyncChange} onFolderClick={handleFolderClick} />
+          </div>
+        )}
+
+        {/* Заглушки для остальных вкладок */}
+        {activeTab !== 'accounts' && activeTab !== 'sync-rules' && (
+          <div style={{ padding: '2rem', color: '#666' }}>
+            <h2>{activeTab.replace('-', ' ').toUpperCase()}</h2>
+            <p>Этот раздел находится в разработке...</p>
+          </div>
+        )}
+      </main>
     </div>
   );
 }
 
 export default App;
-
