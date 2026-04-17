@@ -7,7 +7,8 @@
     "start": "electron . --no-sandbox",
     "dev:react": "vite",
     "dev:electron": "wait-on tcp:5173 && electron . --no-sandbox",
-    "dev": "concurrently \"npm run dev:react\" \"npm run dev:electron\"",
+    "dev:backend": "cd ../../backend && ./mvnw spring-boot:run",
+    "dev": "concurrently \"npm run dev:react\" \"npm run dev:electron\" \"npm run dev:backend\"",
     "build": "vite build"
   },
   "keywords": [],
