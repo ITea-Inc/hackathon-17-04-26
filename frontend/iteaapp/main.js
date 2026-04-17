@@ -18,14 +18,28 @@ function getGnomeAccentColor() {
     pink:   '#d56199',
     purple: '#9141ac',
     slate:  '#6f8396',
+    bark:   '#b27b4f',
+    sage:   '#6f8372',
+    lavender: '#9141ac',
+    magenta: '#d56199',
   };
+
+  // 1) GNOME 47+: accent-color
   try {
-    const result = execSync('gsettings get org.gnome.desktop.interface accent-color')
+    const result = execSync('gsettings get org.gnome.desktop.interface accent-color 2>/dev/null')
       .toString().trim().replace(/'/g, '');
-    return colorMap[result] || '#78aeed';
-  } catch {
-    return '#78aeed';
-  }
+    if (colorMap[result]) return colorMap[result];
+  } catch {}
+
+  // 2) Ubuntu Yaru: accent color from theme name (e.g. Yaru-purple-dark)
+  try {
+    const theme = execSync('gsettings get org.gnome.desktop.interface gtk-theme 2>/dev/null')
+      .toString().trim().replace(/'/g, '');
+    const match = theme.match(/[Yy]aru-(\w+)/);
+    if (match && colorMap[match[1]]) return colorMap[match[1]];
+  } catch {}
+
+  return '#78aeed'; // Adwaita blue fallback
 }
 
 function createWindow() {
