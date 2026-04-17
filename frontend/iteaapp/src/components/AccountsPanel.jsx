@@ -33,7 +33,7 @@ const availableProviders = [
   { id: 'nextcloud', name: 'NextCloud', icon: <NextCloudIcon1 /> },
 ];
 
-function AccountsPanel({ onAccountsChange }) {
+function AccountsPanel({ onAccountSelect }) {
   const [accounts, setAccounts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -42,8 +42,6 @@ function AccountsPanel({ onAccountsChange }) {
   const [connectingProvider, setConnectingProvider] = useState(null); // 'yandex' | 'nextcloud' | null
   const [tokenInput, setTokenInput] = useState('');
   const [usernameInput, setUsernameInput] = useState('');
-  const [serverUrlInput, setServerUrlInput] = useState('');
-  const [passwordInput, setPasswordInput] = useState('');
   const [connecting, setConnecting] = useState(false);
   const [connectError, setConnectError] = useState(null);
 
@@ -58,7 +56,10 @@ function AccountsPanel({ onAccountsChange }) {
       .then(data => {
         setAccounts(data);
         setLoading(false);
-        onAccountsChange?.(data);
+        // Автовыбор первого аккаунта
+        if (data.length > 0 && onAccountSelect) {
+          onAccountSelect(data[0].id);
+        }
       })
       .catch(err => { setError(err.message); setLoading(false); });
   };
@@ -72,19 +73,9 @@ function AccountsPanel({ onAccountsChange }) {
       .catch(err => console.error('[API] Ошибка удаления:', err));
   };
 
-  const resetForm = () => {
-    setConnectingProvider(null);
-    setTokenInput('');
-    setUsernameInput('');
-    setServerUrlInput('');
-    setPasswordInput('');
-    setConnectError(null);
-  };
-
+  // POST /api/accounts/yandex
   const handleConnect = () => {
-    if (connectingProvider === 'yandex' && !tokenInput.trim()) return;
-    if (connectingProvider === 'nextcloud' && (!serverUrlInput.trim() || !usernameInput.trim() || !passwordInput.trim())) return;
-
+    if (!tokenInput.trim()) return;
     setConnecting(true);
     setConnectError(null);
 
@@ -92,21 +83,24 @@ function AccountsPanel({ onAccountsChange }) {
       ? `${API_BASE}/api/accounts/yandex`
       : `${API_BASE}/api/accounts/nextcloud`;
 
-    const body = connectingProvider === 'yandex'
-      ? { accessToken: tokenInput.trim(), username: usernameInput.trim() || 'User' }
-      : { serverUrl: serverUrlInput.trim(), username: usernameInput.trim(), password: passwordInput.trim() };
-
     fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
+      body: JSON.stringify({
+        accessToken: tokenInput.trim(),
+        username: usernameInput.trim() || 'User',
+      }),
     })
       .then(res => {
         if (!res.ok) throw new Error(`Ошибка сервера: ${res.status}`);
-        return res.json();
+        return res.json(); // вернёт { id, provider, username, mountPath, connected }
       })
-      .then(() => {
-        resetForm();
+      .then(data => {
+        console.log('[API] Аккаунт подключён:', data);
+        if (onAccountSelect) onAccountSelect(data.id);
+        setConnectingProvider(null);
+        setTokenInput('');
+        setUsernameInput('');
         setConnecting(false);
         fetchAccounts();
       })
@@ -185,61 +179,37 @@ function AccountsPanel({ onAccountsChange }) {
             <h2 style={{ margin: 0, color: '#e2d9f3', fontSize: 18 }}>
               Подключить {connectingProvider === 'yandex' ? 'Яндекс.Диск' : 'NextCloud'}
             </h2>
-
-            {connectingProvider === 'nextcloud' ? (
-              /* Форма NextCloud: URL сервера + логин + пароль */
-              <>
-                <input
-                  placeholder="URL сервера (https://my-nextcloud.com)"
-                  value={serverUrlInput}
-                  onChange={e => setServerUrlInput(e.target.value)}
-                  style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, padding: '10px 14px', color: '#fff', fontSize: 14, outline: 'none' }}
-                />
-                <input
-                  placeholder="Имя пользователя"
-                  value={usernameInput}
-                  onChange={e => setUsernameInput(e.target.value)}
-                  style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, padding: '10px 14px', color: '#fff', fontSize: 14, outline: 'none' }}
-                />
-                <input
-                  placeholder="Пароль"
-                  type="password"
-                  value={passwordInput}
-                  onChange={e => setPasswordInput(e.target.value)}
-                  style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, padding: '10px 14px', color: '#fff', fontSize: 14, outline: 'none' }}
-                />
-              </>
-            ) : (
-              /* Форма Яндекс: имя + OAuth токен */
-              <>
-                <input
-                  placeholder="Имя пользователя"
-                  value={usernameInput}
-                  onChange={e => setUsernameInput(e.target.value)}
-                  style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, padding: '10px 14px', color: '#fff', fontSize: 14, outline: 'none' }}
-                />
-                <input
-                  placeholder="OAuth токен"
-                  value={tokenInput}
-                  onChange={e => setTokenInput(e.target.value)}
-                  style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, padding: '10px 14px', color: '#fff', fontSize: 14, outline: 'none' }}
-                />
-              </>
-            )}
-
+            <input
+              placeholder="Имя пользователя"
+              value={usernameInput}
+              onChange={e => setUsernameInput(e.target.value)}
+              style={{
+                background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: 8, padding: '10px 14px', color: '#fff', fontSize: 14, outline: 'none',
+              }}
+            />
+            <input
+              placeholder="OAuth токен"
+              value={tokenInput}
+              onChange={e => setTokenInput(e.target.value)}
+              style={{
+                background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: 8, padding: '10px 14px', color: '#fff', fontSize: 14, outline: 'none',
+              }}
+            />
             {connectError && (
               <p style={{ color: '#f87171', fontSize: 13, margin: 0 }}>⚠️ {connectError}</p>
             )}
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
               <button
-                onClick={resetForm}
+                onClick={() => { setConnectingProvider(null); setTokenInput(''); setUsernameInput(''); }}
                 style={{ padding: '8px 18px', background: 'transparent', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 8, color: '#aaa', cursor: 'pointer' }}
               >
                 Отмена
               </button>
               <button
                 onClick={handleConnect}
-                disabled={connecting || (connectingProvider === 'yandex' ? !tokenInput.trim() : !serverUrlInput.trim() || !usernameInput.trim() || !passwordInput.trim())}
+                disabled={connecting || !tokenInput.trim()}
                 style={{ padding: '8px 18px', background: '#6d28d9', border: 'none', borderRadius: 8, color: '#fff', cursor: 'pointer', opacity: connecting ? 0.6 : 1 }}
               >
                 {connecting ? 'Подключение...' : 'Подключить'}
