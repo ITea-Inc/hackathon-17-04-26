@@ -25,7 +25,7 @@ discohack:
   yandex:
     client-id: "912b0deaeaed465fa1dd6241aea47d19"
     client-secret: "716949a771bd4f7d8a2a7884321709d6"
-    redirect-uri: "http://localhost:8080/api/auth/yandex/callback"
+    redirect-uri: "https://oauth.yandex.ru/verification_code"
   mount:
     base-path: "${user.home}/CloudMount"
 

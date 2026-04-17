@@ -15,22 +15,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * MountManager — управляет жизненным циклом FUSE-монтирований.
- *
- * @Service — Spring создаёт этот класс как singleton-бин.
- *   Singleton = один экземпляр на всё приложение. Это важно — только один
- *   MountManager должен управлять всеми точками монтирования.
- *
- * Жизненный цикл:
- *   1. Spring создаёт MountManager
- *   2. AccountController вызывает mountProvider() когда пользователь добавляет аккаунт
- *   3. @PreDestroy — Spring вызывает unmountAll() при остановке (Ctrl+C или завершение)
- *
- * Важно: не монтируем всё при старте (@PostConstruct), потому что токены
- * хранятся в БД — нам сначала нужен AccountRepository. Монтирование
- * происходит при первом запуске AccountService.initializeMounts().
- */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -42,31 +26,26 @@ public class MountManager {
     private final EventBroadcaster broadcaster;
     private final RuleEngine ruleEngine;
 
-    private final ConcurrentHashMap<String, CloudFileSystem> activeMounts
-            = new ConcurrentHashMap<>();
+    // Ключ — accountId, чтобы несколько аккаунтов одного провайдера
+    // монтировались каждый в свою папку.
+    private final ConcurrentHashMap<String, CloudFileSystem> activeMounts = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, Path> mountPaths = new ConcurrentHashMap<>();
 
     /**
-     * Смонтировать провайдер как папку в файловой системе.
-     *
-     * После вызова этого метода пользователь увидит папку
-     * ~/CloudMount/{providerName}/ в Nautilus с файлами из облака.
-     *
-     * @param provider провайдер облака (Яндекс, NextCloud)
-     * @throws IllegalStateException если уже смонтирован
+     * Монтирует аккаунт в папку "{providerName}-{8 символов accountId}".
+     * Например: "yandex-a1b2c3d4", "yandex-ff119a2b" — каждый аккаунт уникален.
      */
     public void mountProvider(CloudProvider provider, String accountId) {
-        String providerName = provider.getProviderName();
-
-        if (activeMounts.containsKey(providerName)) {
-            log.warn("Провайдер {} уже смонтирован", providerName);
+        if (activeMounts.containsKey(accountId)) {
+            log.warn("Аккаунт {} уже смонтирован", accountId);
             return;
         }
 
-        Path mountPoint = Paths.get(baseMountPath, providerName);
+        String dirName = provider.getProviderName() + "-" + accountId.substring(0, 8);
+        Path mountPoint = Paths.get(baseMountPath, dirName);
 
         try {
             Files.createDirectories(mountPoint);
-            log.info("Точка монтирования создана: {}", mountPoint);
         } catch (IOException e) {
             log.error("Не удалось создать папку монтирования {}: {}", mountPoint, e.getMessage());
             throw new RuntimeException("Ошибка создания точки монтирования", e);
@@ -74,115 +53,72 @@ public class MountManager {
 
         CloudFileSystem fs = new CloudFileSystem(provider, broadcaster, ruleEngine, accountId);
 
-        // mount() — блокирующий вызов! Поэтому запускаем в отдельном потоке.
-        // В противном случае Spring-приложение "зависнет" на этой строке.
         Thread mountThread = new Thread(() -> {
             try {
-                log.info("Монтируем {} в {}", providerName, mountPoint);
-
-                fs.mount(
-                    mountPoint,          // путь монтирования
-                    true,                // blocking — false чтобы не блокировать поток
-                    false,               // debug — включи true для отладки FUSE вызовов
-                    new String[]{
-                        "-o", "auto_unmount",  // автоматически размонтировать при завершении
-                    }
-                );
-
+                log.info("Монтируем аккаунт {} в {}", accountId, mountPoint);
+                fs.mount(mountPoint, true, false, new String[]{"-o", "auto_unmount"});
             } catch (Exception e) {
-                log.error("Ошибка монтирования {}: {}", providerName, e.getMessage(), e);
-                activeMounts.remove(providerName);
+                log.error("Ошибка монтирования аккаунта {}: {}", accountId, e.getMessage(), e);
+                activeMounts.remove(accountId);
+                mountPaths.remove(accountId);
             }
-        }, "fuse-mount-" + providerName);
+        }, "fuse-" + accountId.substring(0, 8));
 
-        // daemon = true — поток завершится вместе с JVM (не будет мешать shutdown)
         mountThread.setDaemon(true);
         mountThread.start();
 
-        activeMounts.put(providerName, fs);
-        log.info("Провайдер {} смонтирован в {}", providerName, mountPoint);
+        activeMounts.put(accountId, fs);
+        mountPaths.put(accountId, mountPoint);
+        log.info("Аккаунт {} → {}", accountId, mountPoint);
     }
 
-    /**
-     * Размонтировать провайдер.
-     * Вызывается при удалении аккаунта.
-     *
-     * @param providerName имя провайдера
-     */
-    public void unmountProvider(String providerName) {
-        CloudFileSystem fs = activeMounts.remove(providerName);
+    public void unmountProvider(String accountId) {
+        CloudFileSystem fs = activeMounts.remove(accountId);
+        Path mountPoint = mountPaths.remove(accountId);
+
         if (fs == null) {
-            log.warn("Провайдер {} не был смонтирован", providerName);
+            log.warn("Аккаунт {} не был смонтирован", accountId);
             return;
         }
-
         try {
-            fs.umount();  // Корректное размонтирование
-            log.info("Провайдер {} размонтирован", providerName);
+            fs.umount();
+            log.info("Аккаунт {} размонтирован", accountId);
         } catch (Exception e) {
-            log.error("Ошибка размонтирования {}: {}", providerName, e.getMessage());
-            // Пробуем через fusermount -u как запасной вариант
-            forceUmount(providerName);
+            log.error("Ошибка размонтирования {}: {}", accountId, e.getMessage());
+            if (mountPoint != null) forceUmount(mountPoint);
         }
     }
 
-    /**
-     * @PreDestroy — Spring вызывает этот метод перед уничтожением бина.
-     * То есть при нормальном завершении приложения (SIGTERM, Ctrl+C).
-     *
-     * КРИТИЧНО: если не размонтировать FUSE перед выходом,
-     * точка монтирования останется "висячей" и пользователь
-     * увидит папку, которую не может открыть ("Transport endpoint is not connected").
-     * Тогда нужно вручную: fusermount -u ~/CloudMount/yandex
-     */
     @PreDestroy
     public void unmountAll() {
-        log.info("Размонтируем все провайдеры ({} шт.)...", activeMounts.size());
-        activeMounts.forEach((name, fs) -> {
+        log.info("Размонтируем {} аккаунт(ов)...", activeMounts.size());
+        activeMounts.forEach((accountId, fs) -> {
             try {
                 fs.umount();
-                log.info("Размонтирован: {}", name);
             } catch (Exception e) {
-                log.error("Ошибка размонтирования {}: {}", name, e.getMessage());
-                forceUmount(name);
+                Path mp = mountPaths.get(accountId);
+                if (mp != null) forceUmount(mp);
             }
         });
         activeMounts.clear();
-        log.info("Все провайдеры размонтированы");
+        mountPaths.clear();
     }
 
-    /**
-     * Принудительное размонтирование через системную команду.
-     * Запасной вариант если fs.umount() не сработал.
-     */
-    private void forceUmount(String providerName) {
-        Path mountPoint = Paths.get(baseMountPath, providerName);
+    private void forceUmount(Path mountPoint) {
         try {
-            Process process = new ProcessBuilder(
-                "fusermount", "-u", mountPoint.toString()
-            ).start();
-            int exitCode = process.waitFor();
-            if (exitCode == 0) {
-                log.info("Принудительное размонтирование {} успешно", providerName);
-            } else {
-                log.warn("fusermount -u завершился с кодом {} для {}", exitCode, providerName);
-            }
+            Process p = new ProcessBuilder("fusermount", "-u", mountPoint.toString()).start();
+            p.waitFor();
         } catch (Exception e) {
-            log.error("Не удалось принудительно размонтировать {}: {}", providerName, e.getMessage());
+            log.error("Не удалось принудительно размонтировать {}: {}", mountPoint, e.getMessage());
         }
     }
 
-    /**
-     * Проверить, смонтирован ли провайдер.
-     */
-    public boolean isMounted(String providerName) {
-        return activeMounts.containsKey(providerName);
+    public boolean isMounted(String accountId) {
+        return activeMounts.containsKey(accountId);
     }
 
-    /**
-     * Получить путь точки монтирования для провайдера.
-     */
-    public String getMountPath(String providerName) {
-        return Paths.get(baseMountPath, providerName).toString();
+    public String getMountPath(String accountId) {
+        Path p = mountPaths.get(accountId);
+        return p != null ? p.toString() : null;
     }
 }

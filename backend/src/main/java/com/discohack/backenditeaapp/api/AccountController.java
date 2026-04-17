@@ -115,7 +115,7 @@ public class AccountController {
         providerRegistry.register(accountId, provider);
         mountManager.mountProvider(provider, accountId);
 
-        String mountPath = mountManager.getMountPath(provider.getProviderName());
+        String mountPath = mountManager.getMountPath(accountId);
 
         AccountEntity entity = AccountEntity.builder()
             .id(accountId)
@@ -152,7 +152,7 @@ public class AccountController {
         providerRegistry.register(accountId, provider);
         mountManager.mountProvider(provider, accountId);
 
-        String mountPath = mountManager.getMountPath(provider.getProviderName());
+        String mountPath = mountManager.getMountPath(accountId);
 
         AccountEntity entity = AccountEntity.builder()
             .id(accountId)
@@ -183,7 +183,7 @@ public class AccountController {
                 entity.getProvider(),
                 entity.getUsername(),
                 entity.getMountPath(),
-                mountManager.isMounted(entity.getProvider())
+                mountManager.isMounted(entity.getId())
             ))
             .toList();
         return ResponseEntity.ok(result);
@@ -196,7 +196,7 @@ public class AccountController {
     @DeleteMapping("/{id}")
     public ResponseEntity<Map<String, String>> removeAccount(@PathVariable String id) {
         return accountRepository.findById(id).map(entity -> {
-            mountManager.unmountProvider(entity.getProvider());
+            mountManager.unmountProvider(id);
             providerRegistry.unregister(id);
             accountRepository.deleteById(id);
             log.info("Аккаунт {} ({}) удалён", entity.getUsername(), entity.getProvider());
@@ -211,7 +211,7 @@ public class AccountController {
     @GetMapping("/{id}/status")
     public ResponseEntity<Map<String, Object>> getAccountStatus(@PathVariable String id) {
         return accountRepository.findById(id).map(entity -> {
-            boolean online = mountManager.isMounted(entity.getProvider());
+            boolean online = mountManager.isMounted(entity.getId());
             return ResponseEntity.ok(Map.<String, Object>of(
                 "id", id,
                 "connected", online,

@@ -17,15 +17,13 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * AuthController — OAuth 2.0 flow для Яндекс.Диска.
+ * OAuth 2.0 flow для Яндекс.Диска через verification_code.
  *
  * Сценарий:
- *   1. Electron вызывает GET /api/auth/yandex/authorize → получает URL
- *   2. Electron открывает этот URL в системном браузере
- *   3. Пользователь авторизуется, Яндекс редиректит на redirect_uri
- *   4. GET /api/auth/yandex/callback?code=...&state=... — обмениваем code на токен,
- *      создаём аккаунт, монтируем провайдер
- *   5. Страница callback может закрыться (deep link или просто сообщение пользователю)
+ *   1. Фронт вызывает GET /api/auth/yandex/authorize — получает URL
+ *   2. Открывает его в браузере — Яндекс показывает код пользователю
+ *   3. Пользователь копирует код, вставляет в приложение
+ *   4. Фронт вызывает POST /api/auth/yandex/exchange?code=... — обмениваем на токен
  */
 @Slf4j
 @RestController
@@ -40,79 +38,68 @@ public class AuthController {
 
     /**
      * GET /api/auth/yandex/authorize
-     * Возвращает URL, на который нужно открыть браузер для авторизации.
-     *
-     * Electron открывает этот URL через shell.openExternal(url).
+     * Возвращает URL для открытия в браузере.
      */
     @GetMapping("/yandex/authorize")
     public ResponseEntity<Map<String, String>> getAuthorizationUrl() {
         String state = UUID.randomUUID().toString();
         String url = oauthService.buildAuthorizationUrl(state);
-        log.info("Отправляем пользователя на авторизацию Яндекса, state={}", state);
+        log.info("Генерируем URL авторизации Яндекса, state={}", state);
         return ResponseEntity.ok(Map.of("url", url, "state", state));
     }
 
     /**
-     * GET /api/auth/yandex/callback?code=...&state=...
+     * POST /api/auth/yandex/exchange?code=...
      *
-     * Яндекс редиректит сюда после авторизации пользователя.
-     * Обмениваем code на токен, создаём провайдер, сохраняем в БД.
-     *
-     * В реальном flow здесь нужно проверять state против сохранённого (CSRF),
-     * но для хакатона упрощаем.
+     * Пользователь скопировал код с https://oauth.yandex.ru/verification_code
+     * и передаёт его сюда. Обмениваем на токен, создаём и монтируем аккаунт.
      */
-    @GetMapping("/yandex/callback")
-    public ResponseEntity<String> handleCallback(
-        @RequestParam String code,
-        @RequestParam(required = false) String state
-    ) {
-        log.info("OAuth callback от Яндекса, state={}", state);
+    @PostMapping("/yandex/exchange")
+    public ResponseEntity<Map<String, Object>> exchangeCode(@RequestParam String code) {
+        log.info("Обмен verification code на токен");
 
         YandexOAuthService.TokenResponse tokens;
         try {
-            tokens = oauthService.exchangeCode(code);
+            tokens = oauthService.exchangeCode(code.trim());
         } catch (IOException e) {
-            log.error("Ошибка обмена кода на токен: {}", e.getMessage());
+            log.error("Ошибка обмена кода: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
-                .body("Ошибка авторизации: " + e.getMessage());
+                .body(Map.of("error", "Неверный код или истёк срок действия: " + e.getMessage()));
         }
 
         String accountId = UUID.randomUUID().toString();
         YandexDiskProvider provider = new YandexDiskProvider(tokens.getAccessToken());
 
         if (!provider.isAvailable()) {
-            log.error("Полученный токен невалиден");
             return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
-                .body("Токен получен, но провайдер недоступен");
+                .body(Map.of("error", "Токен получен, но Яндекс.Диск недоступен"));
         }
+
+        String username = provider.getLogin();
 
         providerRegistry.register(accountId, provider);
         mountManager.mountProvider(provider, accountId);
 
-        String mountPath = mountManager.getMountPath(provider.getProviderName());
+        String mountPath = mountManager.getMountPath(accountId);
 
         AccountEntity entity = AccountEntity.builder()
             .id(accountId)
             .provider("yandex")
-            .username("yandex-user")
+            .username(username)
             .accessToken(tokens.getAccessToken())
             .refreshToken(tokens.getRefreshToken())
             .mountPath(mountPath)
             .build();
         accountRepository.save(entity);
 
-        log.info("Яндекс аккаунт создан через OAuth: {} → {}", accountId, mountPath);
+        log.info("Яндекс аккаунт создан: {} ({}) → {}", username, accountId, mountPath);
 
-        // Возвращаем HTML-страницу, которую пользователь видит после авторизации.
-        // Electron может поймать этот редирект через webContents.on('will-navigate').
-        return ResponseEntity.ok()
-            .header("Content-Type", "text/html; charset=utf-8")
-            .body("""
-                <html><body>
-                <h2>Авторизация успешна!</h2>
-                <p>Яндекс.Диск подключён. Вы можете закрыть это окно.</p>
-                <script>window.close();</script>
-                </body></html>
-                """);
+        return ResponseEntity.ok(Map.of(
+            "id", accountId,
+            "provider", "yandex",
+            "username", username,
+            "mountPath", mountPath != null ? mountPath : "",
+            "connected", true
+        ));
     }
 }
