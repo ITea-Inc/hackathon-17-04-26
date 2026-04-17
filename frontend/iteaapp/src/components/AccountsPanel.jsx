@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
-/* ---- SVG-иконки для провайдеров ---- */
+const API_BASE = 'http://localhost:8080';
 
+/* ---- Icons for providers ---- */
 const YandexIcon1 = () => (
   <div style={{ width: 48, height: 48, borderRadius: 12 }}>
     <img width="48" height="48" src="/public/images/YandexDisk.png" />
@@ -14,7 +15,6 @@ const NextCloudIcon1 = () => (
   </div>
 );
 
-/* Card-level icons */
 const YandexDiskCardIcon = () => (
   <img width="22" height="22" src="public/images/YandexDisk.png" />
 );
@@ -23,31 +23,10 @@ const NextCloudCardIcon = () => (
   <img width="22" height="22" src="/public/images/cloud.jpg" />
 );
 
-/* ---- Data ---- */
-const connectedAccounts = [
-  {
-    id: 'yandex-disk',
-    name: 'Яндекс.Диск',
-    usedSpace: '1.2 TB',
-    totalSpace: '2.0 TB',
-    usedPercent: 60,
-    path: '/Documents_and_Code/pepeVatafa',
-    status: 'Online',
-    statusOk: true,
-    icon: <YandexDiskCardIcon />,
-  },
-  {
-    id: 'nextcloud',
-    name: 'NextCloud',
-    usedSpace: '3.4 GB',
-    totalSpace: '10 GB',
-    usedPercent: 34,
-    path: '/shneiiiineFAA',
-    status: 'Online',
-    statusOk: true,
-    icon: <NextCloudCardIcon />,
-  },
-];
+const providerIcon = (provider) => {
+  if (provider === 'yandex') return <YandexDiskCardIcon />;
+  return <NextCloudCardIcon />;
+};
 
 const availableProviders = [
   { id: 'yandex1', name: 'Яндекс.Диск', icon: <YandexIcon1 /> },
@@ -55,62 +34,90 @@ const availableProviders = [
 ];
 
 function AccountsPanel() {
+  const [accounts, setAccounts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // GET /api/accounts — загружаем список аккаунтов с бэкенда
+  const fetchAccounts = () => {
+    setLoading(true);
+    setError(null);
+    fetch(`${API_BASE}/api/accounts`)
+      .then(res => {
+        if (!res.ok) throw new Error(`Ошибка ${res.status}`);
+        return res.json();
+      })
+      .then(data => {
+        setAccounts(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error('[API] Не удалось получить аккаунты:', err);
+        setError(err.message);
+        setLoading(false);
+      });
+  };
+
+  useEffect(() => {
+    fetchAccounts();
+  }, []);
+
+  // DELETE /api/accounts/{id}
+  const handleRemove = (id) => {
+    fetch(`${API_BASE}/api/accounts/${id}`, { method: 'DELETE' })
+      .then(() => fetchAccounts())
+      .catch(err => console.error('[API] Ошибка удаления:', err));
+  };
+
   return (
     <div className="accPanel_container">
-      {/* Header */}
       <h1 className="accPanel_title">Управление Облачными Аккаунтами</h1>
 
+      {/* Loading / Error states */}
+      {loading && <p style={{ color: 'var(--text-secondary)' }}>Загрузка аккаунтов...</p>}
+      {error && (
+        <div style={{ color: '#f87171', background: 'rgba(248,113,113,0.1)', borderRadius: 8, padding: '12px 16px', marginBottom: 16 }}>
+          ⚠️ Не удалось подключиться к бэкенду: {error}
+        </div>
+      )}
+
       {/* Connected Accounts */}
+      {!loading && accounts.length === 0 && !error && (
+        <p style={{ color: 'var(--text-secondary)', marginBottom: 24 }}>Нет подключённых аккаунтов.</p>
+      )}
+
       <div className="accPanel_cardsRow">
-        {connectedAccounts.map((acc) => (
+        {accounts.map((acc) => (
           <div className="accPanel_card" key={acc.id}>
-            {/* Card header */}
             <div className="accPanel_cardHeader">
-              <span className="accPanel_cardIcon">{acc.icon}</span>
-              <span className="accPanel_cardName">{acc.name}</span>
-              <button className="accPanel_cardMenu">⋮</button>
+              <span className="accPanel_cardIcon">{providerIcon(acc.provider)}</span>
+              <span className="accPanel_cardName">{acc.username}</span>
+              <button
+                className="accPanel_cardMenu"
+                onClick={() => handleRemove(acc.id)}
+                title="Удалить аккаунт"
+              >
+                ✕
+              </button>
             </div>
 
-            {/* Storage info */}
-            <div className="accPanel_storageInfo">
-              <span className="accPanel_storageText">
-                {acc.usedSpace} / {acc.totalSpace}
-              </span>
-              <div className="accPanel_progressBar">
-                <div
-                  className={
-                    'accPanel_progressFill' +
-                    (acc.usedPercent > 50 ? ' accPanel_progressFill--warn' : '')
-                  }
-                  style={{ width: `${acc.usedPercent}%` }}
-                />
-              </div>
-            </div>
-
-            {/* Path */}
+            {/* Mount Path */}
             <div className="accPanel_detail">
               <span className="accPanel_detailLabel">Путь:</span>{' '}
-              <span className="accPanel_detailValue">{acc.path}</span>
+              <span className="accPanel_detailValue">{acc.mountPath || '—'}</span>
             </div>
 
             {/* Status */}
             <div className="accPanel_detail">
               <span className="accPanel_detailLabel">Статус:</span>{' '}
-              <span
-                className={
-                  'accPanel_detailValue ' +
-                  (acc.statusOk ? 'accPanel_statusOk' : 'accPanel_statusErr')
-                }
-              >
-                {acc.status}
+              <span className={`accPanel_detailValue ${acc.connected ? 'accPanel_statusOk' : 'accPanel_statusErr'}`}>
+                {acc.connected ? 'Online' : 'Offline'}
               </span>
             </div>
 
-            {/* Actions */}
-            <div className="accPanel_cardActions">
-              {/* <button className="accPanel_actionBtn">Открыть</button>
-              <button className="accPanel_actionBtn">Синхронизировать</button>
-              <button className="accPanel_actionBtn">Настройки</button> */}
+            <div className="accPanel_detail">
+              <span className="accPanel_detailLabel">Провайдер:</span>{' '}
+              <span className="accPanel_detailValue">{acc.provider}</span>
             </div>
           </div>
         ))}

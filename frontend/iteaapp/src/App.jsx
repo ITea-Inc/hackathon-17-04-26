@@ -5,33 +5,56 @@ import AccountsPanel from './components/AccountsPanel';
 import SettingsPanel from './components/SettingsPanel';
 import './App.css';
 
+const API_BASE = 'http://localhost:8080';
+
 function App() {
   const [files, setFiles] = useState([]);
   const [currentPath, setCurrentPath] = useState('/');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  // Mock fetching data from backend
+  // GET /api/accounts/{accountId}/files?path=... — получаем список файлов
+  // Пока нет такого эндпоинта, оставляем мок. Раскомментировать когда бэкенд добавит.
   useEffect(() => {
-    console.log(`[API MOCK] Запрос файлов: GET /api/v1/files?path=${encodeURIComponent(currentPath)}`);
-    /* 
-    fetch(`http://localhost:8080/api/v1/files?path=${encodeURIComponent(currentPath)}`)
-      .then(res => res.json())
-      .then(data => setFiles(data));
+    setLoading(true);
+    setError(null);
+
+    /*
+    // РЕАЛЬНЫЙ ЗАПРОС — раскомментировать когда бэкенд готов:
+    fetch(`${API_BASE}/api/files?path=${encodeURIComponent(currentPath)}`)
+      .then(res => {
+        if (!res.ok) throw new Error(`Ошибка ${res.status}`);
+        return res.json();
+      })
+      .then(data => {
+        // Ожидаемый формат: [{ name, type, size, modified, syncRule }]
+        setFiles(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error('[API] Ошибка загрузки файлов:', err);
+        setError(err.message);
+        setLoading(false);
+      });
     */
 
-    // Сгенерируем фейковые данные в зависимости от пути для наглядности
-    if (currentPath === '/') {
-      setFiles([
-        { name: 'Documents', type: 'folder', size: '', modified: '2024-03-15', syncRule: 'always' },
-        { name: 'Pictures', type: 'folder', size: '', modified: '2024-03-10', syncRule: 'never' },
-        { name: 'Project_Alpha.pdf', type: 'pdf', size: '2.4 MB', modified: '2024-03-16', syncRule: 'timing' },
-      ]);
-    } else {
-      // Имитируем содержимое папки
-      setFiles([
-        { name: 'subfolder_1', type: 'folder', size: '', modified: '2024-03-17', syncRule: 'always' },
-        { name: 'test_file.txt', type: 'txt', size: '15 B', modified: '2024-03-18', syncRule: 'timing' },
-      ]);
-    }
+    // MOCK — убрать когда бэкенд готов:
+    console.log(`[MOCK] GET /api/files?path=${currentPath}`);
+    setTimeout(() => {
+      if (currentPath === '/') {
+        setFiles([
+          { name: 'Documents', type: 'folder', size: '', modified: '2024-03-15', syncRule: 'always' },
+          { name: 'Pictures', type: 'folder', size: '', modified: '2024-03-10', syncRule: 'never' },
+          { name: 'Project_Alpha.pdf', type: 'pdf', size: '2.4 MB', modified: '2024-03-16', syncRule: 'timing' },
+        ]);
+      } else {
+        setFiles([
+          { name: 'subfolder_1', type: 'folder', size: '', modified: '2024-03-17', syncRule: 'always' },
+          { name: 'test_file.txt', type: 'txt', size: '15 B', modified: '2024-03-18', syncRule: 'timing' },
+        ]);
+      }
+      setLoading(false);
+    }, 0);
   }, [currentPath]);
 
   const handleSyncChange = (fileName, newRule) => {
