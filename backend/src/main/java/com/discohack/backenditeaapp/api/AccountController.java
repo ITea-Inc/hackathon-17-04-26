@@ -2,7 +2,11 @@ package com.discohack.backenditeaapp.api;
 
 import com.discohack.backenditeaapp.cloud.CloudProviderRegistry;
 import com.discohack.backenditeaapp.cloud.yandex.YandexDiskProvider;
+import com.discohack.backenditeaapp.cloud.yandex.YandexOAuthService;
 import com.discohack.backenditeaapp.fuse.MountManager;
+import com.discohack.backenditeaapp.persistance.entities.AccountEntity;
+import com.discohack.backenditeaapp.persistance.repository.AccountRepository;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -11,20 +15,15 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * AccountController — REST API для управления облачными аккаунтами.
  *
  * Endpoints:
- *   POST   /api/accounts/yandex        — добавить Яндекс аккаунт
+ *   POST   /api/accounts/yandex        — добавить Яндекс аккаунт (токен напрямую)
  *   GET    /api/accounts               — список всех аккаунтов
  *   DELETE /api/accounts/{id}          — удалить аккаунт
  *   GET    /api/accounts/{id}/status   — статус аккаунта (онлайн/офлайн)
- *
- * @RequiredArgsConstructor (Lombok) — генерирует конструктор со всеми final полями.
- *   Spring увидит конструктор и автоматически внедрит зависимости (Dependency Injection).
- *   Это современная альтернатива @Autowired — более явная и тестируемая.
  */
 @Slf4j
 @RestController
@@ -34,86 +33,80 @@ public class AccountController {
 
     private final MountManager mountManager;
     private final CloudProviderRegistry providerRegistry;
+    private final AccountRepository accountRepository;
+    private final YandexOAuthService oauthService;
 
-    // Временное хранилище аккаунтов в памяти.
-    // TODO на фазе 4: заменить на AccountRepository (JPA + SQLite)
-    // Ключ: UUID аккаунта, Значение: инфо об аккаунте
-    private final ConcurrentHashMap<String, AccountInfo> accounts = new ConcurrentHashMap<>();
-
-    // ─────────────────────────────────────────────────
-    // DTO (Data Transfer Object) — объект для передачи данных
-    // ─────────────────────────────────────────────────
-
-    /**
-     * Запрос на добавление Яндекс аккаунта.
-     * Фронтенд отправляет POST /api/accounts/yandex с этим JSON телом.
-     */
+    /** Запрос на добавление Яндекс аккаунта (прямая передача токена, без OAuth flow). */
     record AddYandexRequest(
-        String accessToken,  // OAuth токен от Яндекса
-        String username      // имя пользователя (для отображения в UI)
+        String accessToken,
+        String username
     ) {}
 
-    /**
-     * Информация об аккаунте — возвращается в ответах API.
-     */
+    /** Информация об аккаунте — возвращается в ответах API. */
     record AccountInfo(
         String id,
-        String provider,    // "yandex" или "nextcloud"
+        String provider,
         String username,
-        String mountPath,   // путь к смонтированной папке
-        boolean connected   // онлайн ли сейчас
+        String mountPath,
+        boolean connected
     ) {}
 
-    // ─────────────────────────────────────────────────
-    // ENDPOINTS
-    // ─────────────────────────────────────────────────
+    /**
+     * При старте приложения восстанавливаем все сохранённые аккаунты из БД
+     * и монтируем их обратно.
+     */
+    @PostConstruct
+    void restoreAccountsOnStartup() {
+        List<AccountEntity> saved = accountRepository.findAll();
+        log.info("Восстанавливаем {} аккаунт(ов) из БД", saved.size());
+        for (AccountEntity entity : saved) {
+            try {
+                YandexDiskProvider provider = new YandexDiskProvider(entity.getAccessToken());
+                if (provider.isAvailable()) {
+                    providerRegistry.register(entity.getId(), provider);
+                    mountManager.mountProvider(provider);
+                    log.info("Аккаунт {} ({}) восстановлен", entity.getUsername(), entity.getProvider());
+                } else {
+                    log.warn("Токен устарел для аккаунта {}, пропускаем монтирование", entity.getUsername());
+                }
+            } catch (Exception e) {
+                log.error("Ошибка восстановления аккаунта {}: {}", entity.getId(), e.getMessage());
+            }
+        }
+    }
 
     /**
      * POST /api/accounts/yandex
-     * Добавить Яндекс.Диск аккаунт.
-     *
-     * Что происходит:
-     * 1. Принимаем токен от фронтенда
-     * 2. Создаём YandexDiskProvider с этим токеном
-     * 3. Регистрируем провайдер в реестре
-     * 4. Монтируем папку через MountManager
-     * 5. Возвращаем информацию об аккаунте
-     *
-     * @RequestBody — Spring автоматически десериализует JSON тело запроса в объект
+     * Добавить Яндекс.Диск аккаунт с готовым токеном.
      */
     @PostMapping("/yandex")
     public ResponseEntity<AccountInfo> addYandexAccount(@RequestBody AddYandexRequest request) {
         log.info("Добавление Яндекс аккаунта для пользователя: {}", request.username());
 
-        // Генерируем уникальный ID для аккаунта
         String accountId = UUID.randomUUID().toString();
-
-        // Создаём провайдер с токеном пользователя
         YandexDiskProvider provider = new YandexDiskProvider(request.accessToken());
 
-        // Проверяем что токен рабочий
         if (!provider.isAvailable()) {
             log.warn("Токен Яндекса невалиден для {}", request.username());
             return ResponseEntity.badRequest().build();
         }
 
-        // Регистрируем провайдер (под уникальным ключом = accountId)
         providerRegistry.register(accountId, provider);
-
-        // Монтируем папку в ~/CloudMount/yandex (или yandex_2 если уже есть)
         mountManager.mountProvider(provider);
 
-        // Запоминаем аккаунт
-        AccountInfo info = new AccountInfo(
-            accountId,
-            "yandex",
-            request.username(),
-            mountManager.getMountPath(provider.getProviderName()),
-            true
-        );
-        accounts.put(accountId, info);
+        String mountPath = mountManager.getMountPath(provider.getProviderName());
 
-        log.info("Яндекс аккаунт добавлен: {} → {}", request.username(), info.mountPath());
+        AccountEntity entity = AccountEntity.builder()
+            .id(accountId)
+            .provider("yandex")
+            .username(request.username())
+            .accessToken(request.accessToken())
+            .mountPath(mountPath)
+            .build();
+        accountRepository.save(entity);
+
+        AccountInfo info = new AccountInfo(accountId, "yandex", request.username(), mountPath, true);
+        log.info("Яндекс аккаунт добавлен: {} → {}", request.username(), mountPath);
         return ResponseEntity.ok(info);
     }
 
@@ -123,59 +116,46 @@ public class AccountController {
      */
     @GetMapping
     public ResponseEntity<List<AccountInfo>> listAccounts() {
-        List<AccountInfo> result = accounts.values().stream()
-            // Обновляем статус connected в реальном времени
-            .map(acc -> new AccountInfo(
-                acc.id(),
-                acc.provider(),
-                acc.username(),
-                acc.mountPath(),
-                mountManager.isMounted(acc.provider())
+        List<AccountInfo> result = accountRepository.findAll().stream()
+            .map(entity -> new AccountInfo(
+                entity.getId(),
+                entity.getProvider(),
+                entity.getUsername(),
+                entity.getMountPath(),
+                mountManager.isMounted(entity.getProvider())
             ))
             .toList();
-
         return ResponseEntity.ok(result);
     }
 
     /**
      * DELETE /api/accounts/{id}
      * Удалить аккаунт и размонтировать папку.
-     *
-     * @PathVariable — Spring извлекает {id} из URL пути
      */
     @DeleteMapping("/{id}")
     public ResponseEntity<Map<String, String>> removeAccount(@PathVariable String id) {
-        AccountInfo account = accounts.remove(id);
-        if (account == null) {
-            return ResponseEntity.notFound().build();
-        }
-
-        // Размонтируем
-        mountManager.unmountProvider(account.provider());
-
-        // Удаляем провайдер из реестра
-        providerRegistry.unregister(id);
-
-        log.info("Аккаунт {} ({}) удалён", account.username(), account.provider());
-        return ResponseEntity.ok(Map.of("message", "Аккаунт удалён"));
+        return accountRepository.findById(id).map(entity -> {
+            mountManager.unmountProvider(entity.getProvider());
+            providerRegistry.unregister(id);
+            accountRepository.deleteById(id);
+            log.info("Аккаунт {} ({}) удалён", entity.getUsername(), entity.getProvider());
+            return ResponseEntity.ok(Map.of("message", "Аккаунт удалён"));
+        }).orElseGet(() -> ResponseEntity.notFound().<Map<String, String>>build());
     }
 
     /**
      * GET /api/accounts/{id}/status
-     * Текущий статус аккаунта (используется для индикатора в UI).
+     * Текущий статус аккаунта.
      */
     @GetMapping("/{id}/status")
     public ResponseEntity<Map<String, Object>> getAccountStatus(@PathVariable String id) {
-        AccountInfo account = accounts.get(id);
-        if (account == null) {
-            return ResponseEntity.notFound().build();
-        }
-
-        boolean online = mountManager.isMounted(account.provider());
-        return ResponseEntity.ok(Map.of(
-            "id", id,
-            "connected", online,
-            "mountPath", account.mountPath()
-        ));
+        return accountRepository.findById(id).map(entity -> {
+            boolean online = mountManager.isMounted(entity.getProvider());
+            return ResponseEntity.ok(Map.<String, Object>of(
+                "id", id,
+                "connected", online,
+                "mountPath", entity.getMountPath()
+            ));
+        }).orElseGet(() -> ResponseEntity.notFound().<Map<String, Object>>build());
     }
 }
