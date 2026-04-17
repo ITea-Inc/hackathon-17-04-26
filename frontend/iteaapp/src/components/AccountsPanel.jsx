@@ -86,7 +86,6 @@ function AccountsPanel() {
     })
       .then(res => {
         if (!res.ok) throw new Error(`Ошибка сервера: ${res.status}`);
-        console.log(res.json())
         return res.json();
       })
       .then(() => {
@@ -94,7 +93,7 @@ function AccountsPanel() {
         setTokenInput('');
         setUsernameInput('');
         setConnecting(false);
-        fetchAccounts(); // Обновляем список
+        fetchAccounts();
       })
       .catch(err => {
         setConnectError(err.message);
