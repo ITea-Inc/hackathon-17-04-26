@@ -42,8 +42,8 @@ const FileItem = ({ name, directory, size, lastModified, syncRule = 'always', on
         <div className="file-name">{name}</div>
       </div>
 
-      <div className="file-size">{isFolder ? '--' : size}</div>
-      <div className="file-modified">{lastModified}</div>
+      <div className="file-size">{isFolder ? '--' : Math.trunc(size / 1024) + 'Kb'}</div>
+      < div className="file-modified">{lastModified}</div>
       <div className="file-sync" onDoubleClick={(e) => e.stopPropagation()}>
         <button className={`sync-btn ${syncRule}`} onClick={toggleSync}>
           {getSyncTitle()}
