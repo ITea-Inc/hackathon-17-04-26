@@ -54,6 +54,7 @@ function createWindow() {
   mainWindow = new BrowserWindow({
     width: 900,
     height: 650,
+    icon: path.join(__dirname, 'public/images/logo.png'), // <-- Укажите путь к вашей иконке здесь
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false
