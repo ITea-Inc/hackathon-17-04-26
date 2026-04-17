@@ -9,7 +9,8 @@ const FileItem = ({ name, type, size, modified, syncRule = 'always', onSyncChang
     }
   };
 
-  const toggleSync = () => {
+  const toggleSync = (e) => {
+    e.stopPropagation();
     let newRule = 'always';
     if (syncRule === 'always') newRule = 'timing';
     else if (syncRule === 'timing') newRule = 'never';
@@ -45,7 +46,7 @@ const FileItem = ({ name, type, size, modified, syncRule = 'always', onSyncChang
       <div className="file-type">{isFolder ? 'Folder' : type.toUpperCase()}</div>
       <div className="file-size">{isFolder ? '--' : size}</div>
       <div className="file-modified">{modified}</div>
-      <div className="file-sync">
+      <div className="file-sync" onDoubleClick={(e) => e.stopPropagation()}>
         <button className={`sync-btn ${syncRule}`} onClick={toggleSync}>
           {getSyncTitle()}
         </button>
