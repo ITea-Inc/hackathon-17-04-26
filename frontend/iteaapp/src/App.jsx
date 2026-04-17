@@ -19,11 +19,11 @@ function App() {
 
   const getCronByFrequency = (freq) => {
     switch (freq) {
-      case '1h': return '0 0 * * * *';        // Каждый час
-      case '1d': return '0 0 2 * * *';       // Раз в день (в 2 ночи)
-      case '3d': return '0 0 2 */3 * *';     // Раз в 3 дня
-      case '1w': return '0 0 2 * * 0';       // Раз в неделю (воскресенье)
-      case '2w': return '0 0 2 1,15 * *';    // Дважды в месяц
+      case '1h': return '0 0 * * * *';
+      case '1d': return '0 0 2 * * *';
+      case '3d': return '0 0 2 */3 * *';
+      case '1w': return '0 0 2 * * 0';
+      case '2w': return '0 0 2 1,15 * *';
       default: return '0 0 2 * * *';
     }
   };
@@ -33,7 +33,7 @@ function App() {
     fetch(`${API_BASE}/api/rules?accountId=${selectedAccountId}`)
       .then(res => res.json())
       .then(data => setRules(data))
-      .catch(err => console.error('[API] Ошибка загрузки правил:', err));
+      .catch(err => console.error(err));
   };
 
   const refreshFiles = (retryCount = 0) => {
@@ -43,7 +43,7 @@ function App() {
 
     fetch(`${API_BASE}/api/files/${selectedAccountId}?path=${encodeURIComponent(currentPath)}`)
       .then(res => {
-        if (!res.ok) throw new Error(`Ошибка ${res.status}`);
+        if (!res.ok) throw new Error(`Status: ${res.status}`);
         return res.json();
       })
       .then(data => {
@@ -56,8 +56,7 @@ function App() {
         setLoading(false);
       })
       .catch(err => {
-        console.warn(`[API] Попытка ${retryCount + 1}: Ошибка загрузки файлов:`, err);
-        if (err.name === 'TypeError' || err.message.includes('Failed to fetch') || err.message.includes('NetworkError')) {
+        if (retryCount < 3 && (err.name === 'TypeError' || err.message.includes('fetch'))) {
           setTimeout(() => refreshFiles(retryCount + 1), 2000);
         } else {
           setError(err.message);
@@ -92,14 +91,14 @@ function App() {
       })
     })
     .then(res => {
-      if (!res.ok) throw new Error('Ошибка сохранения правила');
+      if (!res.ok) throw new Error('Failed to save rule');
       return res.json();
     })
     .then(() => {
       fetchRules();
     })
     .catch(err => {
-      alert(`Не удалось обновить правило: ${err.message}`);
+      alert(err.message);
     });
   };
 

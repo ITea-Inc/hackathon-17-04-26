@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 
-/* ---- SVG icons (Adwaita-style, 20px) ---- */
 const IconAccounts = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
     <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
@@ -43,7 +42,6 @@ function MainMenu({ activeItem: controlledActive, onItemClick }) {
 
   return (
     <aside className="mainMenu_sidebar">
-      {/* Logo */}
       <div className="mainMenu_logoBlock">
         <div className="mainMenu_logoIcon">
           <img className="mainLogo" src="/images/logo.png" alt="logo" />
@@ -51,7 +49,6 @@ function MainMenu({ activeItem: controlledActive, onItemClick }) {
         <span className="mainMenu_logoText">ITeaCloud</span>
       </div>
 
-      {/* Navigation */}
       <nav className="mainMenu_nav">
         <ul className="mainMenu_navList">
           {menuItems.map((item) => (
@@ -71,7 +68,6 @@ function MainMenu({ activeItem: controlledActive, onItemClick }) {
         </ul>
       </nav>
 
-      {/* Spacer */}
       <div className="mainMenu_spacer" />
     </aside>
   );

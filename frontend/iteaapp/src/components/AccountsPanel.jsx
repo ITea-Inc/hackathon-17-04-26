@@ -4,22 +4,22 @@ const API_BASE = 'http://localhost:8080';
 
 const YandexIcon1 = () => (
   <div style={{ width: 48, height: 48, borderRadius: 12 }}>
-    <img width="48" height="48" src="/images/YandexDisk.png" />
+    <img width="48" height="48" src="/images/YandexDisk.png" alt="Yandex" />
   </div>
 );
 
 const NextCloudIcon1 = () => (
   <div style={{ width: 48, height: 48, borderRadius: 12 }}>
-    <img width="48" height="48" src="/images/cloud.png" />
+    <img width="48" height="48" src="/images/cloud.png" alt="NextCloud" />
   </div>
 );
 
 const YandexDiskCardIcon = () => (
-  <img width="22" height="22" src="/images/YandexDisk.png" />
+  <img width="22" height="22" src="/images/YandexDisk.png" alt="Yandex" />
 );
 
 const NextCloudCardIcon = () => (
-  <img width="22" height="22" src="/images/cloud.png" />
+  <img width="22" height="22" src="/images/cloud.png" alt="NextCloud" />
 );
 
 const providerIcon = (provider) => {
@@ -37,8 +37,7 @@ function AccountsPanel({ onAccountSelect }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Стейт для формы подключения токена
-  const [connectingProvider, setConnectingProvider] = useState(null); // 'yandex' | 'nextcloud' | null
+  const [connectingProvider, setConnectingProvider] = useState(null);
   const [tokenInput, setTokenInput] = useState('');
   const [usernameInput, setUsernameInput] = useState('');
   const [connecting, setConnecting] = useState(false);
@@ -48,28 +47,15 @@ function AccountsPanel({ onAccountSelect }) {
     setLoading(true);
     setError(null);
     fetch(`${API_BASE}/api/accounts`)
-      .then(res => {
-        if (!res.ok) throw new Error(`Ошибка ${res.status}`);
-        return res.json();
-      })
+      .then(res => res.ok ? res.json() : Promise.reject(res.status))
       .then(data => {
         setAccounts(data);
         setLoading(false);
-        // Автовыбор первого аккаунта
-        if (data.length > 0 && onAccountSelect) {
-          onAccountSelect(data[0].id);
-        }
+        if (data.length > 0 && onAccountSelect) onAccountSelect(data[0].id);
       })
-      .catch(err => {
-        console.warn(`[API] Попытка ${retryCount + 1}: Ошибка загрузки аккаунтов.`, err);
-        
-        // Если это сетевая ошибка (бэкенд ещё не поднялся), пробуем снова
-        if (err.name === 'TypeError' || err.message.includes('Failed to fetch') || err.message.includes('NetworkError')) {
-          setTimeout(() => fetchAccounts(retryCount + 1), 2000);
-        } else {
-          setError(err.message);
-          setLoading(false);
-        }
+      .catch(() => {
+        if (retryCount < 3) setTimeout(() => fetchAccounts(retryCount + 1), 2000);
+        else setLoading(false);
       });
   };
 
@@ -78,18 +64,15 @@ function AccountsPanel({ onAccountSelect }) {
   const handleRemove = (id) => {
     fetch(`${API_BASE}/api/accounts/${id}`, { method: 'DELETE' })
       .then(() => fetchAccounts())
-      .catch(err => console.error('[API] Ошибка удаления:', err));
+      .catch(console.error);
   };
 
-  // POST /api/accounts/yandex
   const handleConnect = () => {
     if (!tokenInput.trim()) return;
     setConnecting(true);
     setConnectError(null);
 
-    const url = connectingProvider === 'yandex'
-      ? `${API_BASE}/api/accounts/yandex`
-      : `${API_BASE}/api/accounts/nextcloud`;
+    const url = `${API_BASE}/api/accounts/${connectingProvider}`;
 
     fetch(url, {
       method: 'POST',
@@ -99,12 +82,8 @@ function AccountsPanel({ onAccountSelect }) {
         username: usernameInput.trim() || 'User',
       }),
     })
-      .then(res => {
-        if (!res.ok) throw new Error(`Ошибка сервера: ${res.status}`);
-        return res.json(); // вернёт { id, provider, username, mountPath, connected }
-      })
+      .then(res => res.ok ? res.json() : Promise.reject(res.status))
       .then(data => {
-        console.log('[API] Аккаунт подключён:', data);
         if (onAccountSelect) onAccountSelect(data.id);
         setConnectingProvider(null);
         setTokenInput('');
@@ -113,7 +92,7 @@ function AccountsPanel({ onAccountSelect }) {
         fetchAccounts();
       })
       .catch(err => {
-        setConnectError(err.message);
+        setConnectError(`Error: ${err}`);
         setConnecting(false);
       });
   };
@@ -122,7 +101,6 @@ function AccountsPanel({ onAccountSelect }) {
     <div className="accPanel_container">
       <h1 className="accPanel_title">Управление Облачными Аккаунтами</h1>
 
-      {/* Loading / Error */}
       {loading && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, color: 'var(--text-secondary)', marginBottom: 20 }}>
           <div className="spinner" />
@@ -131,14 +109,13 @@ function AccountsPanel({ onAccountSelect }) {
       )}
       {error && (
         <div style={{ color: '#b48e8eff', background: 'rgba(248,113,113,0.1)', borderRadius: 8, padding: '12px 16px', marginBottom: 16 }}>
-          ⚠️ Ошибка связи с бэкендом: {error}
+          ⚠️ Ошибка: {error}
         </div>
       )}
       {!loading && accounts.length === 0 && !error && (
         <p style={{ color: 'var(--text-secondary)', marginBottom: 24 }}>Нет подключённых аккаунтов.</p>
       )}
 
-      {/* Connected Accounts */}
       <div className="accPanel_cardsRow">
         {accounts.map((acc) => (
           <div className="accPanel_card" key={acc.id}>
@@ -161,7 +138,6 @@ function AccountsPanel({ onAccountSelect }) {
         ))}
       </div>
 
-      {/* Available Providers */}
       <h2 className="accPanel_sectionTitle">Доступные провайдеры</h2>
       <div className="accPanel_providersRow">
         {availableProviders.map((prov) => (
@@ -178,7 +154,6 @@ function AccountsPanel({ onAccountSelect }) {
         ))}
       </div>
 
-      {/* ── Connect Modal ── */}
       {connectingProvider && (
         <div style={{
           position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)',
@@ -210,9 +185,7 @@ function AccountsPanel({ onAccountSelect }) {
                 borderRadius: 8, padding: '10px 14px', color: '#fff', fontSize: 14, outline: 'none',
               }}
             />
-            {connectError && (
-              <p style={{ color: '#f87171', fontSize: 13, margin: 0 }}>⚠️ {connectError}</p>
-            )}
+            {connectError && <p style={{ color: '#f87171', fontSize: 13, margin: 0 }}>⚠️ {connectError}</p>}
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
               <button
                 onClick={() => { setConnectingProvider(null); setTokenInput(''); setUsernameInput(''); }}

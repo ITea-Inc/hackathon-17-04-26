@@ -2,7 +2,8 @@ import React from 'react';
 
 const FileItem = ({ name, directory, size, lastModified, syncRule = 'NONE', onSyncChange, onFolderClick }) => {
   const isFolder = directory === true;
-  lastModified = lastModified.replace("T", " ").replace("Z", " ");
+  const formattedDate = lastModified ? lastModified.replace("T", " ").replace("Z", " ") : "";
+
   const handleRowDoubleClick = () => {
     if (isFolder && onFolderClick) {
       onFolderClick(name);
@@ -33,7 +34,7 @@ const FileItem = ({ name, directory, size, lastModified, syncRule = 'NONE', onSy
       </div>
 
       <div className="file-size">{isFolder ? '--' : Math.trunc(size / 1024) + 'Kb'}</div>
-      <div className="file-modified">{lastModified}</div>
+      <div className="file-modified">{formattedDate}</div>
       <div className="file-sync" onDoubleClick={(e) => e.stopPropagation()}>
         <select 
           className={`sync-select ${syncRule}`} 

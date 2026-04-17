@@ -11,15 +11,6 @@ const frequencyOptions = [
 function SettingsPanel({ currentFrequency = '1d', onFrequencyChange }) {
   const [frequency, setFrequency] = useState(currentFrequency);
 
-  const handleSave = () => {
-    // Теперь это реально меняет состояние в App.jsx, 
-    // которое используется при создании правил SCHEDULED
-    onFrequencyChange?.(frequency);
-    
-    // Показываем более аккуратное уведомление (можно заменить на тост)
-    console.log(`[Settings] Установлена частота: ${frequency}`);
-  };
-
   return (
     <div className="accPanel_container">
       <h1 className="accPanel_title">Настройки</h1>
@@ -38,7 +29,7 @@ function SettingsPanel({ currentFrequency = '1d', onFrequencyChange }) {
               className={`settings_option_item ${frequency === opt.id ? 'active' : ''}`}
               onClick={() => {
                 setFrequency(opt.id);
-                onFrequencyChange?.(opt.id); // Сразу применяем при клике для лучшего UX
+                onFrequencyChange?.(opt.id);
               }}
             >
               <div className="settings_radio">
