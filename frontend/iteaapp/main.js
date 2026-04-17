@@ -9,17 +9,17 @@ const isDev = process.env.NODE_ENV !== 'production';
 /* ---- GNOME accent color ---- */
 function getGnomeAccentColor() {
   const colorMap = {
-    blue:   '#78aeed',
-    teal:   '#4a9a8e',
-    green:  '#8cb854',
+    blue: '#78aeed',
+    teal: '#4a9a8e',
+    green: '#8cb854',
     yellow: '#d4a54a',
     orange: '#e5843a',
-    red:    '#e55c5c',
-    pink:   '#d56199',
+    red: '#e55c5c',
+    pink: '#d56199',
     purple: '#9141ac',
-    slate:  '#6f8396',
-    bark:   '#b27b4f',
-    sage:   '#6f8372',
+    slate: '#6f8396',
+    bark: '#b27b4f',
+    sage: '#6f8372',
     lavender: '#9141ac',
     magenta: '#d56199',
   };
@@ -60,6 +60,7 @@ function createWindow() {
   const win = new BrowserWindow({
     width: 900,
     height: 650,
+    icon: path.join(__dirname, 'public/images/logo.png'), // <-- Укажите путь к вашей иконке здесь
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false
