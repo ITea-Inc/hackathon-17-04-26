@@ -98,13 +98,26 @@ function App() {
         
         {activeTab === 'sync-rules' && (
           <div className="accPanel_container">
-            <h1 className="accPanel_title">
-              {currentPath !== '/' && (
-                <button className="accPanel_backBtn" onClick={navigateUp}>← Назад</button>
-              )}
-              Правила синхронизации
-            </h1>
-            <p className="accPanel_subtitle">Путь: {currentPath}</p>
+            <h1 className="accPanel_title">Правила синхронизации</h1>
+            <div className="accPanel_breadcrumb">
+              <button
+                className={'accPanel_breadcrumbBack' + (currentPath === '/' ? ' accPanel_breadcrumbBack--disabled' : '')}
+                onClick={navigateUp}
+                disabled={currentPath === '/'}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="15 18 9 12 15 6" />
+                </svg>
+              </button>
+              <span className="accPanel_breadcrumbPath">
+                {currentPath === '/' ? '/' : currentPath.split('/').filter(Boolean).map((seg, i, arr) => (
+                  <span key={i}>
+                    <span className="accPanel_breadcrumbSep">/</span>
+                    <span className={i === arr.length - 1 ? 'accPanel_breadcrumbCurrent' : ''}>{seg}</span>
+                  </span>
+                ))}
+              </span>
+            </div>
             <FileExplorer items={files} onSyncChange={handleSyncChange} onFolderClick={handleFolderClick} />
           </div>
         )}
