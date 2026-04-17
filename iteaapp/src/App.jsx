@@ -14,13 +14,7 @@ function App() {
   ];
 
   return (
-    <div className="app-main">
-      <div style={{ textAlign: 'center', marginBottom: '2rem', paddingTop: '3rem' }}>
-        <h1 style={{ color: '#fff', fontSize: '2.5rem', fontWeight: '800', margin: 0 }}>My Files</h1>
-        <p style={{ color: '#94a3b8', marginTop: '0.5rem' }}>Modern Desktop File Management</p>
-      </div>
-      <FileExplorer items={dummyFiles} />
-    </div>
+    <FileExplorer items={dummyFiles} />
   );
 }
 
