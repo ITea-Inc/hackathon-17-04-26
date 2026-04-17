@@ -48,7 +48,7 @@ const IconSettings = () => (
 const menuItems = [
   { id: 'accounts',    label: 'Аккаунты',               icon: <IconAccounts /> },
   { id: 'sync-rules',  label: 'Правила Синхронизации',   icon: <IconSyncRules /> },
-  { id: 'sync-status', label: 'Статус Синхронизации',    icon: <IconSyncStatus /> },
+  // { id: 'sync-status', label: 'Статус Синхронизации',    icon: <IconSyncStatus /> },
   { id: 'settings',    label: 'Настройки',               icon: <IconSettings /> },
 ];
 
@@ -95,9 +95,9 @@ function MainMenu({ activeItem: controlledActive, onItemClick }) {
       <div className="mainMenu_spacer" />
 
       {/* Add Cloud Button */}
-      <button className="mainMenu_addButton">
+      {/* <button className="mainMenu_addButton">
         Добавить Облако
-      </button>
+      </button> */}
 
       {/* Status Bar */}
       <div className="mainMenu_statusBar">
