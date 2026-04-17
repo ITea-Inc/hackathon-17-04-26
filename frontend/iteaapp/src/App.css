@@ -422,6 +422,65 @@ body {
   color: var(--text-primary);
 }
 
+/* ---- Breadcrumb ---- */
+.accPanel_breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 20px;
+  padding: 8px 14px;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.accPanel_breadcrumbBack {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--card-border);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+  flex-shrink: 0;
+  padding: 0;
+}
+
+.accPanel_breadcrumbBack:hover {
+  background: rgba(139, 92, 246, 0.15);
+  color: var(--text-primary);
+  border-color: rgba(139, 92, 246, 0.3);
+}
+
+.accPanel_breadcrumbBack--disabled {
+  opacity: 0.3;
+  cursor: default;
+  pointer-events: none;
+}
+
+.accPanel_breadcrumbPath {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  overflow: hidden;
+}
+
+.accPanel_breadcrumbSep {
+  color: rgba(255, 255, 255, 0.2);
+  margin: 0 2px;
+}
+
+.accPanel_breadcrumbCurrent {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
 /* ---- Account Cards Row ---- */
 .accPanel_cardsRow {
   display: flex;

@@ -10,7 +10,7 @@ const YandexIcon1 = () => (
 
 const NextCloudIcon1 = () => (
   <div style={{ width: 48, height: 48, borderRadius: 12 }}>
-    <img width="48" height="48" src="/public/images/cloud.jpg" />
+    <img width="48" height="48" src="/public/images/cloud.png" />
   </div>
 );
 
@@ -20,7 +20,7 @@ const YandexDiskCardIcon = () => (
 );
 
 const NextCloudCardIcon = () => (
-  <img width="22" height="22" src="/public/images/cloud.jpg" />
+  <img width="22" height="22" src="/public/images/cloud.png" />
 );
 
 /* ---- Data ---- */
