@@ -55,10 +55,12 @@ body {
   margin: 0;
   letter-spacing: -0.2px;
 }
-.mainLogo{
+
+.mainLogo {
   object-fit: contain;
   max-height: 100%;
 }
+
 .app-subtitle {
   color: var(--text-secondary);
   margin-top: 0.5rem;
@@ -217,10 +219,9 @@ body {
 }
 
 .mainMenu_logoIcon {
-  width: 48px;
-  height: 48px;
+  width: 96px;
+  height: 96px;
   border-radius: 14px;
-  background: linear-gradient(135deg, #6d28d9 0%, #a855f7 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -719,6 +720,7 @@ body {
 .accPanel_logBox::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.15);
 }
+
 /* ========== Settings Panel ========== */
 
 .settings_group {
