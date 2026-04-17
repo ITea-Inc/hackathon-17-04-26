@@ -247,10 +247,12 @@ public class CloudFileSystem extends FuseStubFS {
             byte[] bytes = new byte[(int) size];
             buf.get(0, bytes, 0, (int) size);
 
-            // Накапливаем в writeBuffers
-            // Для простоты на хакатоне — просто расширяем массив
+            // Накапливаем в writeBuffers.
+            // Размер буфера = max(существующий размер, offset + size),
+            // чтобы корректно обрабатывать неупорядоченные записи.
             byte[] existing = writeBuffers.getOrDefault(path, new byte[0]);
-            byte[] combined = new byte[(int) (offset + size)];
+            int newSize = (int) Math.max(existing.length, offset + size);
+            byte[] combined = new byte[newSize];
             System.arraycopy(existing, 0, combined, 0, existing.length);
             System.arraycopy(bytes, 0, combined, (int) offset, (int) size);
             writeBuffers.put(path, combined);
@@ -265,28 +267,51 @@ public class CloudFileSystem extends FuseStubFS {
 
     /**
      * flush вызывается при закрытии файла (после последнего write).
-     * Здесь мы реально загружаем файл в облако.
+     * Здесь мы реально загружаем файл в облако, в том числе пустые файлы.
      */
     @Override
     public int flush(String path, FuseFileInfo fi) {
         log.debug("flush: {}", path);
 
         byte[] data = writeBuffers.remove(path);
-        if (data == null || data.length == 0) {
-            return 0;  // Нечего загружать
+        if (data == null) {
+            return 0;  // Файл не открывался на запись — нечего загружать
         }
 
+        return uploadBuffer(path, data);
+    }
+
+    /**
+     * release вызывается когда последний файловый дескриптор закрыт.
+     * Используется как резервный путь загрузки, если flush() был пропущен.
+     */
+    @Override
+    public int release(String path, FuseFileInfo fi) {
+        log.debug("release: {}", path);
+
+        byte[] data = writeBuffers.remove(path);
+        if (data == null) {
+            return 0;  // flush() уже обработал данные — всё в порядке
+        }
+
+        log.warn("release: данные для {} не были загружены в flush(), загружаем сейчас", path);
+        return uploadBuffer(path, data);
+    }
+
+    /**
+     * Загружает буфер в облако и инвалидирует кеш.
+     */
+    private int uploadBuffer(String path, byte[] data) {
         try {
             provider.uploadFile(path,
                 new java.io.ByteArrayInputStream(data),
                 data.length
             );
-            // Инвалидируем кеш после записи
             invalidateCache(path);
-            log.info("flush: {} загружен в облако ({} байт)", path, data.length);
+            log.info("uploadBuffer: {} загружен в облако ({} байт)", path, data.length);
             return 0;
         } catch (CloudProviderException e) {
-            log.error("flush ошибка для {}: {}", path, e.getMessage());
+            log.error("uploadBuffer ошибка для {}: {}", path, e.getMessage());
             return e.toFuseErrorCode();
         }
     }

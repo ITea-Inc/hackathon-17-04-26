@@ -23,6 +23,9 @@ public class AccountEntity {
     @Column(nullable = false)
     private String username;
 
+    @Column(length = 512)
+    private String serverUrl;  // для NextCloud: https://my-server.com
+
     @Column(nullable = false, length = 2048)
     private String accessToken;
 
