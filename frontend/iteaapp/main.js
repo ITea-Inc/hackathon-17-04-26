@@ -42,7 +42,7 @@ function getGnomeAccentColor() {
       const match = theme.match(/[Yy]aru-(\w+)/);
       if (match) {
         const colorName = match[1].replace(/-?dark$/, '').replace(/-?light$/, '');
-        if (colorMap[colorName]) return colorMap[colorName];
+        if (colorName && colorMap[colorName]) return colorMap[colorName];
       }
     }
   } catch (e) {}
@@ -54,7 +54,7 @@ function createWindow() {
   mainWindow = new BrowserWindow({
     width: 900,
     height: 650,
-    icon: path.join(__dirname, 'public/images/logo.png'), // <-- Укажите путь к вашей иконке здесь
+    icon: path.join(__dirname, 'public/images/logo.png'),
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false
@@ -88,10 +88,12 @@ function createWindow() {
 }
 
 function createTray() {
-  const iconPath = path.join(__dirname, 'public', 'images', 'logo.png');
+  // Используем обрезанную версию иконки без полей
+  const iconPath = path.join(__dirname, 'public', 'images', 'logo_tray.png');
   const icon = nativeImage.createFromPath(iconPath);
   
-  tray = new Tray(icon.resize({ width: 16, height: 16 }));
+  // 22x22 — стандартный размер для иконок в трее Linux
+  tray = new Tray(icon.resize({ width: 22, height: 22, quality: 'best' }));
   
   const contextMenu = Menu.buildFromTemplate([
     { 
@@ -124,27 +126,21 @@ function createTray() {
 function setupLocalServer() {
   const http = require('http');
   const server = http.createServer((req, res) => {
-    // Разрешаем CORS (на всякий случай)
     res.setHeader('Access-Control-Allow-Origin', '*');
     
-    // Ответ для "пинга" (расширение Nautilus проверяет, запущено ли приложение)
     if (req.method === 'GET' && req.url === '/api/ping') {
       res.writeHead(200);
       res.end('pong');
       return;
     }
 
-    // Обработка клика "Получить ссылку" в Наутилус
     if (req.method === 'POST' && req.url === '/api/share-from-nautilus') {
       let body = '';
       req.on('data', chunk => { body += chunk.toString(); });
       req.on('end', () => {
         const params = new URLSearchParams(body);
         const filePath = params.get('file_path');
-        
         console.log('\n[Nautilus Hook] Пользователь хочет поделиться файлом:', filePath);
-        // TODO: Чуть позже мы заставим Electron послать это событие в React Frontend
-        
         res.writeHead(200);
         res.end('Shared');
       });
@@ -155,7 +151,6 @@ function setupLocalServer() {
     res.end();
   });
 
-  // Слушаем порт 5174, который мы указали в нашем Python-коде
   server.listen(5174, '127.0.0.1', () => {
     console.log('[Local Server] Слушаем команды от Nautilus на порту 5174');
   });
@@ -163,7 +158,7 @@ function setupLocalServer() {
 
 app.whenReady().then(() => {
   createWindow();
-  setupLocalServer(); // <-- Запускаем сервер при старте
+  setupLocalServer();
   createTray();
 
   app.on('activate', () => {
