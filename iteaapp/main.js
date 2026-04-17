@@ -1,5 +1,7 @@
-const { app, BrowserWindow } = require('electron');
+const { app, BrowserWindow, Menu } = require('electron');
 const path = require('path');
+
+Menu.setApplicationMenu(null); // Полностью убирает стандартное меню (File, Edit и т.д.)
 
 const isDev = process.env.NODE_ENV !== 'production';
 
