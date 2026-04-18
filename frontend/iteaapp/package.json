@@ -1,10 +1,11 @@
 {
   "name": "iteaapp",
   "version": "1.0.0",
-  "description": "",
+  "description": "iTea Cloud Drive client",
   "main": "main.js",
   "scripts": {
     "build:linux": "electron-builder --linux dir",
+    "build:linux:rpm": "electron-builder --linux rpm",
     "start": "electron . --no-sandbox",
     "dev:react": "vite",
     "dev:electron": "wait-on tcp:5173 && electron . --no-sandbox",
@@ -13,7 +14,8 @@
     "build": "vite build"
   },
   "keywords": [],
-  "author": "",
+  "author": "ITea Team <support@itea.inc>",
+  "homepage": "https://github.com/ITea-Inc/iteaapp",
   "license": "ISC",
   "devDependencies": {
     "@vitejs/plugin-react": "^4.7.0",
@@ -38,6 +40,31 @@
     ],
     "directories": {
       "output": "dist"
+    },
+    "extraResources": [
+      {
+        "from": "../../extraResources/nautilus",
+        "to": "opt/iteaapp/nautilus"
+      },
+      {
+        "from": "../../extraResources/systemd",
+        "to": "opt/iteaapp/systemd"
+      },
+      {
+        "from": "../../extraResources/backend.jar",
+        "to": "opt/iteaapp/backend/backend.jar"
+      }
+    ],
+    "linux": {
+      "target": [
+        "deb",
+        "rpm"
+      ],
+      "maintainer": "ITea Team <support@itea.inc>",
+      "category": "Utility"
+    },
+    "rpm": {
+      "afterInstall": "scripts/after-install.sh"
     }
   }
 }
