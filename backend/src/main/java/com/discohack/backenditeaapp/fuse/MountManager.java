@@ -25,6 +25,7 @@ public class MountManager {
 
     private final EventBroadcaster broadcaster;
     private final RuleEngine ruleEngine;
+    private final FileCacheManager fileCacheManager;
 
     // Ключ — accountId, чтобы несколько аккаунтов одного провайдера
     // монтировались каждый в свою папку.
@@ -51,7 +52,7 @@ public class MountManager {
             throw new RuntimeException("Ошибка создания точки монтирования", e);
         }
 
-        CloudFileSystem fs = new CloudFileSystem(provider, broadcaster, ruleEngine, accountId);
+        CloudFileSystem fs = new CloudFileSystem(provider, broadcaster, ruleEngine, accountId, fileCacheManager);
 
         Thread mountThread = new Thread(() -> {
             try {

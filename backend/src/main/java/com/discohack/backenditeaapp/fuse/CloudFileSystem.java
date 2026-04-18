@@ -17,6 +17,8 @@ import ru.serce.jnrfuse.struct.FileStat;
 import ru.serce.jnrfuse.struct.FuseFileInfo;
 
 import java.io.InputStream;
+import java.io.RandomAccessFile;
+import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -47,6 +49,7 @@ public class CloudFileSystem extends FuseStubFS {
     private final EventBroadcaster broadcaster;
     private final RuleEngine ruleEngine;
     private final String accountId;
+    private final FileCacheManager fileCache;
 
     private final ConcurrentHashMap<String, CachedEntry<CloudFile>> fileInfoCache
             = new ConcurrentHashMap<>();
@@ -59,11 +62,12 @@ public class CloudFileSystem extends FuseStubFS {
             = new ConcurrentHashMap<>();
 
     public CloudFileSystem(CloudProvider provider, EventBroadcaster broadcaster,
-                           RuleEngine ruleEngine, String accountId) {
+                           RuleEngine ruleEngine, String accountId, FileCacheManager fileCache) {
         this.provider = provider;
         this.broadcaster = broadcaster;
         this.ruleEngine = ruleEngine;
         this.accountId = accountId;
+        this.fileCache = fileCache;
     }
 
     // ════════════════════════════════════════════════════
@@ -218,20 +222,37 @@ public class CloudFileSystem extends FuseStubFS {
                 return -ErrorCodes.EACCES();
             }
 
-            InputStream stream = provider.downloadFile(path, offset, size);
+            // Проверяем дисковый кэш
+            Optional<Path> cachedPath = fileCache.get(accountId, path);
 
-            // Читаем байты из потока в массив
-            byte[] bytes = stream.readNBytes((int) size);
-
-            if (bytes.length == 0) {
-                return 0;  // Конец файла
+            if (cachedPath.isEmpty()) {
+                // Кэш-промах: скачиваем весь файл (offset=0, length=0 → без Range-заголовка)
+                log.debug("read: кэш-промах для {}, скачиваем с облака", path);
+                InputStream fullStream = provider.downloadFile(path, 0, 0);
+                fileCache.put(accountId, path, fullStream);
+                cachedPath = fileCache.get(accountId, path);
             }
 
-            // Записываем байты в FUSE-буфер через JNR (Java Native Runtime)
-            buf.put(0, bytes, 0, bytes.length);
+            if (cachedPath.isEmpty()) {
+                // Кэш не смог сохранить файл — читаем напрямую как раньше
+                log.warn("read: не удалось закэшировать {}, читаем напрямую", path);
+                InputStream stream = provider.downloadFile(path, offset, size);
+                byte[] bytes = stream.readNBytes((int) size);
+                if (bytes.length == 0) return 0;
+                buf.put(0, bytes, 0, bytes.length);
+                return bytes.length;
+            }
 
-            log.debug("read: {} прочитано {} байт", path, bytes.length);
-            return bytes.length;
+            // Кэш-попадание: читаем нужный кусок из локального файла
+            try (RandomAccessFile raf = new RandomAccessFile(cachedPath.get().toFile(), "r")) {
+                raf.seek(offset);
+                byte[] bytes = new byte[(int) size];
+                int read = raf.read(bytes, 0, (int) size);
+                if (read <= 0) return 0;
+                buf.put(0, bytes, 0, read);
+                log.debug("read: {} прочитано {} байт из кэша (offset={})", path, read, offset);
+                return read;
+            }
 
         } catch (CloudProviderException e) {
             log.error("read ошибка для {}: {}", path, e.getMessage());
@@ -484,7 +505,7 @@ public class CloudFileSystem extends FuseStubFS {
     private void invalidateCache(String path) {
         fileInfoCache.remove(path);
         dirCache.remove(path);
-        // Инвалидируем и родительскую папку
+        fileCache.invalidate(accountId, path);
         invalidateParentCache(path);
     }
 
