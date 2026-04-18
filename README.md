@@ -6,4 +6,5 @@
 ## ./build-deb.sh
 ## sudo dpkg -i iteaapp-deb.deb
 ## Если пожалуется на нехватку пакетов типа java, выполнить sudo apt-get install -f
+## Удаление данной программы:
 ## sudo dpkg -P iteaapp
