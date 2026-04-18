@@ -2,6 +2,7 @@
 *.iml
 .DS_Store
 node_modules/
+iteaapp-deb/
 .postman
 postman
 
@@ -31,7 +32,7 @@ target/
 ### NetBeans ###
 /nbproject/private/
 /nbbuild/
-/dist/
+dist/
 /nbdist/
 /.nb-gradle/
 build/
