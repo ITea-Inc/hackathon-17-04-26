@@ -37,6 +37,7 @@ public class CloudFileSystem extends FuseStubFS {
     private final RuleEngine ruleEngine;
     private final String accountId;
     private final FileCacheManager fileCache;
+    private final DirCacheStore dirCacheStore;
 
     private final ConcurrentHashMap<String, CachedEntry<CloudFile>> fileInfoCache
             = new ConcurrentHashMap<>();
@@ -49,12 +50,14 @@ public class CloudFileSystem extends FuseStubFS {
             = new ConcurrentHashMap<>();
 
     public CloudFileSystem(CloudProvider provider, EventBroadcaster broadcaster,
-                           RuleEngine ruleEngine, String accountId, FileCacheManager fileCache) {
+                           RuleEngine ruleEngine, String accountId,
+                           FileCacheManager fileCache, DirCacheStore dirCacheStore) {
         this.provider = provider;
         this.broadcaster = broadcaster;
         this.ruleEngine = ruleEngine;
         this.accountId = accountId;
         this.fileCache = fileCache;
+        this.dirCacheStore = dirCacheStore;
     }
 
 
@@ -89,14 +92,26 @@ public class CloudFileSystem extends FuseStubFS {
             if (cachedFile.isPresent()) {
                 file = cachedFile.get();
             } else {
-                // Кеш промах — запрашиваем у провайдера
-                Optional<CloudFile> providerFile = provider.getFileInfo(path);
-                if (providerFile.isEmpty()) {
-                    return -ErrorCodes.ENOENT();  // Файл не найден
+                try {
+                    Optional<CloudFile> providerFile = provider.getFileInfo(path);
+                    if (providerFile.isEmpty()) {
+                        return -ErrorCodes.ENOENT();
+                    }
+                    file = providerFile.get();
+                    fileInfoCache.put(path, new CachedEntry<>(file));
+                } catch (CloudProviderException e) {
+                    if (e.getErrorType() != CloudProviderException.ErrorType.IO_ERROR) throw e;
+                    // Сеть недоступна — ищем в кэше родительской директории
+                    log.debug("getattr: сеть недоступна для {}, ищем в кэше директорий", path);
+                    String parentPath = parentOf(path);
+                    Optional<CloudFile> fromDirCache = dirCacheStore.load(accountId, parentPath)
+                        .flatMap(list -> list.stream()
+                            .filter(f -> f.getPath().equals(path))
+                            .findFirst());
+                    if (fromDirCache.isEmpty()) return -ErrorCodes.ENOENT();
+                    file = fromDirCache.get();
+                    fileInfoCache.put(path, new CachedEntry<>(file));
                 }
-                file = providerFile.get();
-                // Кешируем результат
-                fileInfoCache.put(path, new CachedEntry<>(file));
             }
 
             // Заполняем структуру stat
@@ -133,18 +148,29 @@ public class CloudFileSystem extends FuseStubFS {
             filler.apply(buf, ".", null, 0);
             filler.apply(buf, "..", null, 0);
 
-            // Проверяем кеш директорий
             List<CloudFile> files = getCachedDirListing(path);
 
             if (files == null) {
-                files = provider.listDirectory(path);
-                dirCache.put(path, new CachedEntry<>(files));
+                try {
+                    files = provider.listDirectory(path);
+                    dirCache.put(path, new CachedEntry<>(files));
+                    dirCacheStore.save(accountId, path, files);
+                } catch (CloudProviderException e) {
+                    if (e.getErrorType() != CloudProviderException.ErrorType.IO_ERROR) throw e;
+                    // Сеть недоступна — пробуем диск
+                    log.warn("readdir: сеть недоступна для {}, используем кэш с диска", path);
+                    Optional<List<CloudFile>> offline = dirCacheStore.load(accountId, path);
+                    if (offline.isEmpty()) {
+                        log.error("readdir: нет ни сети, ни кэша для {}", path);
+                        return -ErrorCodes.ENOENT();
+                    }
+                    files = offline.get();
+                    dirCache.put(path, new CachedEntry<>(files));
+                }
             }
 
-            // Добавляем каждый файл/папку в листинг
             for (CloudFile file : files) {
                 filler.apply(buf, file.getName(), null, 0);
-                // Заодно кешируем метаданные каждого файла
                 fileInfoCache.put(file.getPath(), new CachedEntry<>(file));
             }
 
@@ -462,18 +488,20 @@ public class CloudFileSystem extends FuseStubFS {
     private void invalidateCache(String path) {
         fileInfoCache.remove(path);
         dirCache.remove(path);
+        dirCacheStore.invalidate(accountId, path);
         fileCache.invalidate(accountId, path);
         invalidateParentCache(path);
     }
 
     private void invalidateParentCache(String path) {
+        String parent = parentOf(path);
+        dirCache.remove(parent);
+        dirCacheStore.invalidate(accountId, parent);
+    }
+
+    private String parentOf(String path) {
         int lastSlash = path.lastIndexOf('/');
-        if (lastSlash > 0) {
-            String parent = path.substring(0, lastSlash);
-            dirCache.remove(parent);
-        } else {
-            dirCache.remove("/");
-        }
+        return lastSlash > 0 ? path.substring(0, lastSlash) : "/";
     }
 
     // ─── Внутренний класс для кеш-записи с TTL ───

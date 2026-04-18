@@ -26,6 +26,7 @@ public class MountManager {
     private final EventBroadcaster broadcaster;
     private final RuleEngine ruleEngine;
     private final FileCacheManager fileCacheManager;
+    private final DirCacheStore dirCacheStore;
 
     /** Мапа активных FUSE соединений. */
     private final ConcurrentHashMap<String, CloudFileSystem> activeMounts = new ConcurrentHashMap<>();
@@ -51,7 +52,7 @@ public class MountManager {
             throw new RuntimeException("Ошибка создания точки монтирования", e);
         }
 
-        CloudFileSystem fs = new CloudFileSystem(provider, broadcaster, ruleEngine, accountId, fileCacheManager);
+        CloudFileSystem fs = new CloudFileSystem(provider, broadcaster, ruleEngine, accountId, fileCacheManager, dirCacheStore);
 
         Thread mountThread = new Thread(() -> {
             try {

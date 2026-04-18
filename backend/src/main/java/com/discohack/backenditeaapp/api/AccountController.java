@@ -1,7 +1,6 @@
 package com.discohack.backenditeaapp.api;
 
 import com.discohack.backenditeaapp.cloud.CloudProviderRegistry;
-import com.discohack.backenditeaapp.cloud.nextcloud.NextCloudProvider;
 import com.discohack.backenditeaapp.cloud.yandex.YandexDiskProvider;
 import com.discohack.backenditeaapp.cloud.yandex.YandexOAuthService;
 import com.discohack.backenditeaapp.fuse.MountManager;
@@ -37,13 +36,6 @@ public class AccountController {
         String username
     ) {}
 
-    /** Запрос на добавление NextCloud аккаунта. */
-    record AddNextCloudRequest(
-        String serverUrl,
-        String username,
-        String password
-    ) {}
-
     /** Информация об аккаунте — возвращается в ответах API. */
     record AccountInfo(
         String id,
@@ -63,26 +55,13 @@ public class AccountController {
         log.info("Восстанавливаем {} аккаунт(ов) из БД", saved.size());
         for (AccountEntity entity : saved) {
             try {
-                if ("nextcloud".equals(entity.getProvider())) {
-                    NextCloudProvider provider = new NextCloudProvider(
-                        entity.getServerUrl(), entity.getUsername(), entity.getAccessToken()
-                    );
-                    if (provider.isAvailable()) {
-                        providerRegistry.register(entity.getId(), provider);
-                        mountManager.mountProvider(provider, entity.getId(), entity.getUsername());
-                        log.info("NextCloud аккаунт {} восстановлен", entity.getUsername());
-                    } else {
-                        log.warn("NextCloud недоступен для аккаунта {}, пропускаем", entity.getUsername());
-                    }
+                YandexDiskProvider provider = new YandexDiskProvider(entity.getAccessToken());
+                if (provider.isAvailable()) {
+                    providerRegistry.register(entity.getId(), provider);
+                    mountManager.mountProvider(provider, entity.getId(), entity.getUsername());
+                    log.info("Аккаунт {} восстановлен", entity.getUsername());
                 } else {
-                    YandexDiskProvider provider = new YandexDiskProvider(entity.getAccessToken());
-                    if (provider.isAvailable()) {
-                        providerRegistry.register(entity.getId(), provider);
-                        mountManager.mountProvider(provider, entity.getId(), entity.getUsername());
-                        log.info("Аккаунт {} ({}) восстановлен", entity.getUsername(), entity.getProvider());
-                    } else {
-                        log.warn("Токен устарел для аккаунта {}, пропускаем монтирование", entity.getUsername());
-                    }
+                    log.warn("Токен устарел для аккаунта {}, пропускаем монтирование", entity.getUsername());
                 }
             } catch (Exception e) {
                 log.error("Ошибка восстановления аккаунта {}: {}", entity.getId(), e.getMessage());
@@ -121,44 +100,6 @@ public class AccountController {
 
         AccountInfo info = new AccountInfo(accountId, "yandex", request.username(), mountPath, true);
         log.info("Яндекс аккаунт добавлен: {} → {}", request.username(), mountPath);
-        return ResponseEntity.ok(info);
-    }
-
-    /**
-     * Добавляет NextCloud аккаунт.
-     */
-    @PostMapping("/nextcloud")
-    public ResponseEntity<AccountInfo> addNextCloudAccount(@RequestBody AddNextCloudRequest request) {
-        log.info("Добавление NextCloud аккаунта для пользователя: {}", request.username());
-
-        String accountId = UUID.randomUUID().toString();
-        NextCloudProvider provider = new NextCloudProvider(
-            request.serverUrl(), request.username(), request.password()
-        );
-
-        if (!provider.isAvailable()) {
-            log.warn("NextCloud недоступен: {}", request.serverUrl());
-            return ResponseEntity.badRequest().build();
-        }
-
-        providerRegistry.register(accountId, provider);
-        mountManager.mountProvider(provider, accountId, request.username());
-
-        String mountPath = mountManager.getMountPath(accountId);
-
-        AccountEntity entity = AccountEntity.builder()
-            .id(accountId)
-            .provider("nextcloud")
-            .username(request.username())
-            .serverUrl(request.serverUrl())
-            // TODO: реализовать безопасное хранение паролей (напр. PasswordEncoder)
-            .accessToken(request.password())
-            .mountPath(mountPath)
-            .build();
-        accountRepository.save(entity);
-
-        AccountInfo info = new AccountInfo(accountId, "nextcloud", request.username(), mountPath, true);
-        log.info("NextCloud аккаунт добавлен: {} → {}", request.username(), mountPath);
         return ResponseEntity.ok(info);
     }
 
