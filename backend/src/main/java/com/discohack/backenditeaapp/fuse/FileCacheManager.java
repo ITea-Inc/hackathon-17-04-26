@@ -160,6 +160,10 @@ public class FileCacheManager {
         return totalCachedBytes.get();
     }
 
+    public long getCacheLimitBytes() {
+        return settingsController.getCacheSizeBytes();
+    }
+
     /**
      * LRU-вытеснение: удаляет старейшие файлы пока суммарный размер не войдёт в лимит.
      */

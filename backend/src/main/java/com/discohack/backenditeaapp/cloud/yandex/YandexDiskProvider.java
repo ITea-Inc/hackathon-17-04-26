@@ -163,16 +163,23 @@ public class YandexDiskProvider implements CloudProvider {
 
         // ETag-проверка: убеждаемся что файл не изменился пока мы его редактировали
         if (expectedEtag != null && !expectedEtag.isEmpty()) {
-            Optional<CloudFile> current = getFileInfo(path);
-            if (current.isPresent()) {
-                String serverEtag = current.get().getEtag();
-                if (!serverEtag.isEmpty() && !serverEtag.equals(expectedEtag)) {
-                    log.warn("uploadFile: конфликт версий для {} (ожидали {}, на сервере {})",
-                        path, expectedEtag, serverEtag);
-                    throw new CloudProviderException(
-                        "Конфликт: файл изменён другим клиентом: " + path,
-                        CloudProviderException.ErrorType.CONFLICT);
+            try {
+                Optional<CloudFile> current = getFileInfo(path);
+                if (current.isPresent()) {
+                    String serverEtag = current.get().getEtag();
+                    if (!serverEtag.isEmpty() && !serverEtag.equals(expectedEtag)) {
+                        log.warn("uploadFile: конфликт версий для {} (ожидали {}, на сервере {})",
+                            path, expectedEtag, serverEtag);
+                        throw new CloudProviderException(
+                            "Конфликт: файл изменён другим клиентом: " + path,
+                            CloudProviderException.ErrorType.CONFLICT);
+                    }
                 }
+            } catch (CloudProviderException e) {
+                if (e.getErrorType() == CloudProviderException.ErrorType.CONFLICT) throw e;
+                // Не удалось проверить ETag (сеть, таймаут, rate limit) — загружаем без проверки
+                log.warn("uploadFile: не удалось проверить ETag для {}, загружаем без проверки конфликтов: {}",
+                    path, e.getMessage());
             }
         }
 

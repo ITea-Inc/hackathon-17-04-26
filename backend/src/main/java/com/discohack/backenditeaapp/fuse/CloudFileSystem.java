@@ -243,6 +243,15 @@ public class CloudFileSystem extends FuseStubFS {
             Optional<Path> cachedPath = fileCache.get(accountId, path);
 
             if (cachedPath.isEmpty()) {
+                Optional<CloudFile> fileInfo = getCachedFileInfo(path);
+                boolean tooBigToCache = fileInfo.isPresent()
+                    && fileInfo.get().getSize() > fileCache.getCacheLimitBytes();
+
+                if (tooBigToCache) {
+                    log.debug("read: {} ({} байт) больше лимита кэша, читаем Range-запросом", path, fileInfo.get().getSize());
+                    return readDirect(path, buf, size, offset);
+                }
+
                 // Кэш-промах: скачиваем весь файл (offset=0, length=0 → без Range-заголовка)
                 log.debug("read: кэш-промах для {}, скачиваем с облака", path);
                 InputStream fullStream = provider.downloadFile(path, 0, 0);
@@ -251,13 +260,9 @@ public class CloudFileSystem extends FuseStubFS {
             }
 
             if (cachedPath.isEmpty()) {
-                // Кэш не смог сохранить файл — читаем напрямую как раньше
+                // Кэш не смог сохранить файл — читаем напрямую
                 log.warn("read: не удалось закэшировать {}, читаем напрямую", path);
-                InputStream stream = provider.downloadFile(path, offset, size);
-                byte[] bytes = stream.readNBytes((int) size);
-                if (bytes.length == 0) return 0;
-                buf.put(0, bytes, 0, bytes.length);
-                return bytes.length;
+                return readDirect(path, buf, size, offset);
             }
 
             // Кэш-попадание: читаем нужный кусок из локального файла
@@ -363,6 +368,23 @@ public class CloudFileSystem extends FuseStubFS {
         }
         invalidateCache(path);
         return 0;
+    }
+
+    /** Читает кусок файла напрямую с облака через Range-запрос, без записи на диск. */
+    private int readDirect(String path, Pointer buf, long size, long offset) {
+        try {
+            InputStream stream = provider.downloadFile(path, offset, size);
+            byte[] bytes = stream.readNBytes((int) size);
+            if (bytes.length == 0) return 0;
+            buf.put(0, bytes, 0, bytes.length);
+            return bytes.length;
+        } catch (CloudProviderException e) {
+            log.error("readDirect ошибка для {}: {}", path, e.getMessage());
+            return e.toFuseErrorCode();
+        } catch (Exception e) {
+            log.error("readDirect неожиданная ошибка для {}: {}", path, e.getMessage());
+            return -ErrorCodes.EIO();
+        }
     }
 
     private int uploadBuffer(String path, byte[] data) {
