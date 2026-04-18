@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -42,7 +43,9 @@ public class AccountController {
         String provider,
         String username,
         String mountPath,
-        boolean connected
+        boolean connected,
+        Long totalSpace,
+        Long usedSpace
     ) {}
 
     /**
@@ -98,7 +101,16 @@ public class AccountController {
             .build();
         accountRepository.save(entity);
 
-        AccountInfo info = new AccountInfo(accountId, "yandex", request.username(), mountPath, true);
+        Optional<YandexDiskProvider.DiskUsage> diskUsage = provider.getDiskUsage();
+        AccountInfo info = new AccountInfo(
+            accountId,
+            "yandex",
+            request.username(),
+            mountPath,
+            true,
+            diskUsage.map(YandexDiskProvider.DiskUsage::totalSpace).orElse(null),
+            diskUsage.map(YandexDiskProvider.DiskUsage::usedSpace).orElse(null)
+        );
         log.info("Яндекс аккаунт добавлен: {} → {}", request.username(), mountPath);
         return ResponseEntity.ok(info);
     }
@@ -113,12 +125,20 @@ public class AccountController {
                 String actualMountPath = mountManager.isMounted(entity.getId()) 
                                          ? mountManager.getMountPath(entity.getId()) 
                                          : entity.getMountPath();
+                Optional<YandexDiskProvider.DiskUsage> diskUsage = Optional.empty();
+                if ("yandex".equals(entity.getProvider())) {
+                    YandexDiskProvider provider = new YandexDiskProvider(entity.getAccessToken());
+                    diskUsage = provider.getDiskUsage();
+                }
+
                 return new AccountInfo(
                     entity.getId(),
                     entity.getProvider(),
                     entity.getUsername(),
                     actualMountPath,
-                    mountManager.isMounted(entity.getId())
+                    mountManager.isMounted(entity.getId()),
+                    diskUsage.map(YandexDiskProvider.DiskUsage::totalSpace).orElse(null),
+                    diskUsage.map(YandexDiskProvider.DiskUsage::usedSpace).orElse(null)
                 );
             })
             .toList();

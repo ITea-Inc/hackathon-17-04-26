@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+
 /**
  * Реализация {@link CloudProvider} для Яндекс.Диска.
  * Взаимодействует с REST API Яндекс.Диска v1.
@@ -26,6 +27,8 @@ import java.util.Optional;
  */
 @Slf4j
 public class YandexDiskProvider implements CloudProvider {
+
+    public record DiskUsage(long totalSpace, long usedSpace) {}
 
     // Базовый URL API Яндекс.Диска
     private static final String API_BASE = "https://cloud-api.yandex.net/v1/disk";
@@ -330,6 +333,27 @@ public class YandexDiskProvider implements CloudProvider {
             return true;
         } catch (Exception e) {
             return false;
+        }
+    }
+
+    /**
+     * Возвращает квоту Яндекс.Диска (в байтах).
+     * GET /v1/disk → { "total_space": ..., "used_space": ... }
+     */
+    public Optional<DiskUsage> getDiskUsage() {
+        try {
+            JsonNode response = executeGet(API_BASE);
+            long totalSpace = response.path("total_space").asLong(-1);
+            long usedSpace = response.path("used_space").asLong(-1);
+
+            if (totalSpace < 0 || usedSpace < 0) {
+                return Optional.empty();
+            }
+
+            return Optional.of(new DiskUsage(totalSpace, usedSpace));
+        } catch (Exception e) {
+            log.warn("Не удалось получить квоту Яндекс.Диска: {}", e.getMessage());
+            return Optional.empty();
         }
     }
 

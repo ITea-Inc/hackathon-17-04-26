@@ -30,6 +30,36 @@ const availableProviders = [
   { id: 'yandex', name: 'Яндекс.Диск', icon: <YandexIcon1 /> }
 ];
 
+const formatBytes = (bytes) => {
+  if (!Number.isFinite(bytes) || bytes < 0) return '—';
+
+  const units = ['Б', 'КБ', 'МБ', 'ГБ', 'ТБ'];
+  let value = bytes;
+  let unitIndex = 0;
+
+  while (value >= 1024 && unitIndex < units.length - 1) {
+    value /= 1024;
+    unitIndex += 1;
+  }
+
+  const precision = value >= 10 || unitIndex === 0 ? 0 : 1;
+  return `${value.toFixed(precision)} ${units[unitIndex]}`;
+};
+
+const getYandexQuota = (account) => {
+  const totalSpace = Number(account.totalSpace);
+  const usedSpace = Number(account.usedSpace);
+
+  if (!Number.isFinite(totalSpace) || !Number.isFinite(usedSpace) || totalSpace <= 0 || usedSpace < 0) {
+    return null;
+  }
+
+  const freeSpace = Math.max(totalSpace - usedSpace, 0);
+  const freePercent = (freeSpace / totalSpace) * 100;
+
+  return { totalSpace, freeSpace, freePercent };
+};
+
 function AccountsPanel({ onAccountSelect }) {
   const [accounts, setAccounts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -196,6 +226,28 @@ function AccountsPanel({ onAccountSelect }) {
                 {acc.connected ? 'Online' : 'Offline'}
               </span>
             </div>
+
+            {acc.provider === 'yandex' && (() => {
+              const quota = getYandexQuota(acc);
+              if (!quota) return null;
+
+              const isLowSpace = quota.freePercent < 10;
+              const clampedPercent = Math.max(0, Math.min(100, quota.freePercent));
+
+              return (
+                <div className="accPanel_storageInfo">
+                  <span className={`accPanel_storageText${isLowSpace ? ' accPanel_storageText--warn' : ''}`}>
+                    Яндекс.Диск: свободно {formatBytes(quota.freeSpace)} из {formatBytes(quota.totalSpace)}
+                  </span>
+                  <div className="accPanel_progressBar">
+                    <div
+                      className={`accPanel_progressFill${isLowSpace ? ' accPanel_progressFill--warn' : ''}`}
+                      style={{ width: `${clampedPercent}%` }}
+                    />
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         ))}
       </div>

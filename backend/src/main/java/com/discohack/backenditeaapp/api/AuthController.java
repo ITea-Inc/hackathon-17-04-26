@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -76,6 +77,7 @@ public class AuthController {
         }
 
         String username = provider.getLogin();
+        Optional<YandexDiskProvider.DiskUsage> diskUsage = provider.getDiskUsage();
 
         providerRegistry.register(accountId, provider);
         mountManager.mountProvider(provider, accountId, username);
@@ -99,7 +101,9 @@ public class AuthController {
             "provider", "yandex",
             "username", username,
             "mountPath", mountPath != null ? mountPath : "",
-            "connected", true
+            "connected", true,
+            "totalSpace", diskUsage.map(YandexDiskProvider.DiskUsage::totalSpace).orElse(null),
+            "usedSpace", diskUsage.map(YandexDiskProvider.DiskUsage::usedSpace).orElse(null)
         ));
     }
 }
