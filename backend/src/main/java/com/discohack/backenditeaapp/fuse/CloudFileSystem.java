@@ -484,7 +484,7 @@ public class CloudFileSystem extends FuseStubFS {
         try {
             provider.rename(oldpath, newpath);
             invalidateCache(oldpath);
-            invalidateParentCache(newpath);
+            invalidateCache(newpath);
             return 0;
         } catch (CloudProviderException e) {
             // Если файла нет в облаке, но он есть у нас в буфере, просто переносим буфер.
