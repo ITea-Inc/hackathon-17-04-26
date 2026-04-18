@@ -507,7 +507,11 @@ body {
 }
 
 .accPanel_progressFill--warn {
-  background: var(--warning);
+  background: var(--destructive);
+}
+
+.accPanel_storageText--warn {
+  color: var(--destructive);
 }
 
 .accPanel_detail {
