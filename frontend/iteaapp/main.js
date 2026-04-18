@@ -141,10 +141,47 @@ function setupLocalServer() {
     if (req.method === 'POST' && req.url === '/api/share-from-nautilus') {
       let body = '';
       req.on('data', chunk => { body += chunk.toString(); });
-      req.on('end', () => {
+      req.on('end', async () => {
         const params = new URLSearchParams(body);
         const filePath = params.get('file_path');
         console.log('\n[Nautilus Hook] Пользователь хочет поделиться файлом:', filePath);
+        
+        try {
+          const accountsRes = await fetch('http://localhost:8080/api/accounts');
+          if (!accountsRes.ok) throw new Error('Cannot fetch accounts');
+          const accounts = await accountsRes.json();
+          
+          let matchedAcc = null;
+          let relPath = '';
+          for (const acc of accounts) {
+             if (acc.mountPath && filePath.startsWith(acc.mountPath)) {
+               matchedAcc = acc;
+               relPath = filePath.substring(acc.mountPath.length);
+               break;
+             }
+          }
+          if (!matchedAcc) {
+            console.log('[Nautilus Hook] Не найден аккаунт для пути:', filePath);
+            res.writeHead(200); res.end('Account not found');
+            return;
+          }
+          
+          const shareRes = await fetch(`http://localhost:8080/api/share/${matchedAcc.id}?path=${encodeURIComponent(relPath)}`, { method: 'POST' });
+          if (!shareRes.ok) throw new Error(`Share failed with status ${shareRes.status}`);
+          const shareData = await shareRes.json();
+          
+          if (shareData.url) {
+             const { clipboard, Notification } = require('electron');
+             const { exec } = require('child_process');
+             clipboard.writeText(shareData.url);
+             try { exec(`echo -n "${shareData.url}" | wl-copy`, () => {}); } catch(e) {}
+             try { exec(`echo -n "${shareData.url}" | xclip -selection clipboard`, () => {}); } catch(e) {}
+             new Notification({ title: 'iTea App', body: 'Ссылка скопирована в буфер обмена!' }).show();
+          }
+        } catch(e) {
+          console.log('[Nautilus Hook] Ошибка при шаринге:', e.message);
+        }
+
         res.writeHead(200);
         res.end('Shared');
       });
