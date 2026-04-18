@@ -54,10 +54,9 @@ const getYandexQuota = (account) => {
     return null;
   }
 
-  const freeSpace = Math.max(totalSpace - usedSpace, 0);
-  const freePercent = (freeSpace / totalSpace) * 100;
+  const usedPercent = Math.min((usedSpace / totalSpace) * 100, 100);
 
-  return { totalSpace, freeSpace, freePercent };
+  return { totalSpace, usedSpace, usedPercent };
 };
 
 function AccountsPanel({ onAccountSelect }) {
@@ -231,16 +230,16 @@ function AccountsPanel({ onAccountSelect }) {
               const quota = getYandexQuota(acc);
               if (!quota) return null;
 
-              const isLowSpace = quota.freePercent < 10;
+              const isHighUsage = quota.usedPercent > 90;
               return (
                 <div className="accPanel_storageInfo">
-                  <span className={`accPanel_storageText${isLowSpace ? ' accPanel_storageText--warn' : ''}`}>
-                    Яндекс.Диск: свободно {formatBytes(quota.freeSpace)} из {formatBytes(quota.totalSpace)}
+                  <span className={`accPanel_storageText${isHighUsage ? ' accPanel_storageText--warn' : ''}`}>
+                    Яндекс.Диск: занято {formatBytes(quota.usedSpace)} из {formatBytes(quota.totalSpace)}
                   </span>
                   <div className="accPanel_progressBar">
                     <div
-                      className={`accPanel_progressFill${isLowSpace ? ' accPanel_progressFill--warn' : ''}`}
-                      style={{ width: `${quota.freePercent}%` }}
+                      className={`accPanel_progressFill${isHighUsage ? ' accPanel_progressFill--warn' : ''}`}
+                      style={{ width: `${quota.usedPercent}%` }}
                     />
                   </div>
                 </div>
