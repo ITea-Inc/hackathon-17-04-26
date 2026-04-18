@@ -7,8 +7,6 @@ iteaapp-deb/
 postman
 
 *.deb
-*.rpm
-build-rpm/
 extraResources/backend.jar
 
 HELP.md
@@ -38,7 +36,6 @@ target/
 dist/
 /nbdist/
 /.nb-gradle/
-build/
 !**/src/main/**/build/
 !**/src/test/**/build/
 
