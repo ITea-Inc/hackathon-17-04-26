@@ -75,7 +75,7 @@ public class AccountController {
                     );
                     if (provider.isAvailable()) {
                         providerRegistry.register(entity.getId(), provider);
-                        mountManager.mountProvider(provider, entity.getId());
+                        mountManager.mountProvider(provider, entity.getId(), entity.getUsername());
                         log.info("NextCloud аккаунт {} восстановлен", entity.getUsername());
                     } else {
                         log.warn("NextCloud недоступен для аккаунта {}, пропускаем", entity.getUsername());
@@ -84,7 +84,7 @@ public class AccountController {
                     YandexDiskProvider provider = new YandexDiskProvider(entity.getAccessToken());
                     if (provider.isAvailable()) {
                         providerRegistry.register(entity.getId(), provider);
-                        mountManager.mountProvider(provider, entity.getId());
+                        mountManager.mountProvider(provider, entity.getId(), entity.getUsername());
                         log.info("Аккаунт {} ({}) восстановлен", entity.getUsername(), entity.getProvider());
                     } else {
                         log.warn("Токен устарел для аккаунта {}, пропускаем монтирование", entity.getUsername());
@@ -113,7 +113,7 @@ public class AccountController {
         }
 
         providerRegistry.register(accountId, provider);
-        mountManager.mountProvider(provider, accountId);
+        mountManager.mountProvider(provider, accountId, request.username());
 
         String mountPath = mountManager.getMountPath(accountId);
 
@@ -150,7 +150,7 @@ public class AccountController {
         }
 
         providerRegistry.register(accountId, provider);
-        mountManager.mountProvider(provider, accountId);
+        mountManager.mountProvider(provider, accountId, request.username());
 
         String mountPath = mountManager.getMountPath(accountId);
 

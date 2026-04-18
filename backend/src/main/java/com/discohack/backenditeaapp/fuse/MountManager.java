@@ -33,16 +33,17 @@ public class MountManager {
     private final ConcurrentHashMap<String, Path> mountPaths = new ConcurrentHashMap<>();
 
     /**
-     * Монтирует аккаунт в папку "{providerName}-{8 символов accountId}".
-     * Например: "yandex-a1b2c3d4", "yandex-ff119a2b" — каждый аккаунт уникален.
+     * Монтирует аккаунт в папку "{providerName}-{username}".
+     * Например: "yandex-ivan.petrov", "nextcloud-admin".
      */
-    public void mountProvider(CloudProvider provider, String accountId) {
+    public void mountProvider(CloudProvider provider, String accountId, String username) {
         if (activeMounts.containsKey(accountId)) {
             log.warn("Аккаунт {} уже смонтирован", accountId);
             return;
         }
 
-        String dirName = provider.getProviderName() + "-" + accountId.substring(0, 8);
+        String safeName = username.replaceAll("[^a-zA-Z0-9._-]", "_");
+        String dirName = provider.getProviderName() + "-" + safeName;
         Path mountPoint = Paths.get(baseMountPath, dirName);
 
         try {
@@ -87,6 +88,14 @@ public class MountManager {
         } catch (Exception e) {
             log.error("Ошибка размонтирования {}: {}", accountId, e.getMessage());
             if (mountPoint != null) forceUmount(mountPoint);
+        }
+        if (mountPoint != null) {
+            try {
+                Files.deleteIfExists(mountPoint);
+                log.info("Папка монтирования удалена: {}", mountPoint);
+            } catch (IOException e) {
+                log.warn("Не удалось удалить папку {}: {}", mountPoint, e.getMessage());
+            }
         }
     }
 
