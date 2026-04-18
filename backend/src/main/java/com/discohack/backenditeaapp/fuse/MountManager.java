@@ -2,6 +2,7 @@ package com.discohack.backenditeaapp.fuse;
 
 import com.discohack.backenditeaapp.cloud.CloudProvider;
 import com.discohack.backenditeaapp.domain.RuleEngine;
+import com.discohack.backenditeaapp.persistance.settings.AppSettingsFileStore;
 import com.discohack.backenditeaapp.ws.EventBroadcaster;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,6 +29,7 @@ public class MountManager {
     private final FileCacheManager fileCacheManager;
     private final DirCacheStore dirCacheStore;
     private final com.discohack.backenditeaapp.persistance.repository.PinnedFileRepository pinnedFileRepository;
+    private final AppSettingsFileStore settingsFileStore;
 
     /** Мапа активных FUSE соединений. */
     private final ConcurrentHashMap<String, CloudFileSystem> activeMounts = new ConcurrentHashMap<>();
@@ -54,7 +56,7 @@ public class MountManager {
         }
 
         CloudFileSystem fs = new CloudFileSystem(provider, broadcaster, ruleEngine, accountId, 
-            fileCacheManager, dirCacheStore, pinnedFileRepository);
+            fileCacheManager, dirCacheStore, pinnedFileRepository, settingsFileStore);
 
         Thread mountThread = new Thread(() -> {
             try {
