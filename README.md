@@ -13,32 +13,6 @@
 - Node.js и npm
 - Для RPM-сборки: `rpm` и `rpmbuild`
 
-## DEB
-
-Сборка:
-
-```bash
-./build-deb.sh
-```
-
-Установка пакета:
-
-```bash
-sudo dpkg -i iteaapp-deb.deb
-```
-
-Если Debian/Ubuntu сообщит о нехватке зависимостей:
-
-```bash
-sudo apt-get install -f
-```
-
-Удаление:
-
-```bash
-sudo dpkg -P iteaapp
-```
-
 ## RPM
 
 Сборка:
