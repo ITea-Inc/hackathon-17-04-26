@@ -290,6 +290,34 @@ body {
   overflow: hidden;
 }
 
+.explorer-toolbar {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.explorer-search {
+  width: min(360px, 100%);
+  border: 1px solid var(--border-color);
+  background: rgba(0, 0, 0, 0.15);
+  color: var(--text-primary);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-family: inherit;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.12s ease, background 0.12s ease;
+}
+
+.explorer-search:focus {
+  border-color: color-mix(in srgb, var(--accent-color) 40%, var(--border-color));
+  background: rgba(0, 0, 0, 0.22);
+}
+
+.explorer-search::placeholder {
+  color: var(--text-secondary);
+}
+
 .explorer-header {
   display: grid;
   grid-template-columns: 3fr 1fr 1.5fr 1fr;
@@ -300,6 +328,30 @@ body {
   font-weight: 600;
   border-bottom: 1px solid var(--border-color);
   letter-spacing: 0.02em;
+}
+
+.header-sort-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
+}
+
+.header-sort-btn:hover {
+  color: var(--text-primary);
+}
+
+.header-sort-indicator {
+  font-size: 10px;
+  opacity: 0.8;
 }
 
 .file-item {

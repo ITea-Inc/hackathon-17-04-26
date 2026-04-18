@@ -1,13 +1,74 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import FileItem from './FileItem';
 
 const FileExplorer = ({ items, onSyncChange, onFolderClick, accountId, onRefresh, getSyncInfo, pinnedPaths, onPinToggle }) => {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState('name');
+  const [sortDirection, setSortDirection] = useState('asc');
+  const nameCollator = useMemo(() => new Intl.Collator(undefined, { sensitivity: 'base' }), []);
+
+  const handleSortClick = (field) => {
+    if (sortBy === field) {
+      setSortDirection(prev => (prev === 'asc' ? 'desc' : 'asc'));
+      return;
+    }
+
+    setSortBy(field);
+    setSortDirection('asc');
+  };
+
+  const visibleItems = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    const filtered = query
+      ? items.filter(item => (item.name || '').toLowerCase().includes(query))
+      : items;
+
+    const sorted = [...filtered].sort((a, b) => {
+      if (a.directory !== b.directory) return a.directory ? -1 : 1;
+
+      let result = 0;
+      if (sortBy === 'name') {
+        result = nameCollator.compare(a.name || '', b.name || '');
+      } else if (sortBy === 'size') {
+        result = (a.size || 0) - (b.size || 0);
+      } else if (sortBy === 'date') {
+        const aDate = a.lastModified ? Date.parse(a.lastModified) : 0;
+        const bDate = b.lastModified ? Date.parse(b.lastModified) : 0;
+        result = aDate - bDate;
+      }
+
+      return sortDirection === 'asc' ? result : -result;
+    });
+
+    return sorted;
+  }, [items, searchQuery, sortBy, sortDirection, nameCollator]);
+
+  const sortIndicator = (field) => {
+    if (sortBy !== field) return '↕';
+    return sortDirection === 'asc' ? '↑' : '↓';
+  };
+
   return (
     <div className="explorer-container">
+      <div className="explorer-toolbar">
+        <input
+          className="explorer-search"
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Поиск в текущей папке..."
+        />
+      </div>
       <div className="explorer-header">
-        <div className="header-name">Имя</div>
-        <div className="header-size">Размер</div>
-        <div className="header-modified">Изменён</div>
+        <button type="button" className="header-sort-btn" onClick={() => handleSortClick('name')}>
+          Имя <span className="header-sort-indicator">{sortIndicator('name')}</span>
+        </button>
+        <button type="button" className="header-sort-btn" onClick={() => handleSortClick('size')}>
+          Размер <span className="header-sort-indicator">{sortIndicator('size')}</span>
+        </button>
+        <button type="button" className="header-sort-btn" onClick={() => handleSortClick('date')}>
+          Изменён <span className="header-sort-indicator">{sortIndicator('date')}</span>
+        </button>
         <div className="header-sync" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           Синхр.
           {onRefresh && (
@@ -23,14 +84,14 @@ const FileExplorer = ({ items, onSyncChange, onFolderClick, accountId, onRefresh
         </div>
       </div>
       <div className="explorer-list">
-        {items.length === 0 && (
+        {visibleItems.length === 0 && (
           <div style={{ padding: '2rem', color: 'var(--text-secondary)', textAlign: 'center', fontSize: 13 }}>
-            {accountId ? 'Папка пуста' : 'Подключите аккаунт в разделе «Аккаунты»'}
+            {!accountId ? 'Подключите аккаунт в разделе «Аккаунты»' : items.length === 0 ? 'Папка пуста' : 'Ничего не найдено'}
           </div>
         )}
-        {items.map((item, index) => (
+        {visibleItems.map((item) => (
           <FileItem
-            key={index}
+            key={item.fullPath}
             {...item}
             onSyncChange={onSyncChange}
             onFolderClick={onFolderClick}
