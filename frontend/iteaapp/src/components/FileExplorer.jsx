@@ -5,6 +5,7 @@ const FileExplorer = ({ items, onSyncChange, onFolderClick, accountId, onRefresh
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('name');
   const [sortDirection, setSortDirection] = useState('asc');
+  const nameCollator = useMemo(() => new Intl.Collator(undefined, { sensitivity: 'base' }), []);
 
   const handleSortClick = (field) => {
     if (sortBy === field) {
@@ -27,7 +28,7 @@ const FileExplorer = ({ items, onSyncChange, onFolderClick, accountId, onRefresh
 
       let result = 0;
       if (sortBy === 'name') {
-        result = (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' });
+        result = nameCollator.compare(a.name || '', b.name || '');
       } else if (sortBy === 'size') {
         result = (a.size || 0) - (b.size || 0);
       } else if (sortBy === 'date') {
@@ -40,7 +41,7 @@ const FileExplorer = ({ items, onSyncChange, onFolderClick, accountId, onRefresh
     });
 
     return sorted;
-  }, [items, searchQuery, sortBy, sortDirection]);
+  }, [items, searchQuery, sortBy, sortDirection, nameCollator]);
 
   const sortIndicator = (field) => {
     if (sortBy !== field) return '↕';
