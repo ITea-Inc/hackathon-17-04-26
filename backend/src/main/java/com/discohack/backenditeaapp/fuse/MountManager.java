@@ -87,15 +87,12 @@ public class MountManager {
             log.info("Аккаунт {} размонтирован", accountId);
         } catch (Exception e) {
             log.error("Ошибка размонтирования {}: {}", accountId, e.getMessage());
-            if (mountPoint != null) forceUmount(mountPoint);
         }
+
         if (mountPoint != null) {
-            try {
-                Files.deleteIfExists(mountPoint);
-                log.info("Папка монтирования удалена: {}", mountPoint);
-            } catch (IOException e) {
-                log.warn("Не удалось удалить папку {}: {}", mountPoint, e.getMessage());
-            }
+            // Гарантируем размонтирование через fusermount перед удалением папки
+            forceUmount(mountPoint);
+            deleteMountPoint(mountPoint);
         }
     }
 
@@ -119,7 +116,23 @@ public class MountManager {
             Process p = new ProcessBuilder("fusermount", "-u", mountPoint.toString()).start();
             p.waitFor();
         } catch (Exception e) {
-            log.error("Не удалось принудительно размонтировать {}: {}", mountPoint, e.getMessage());
+            log.warn("fusermount -u для {}: {}", mountPoint, e.getMessage());
+        }
+    }
+
+    private void deleteMountPoint(Path mountPoint) {
+        for (int attempt = 1; attempt <= 5; attempt++) {
+            try {
+                Files.deleteIfExists(mountPoint);
+                log.info("Папка монтирования удалена: {}", mountPoint);
+                return;
+            } catch (IOException e) {
+                if (attempt == 5) {
+                    log.warn("Не удалось удалить папку {} после {} попыток: {}", mountPoint, attempt, e.getMessage());
+                } else {
+                    try { Thread.sleep(200); } catch (InterruptedException ignored) {}
+                }
+            }
         }
     }
 
