@@ -58,7 +58,6 @@
     "linux": {
       "icon": "public/images/logo.png",
       "target": [
-        "deb",
         "rpm"
       ],
       "maintainer": "ITea Team <support@itea.inc>",
