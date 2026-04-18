@@ -17,14 +17,10 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * NextCloudProvider — реализация CloudProvider для NextCloud через WebDAV (библиотека Sardine).
+ * Реализация {@link CloudProvider} для NextCloud.
  *
- * NextCloud предоставляет стандартный WebDAV endpoint:
- *   https://<server>/remote.php/webdav/<path>
- *
- * Sardine — Java WebDAV-клиент, работает поверх Apache HttpClient.
- * Поддерживает все нужные операции: PROPFIND (список), GET (скачать),
- * PUT (загрузить), DELETE, MKCOL (создать папку), MOVE (переместить).
+ * Взаимодействует с NextCloud через WebDAV endpoint: {@code /remote.php/webdav}
+ * с использованием библиотеки Sardine.
  */
 @Slf4j
 public class NextCloudProvider implements CloudProvider {

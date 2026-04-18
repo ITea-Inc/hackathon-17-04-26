@@ -9,18 +9,8 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 /**
- * RuleEngine — движок разрешения политики синхронизации.
- *
- * Для заданного аккаунта и пути файла определяет, какая политика применяется.
- *
- * Алгоритм разрешения:
- *   1. Загружаем все правила для аккаунта, сортированные по priority DESC.
- *   2. Перебираем правила. Первое совпадающее (точное или префиксное) — победитель.
- *   3. Если ни одно правило не совпало — возвращаем ON_DEMAND (дефолт).
- *
- * Примеры соответствия:
- *   rule.pathPattern = "/Documents"  → совпадает с "/Documents", "/Documents/file.txt"
- *   rule.pathPattern = "/report.pdf" → совпадает только с "/report.pdf"
+ * Сервис разрешения политик синхронизации для файлов.
+ * Определяет применяемую политику на основе наибольшего приоритета и совпадения пути.
  */
 @Slf4j
 @Service
@@ -30,11 +20,7 @@ public class RuleEngine {
     private final SyncRuleRepository ruleRepository;
 
     /**
-     * Определить политику синхронизации для файла.
-     *
-     * @param accountId ID аккаунта
-     * @param path      полный путь файла (например, "/Documents/report.pdf")
-     * @return политика синхронизации
+     * Разрешает политику синхронизации для указанного пути и аккаунта.
      */
     public SyncPolicy resolvePolicy(String accountId, String path) {
         List<SyncRuleEntity> rules = ruleRepository.findByAccountIdOrderByPriorityDesc(accountId);
@@ -51,12 +37,7 @@ public class RuleEngine {
     }
 
     /**
-     * Проверяет, применяется ли шаблон правила к пути файла.
-     *
-     * Поддерживаются два вида совпадений:
-     *   - Точное совпадение: pathPattern == path
-     *   - Префиксное совпадение: path начинается с pathPattern + "/"
-     *     (применяется ко всему содержимому папки)
+     * Проверяет соответствие пути заданному шаблону (точное или префиксное).
      */
     private boolean matches(String pathPattern, String path) {
         if (pathPattern.equals(path)) {

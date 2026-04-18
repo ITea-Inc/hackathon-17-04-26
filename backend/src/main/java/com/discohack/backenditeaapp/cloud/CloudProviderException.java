@@ -1,15 +1,8 @@
 package com.discohack.backenditeaapp.cloud;
 
 /**
- * CloudProviderException — кастомное исключение для ошибок работы с облаком.
- *
- * Зачем кастомное исключение? Потому что нам нужно различать:
- *   - Файл не найден → FUSE должен вернуть ENOENT (errno = -2)
- *   - Нет сети       → FUSE должен вернуть EIO    (errno = -5)
- *   - Нет прав       → FUSE должен вернуть EACCES (errno = -13)
- *
- * RuntimeException — unchecked исключение. Не надо писать throws CloudProviderException
- * в каждом методе, где оно может возникнуть. Это удобно для кода FUSE-слоя.
+ * Исключение для ошибок при работе с облачными провайдерами.
+ * Содержит {@link ErrorType} для корректного маппинга ошибок на FUSE-коды (errno).
  */
 public class CloudProviderException extends RuntimeException {
 
@@ -46,10 +39,7 @@ public class CloudProviderException extends RuntimeException {
     }
 
     /**
-     * Конвертирует тип ошибки в FUSE errno код (отрицательное число).
-     * CloudFileSystem вызывает этот метод при перехвате исключения.
-     *
-     * Значения errno — стандарт POSIX, используется в Linux.
+     * Возвращает POSIX errno код ошибки для FUSE.
      */
     public int toFuseErrorCode() {
         return switch (errorType) {

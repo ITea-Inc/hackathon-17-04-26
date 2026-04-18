@@ -18,13 +18,7 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * AccountController — REST API для управления облачными аккаунтами.
- *
- * Endpoints:
- *   POST   /api/accounts/yandex        — добавить Яндекс аккаунт (токен напрямую)
- *   GET    /api/accounts               — список всех аккаунтов
- *   DELETE /api/accounts/{id}          — удалить аккаунт
- *   GET    /api/accounts/{id}/status   — статус аккаунта (онлайн/офлайн)
+ * REST API для управления облачными аккаунтами.
  */
 @Slf4j
 @RestController
@@ -97,8 +91,7 @@ public class AccountController {
     }
 
     /**
-     * POST /api/accounts/yandex
-     * Добавить Яндекс.Диск аккаунт с готовым токеном.
+     * Добавляет Яндекс.Диск аккаунт с готовым OAuth токеном.
      */
     @PostMapping("/yandex")
     public ResponseEntity<AccountInfo> addYandexAccount(@RequestBody AddYandexRequest request) {
@@ -132,8 +125,7 @@ public class AccountController {
     }
 
     /**
-     * POST /api/accounts/nextcloud
-     * Добавить NextCloud аккаунт.
+     * Добавляет NextCloud аккаунт.
      */
     @PostMapping("/nextcloud")
     public ResponseEntity<AccountInfo> addNextCloudAccount(@RequestBody AddNextCloudRequest request) {
@@ -159,8 +151,7 @@ public class AccountController {
             .provider("nextcloud")
             .username(request.username())
             .serverUrl(request.serverUrl())
-            // На хакатоне пароль хранится в поле accessToken.
-            // В продакшене необходимо шифрование (например, Spring Security PasswordEncoder).
+            // TODO: реализовать безопасное хранение паролей (напр. PasswordEncoder)
             .accessToken(request.password())
             .mountPath(mountPath)
             .build();
@@ -172,8 +163,7 @@ public class AccountController {
     }
 
     /**
-     * GET /api/accounts
-     * Список всех подключённых аккаунтов.
+     * Возвращает список всех подключенных аккаунтов.
      */
     @GetMapping
     public ResponseEntity<List<AccountInfo>> listAccounts() {
@@ -190,8 +180,7 @@ public class AccountController {
     }
 
     /**
-     * DELETE /api/accounts/{id}
-     * Удалить аккаунт и размонтировать папку.
+     * Удаляет аккаунт и размонтирует папку.
      */
     @DeleteMapping("/{id}")
     public ResponseEntity<Map<String, String>> removeAccount(@PathVariable String id) {
@@ -205,8 +194,7 @@ public class AccountController {
     }
 
     /**
-     * GET /api/accounts/{id}/status
-     * Текущий статус аккаунта.
+     * Возвращает текущий статус подключения аккаунта.
      */
     @GetMapping("/{id}/status")
     public ResponseEntity<Map<String, Object>> getAccountStatus(@PathVariable String id) {

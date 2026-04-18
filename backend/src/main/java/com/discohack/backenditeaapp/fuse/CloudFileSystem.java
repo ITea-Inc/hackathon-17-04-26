@@ -25,22 +25,9 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * CloudFileSystem — реализация виртуальной файловой системы через FUSE.
- *
- * FUSE (Filesystem in Userspace) — механизм Linux, позволяющий создавать
- * файловые системы в пользовательском пространстве (без написания драйверов ядра).
- *
- * Как это работает:
- * 1. MountManager монтирует эту ФС в ~/CloudMount/yandex
- * 2. Когда Nautilus открывает ~/CloudMount/yandex — ядро Linux вызывает наш readdir()
- * 3. Когда пользователь открывает файл — ядро вызывает наш open() и read()
- * 4. Когда сохраняет файл — ядро вызывает write() и flush()
- *
- * FuseStubFS — базовый класс из jnr-fuse, реализует все методы заглушками.
- * Мы переопределяем только нужные.
- *
- * КРИТИЧЕСКИ ВАЖНО: все методы FUSE должны возвращать 0 при успехе
- * и отрицательный errno-код при ошибке (например, -ErrorCodes.ENOENT()).
+ * Реализация виртуальной файловой системы FUSE для облачного провайдера.
+ * Обертка над {@link CloudProvider} для интеграции с файловой системой Linux.
+ * Все методы FUSE возвращают 0 при успехе или отрицательный код ошибки (errno).
  */
 @Slf4j
 public class CloudFileSystem extends FuseStubFS {
@@ -70,23 +57,12 @@ public class CloudFileSystem extends FuseStubFS {
         this.fileCache = fileCache;
     }
 
-    // ════════════════════════════════════════════════════
-    // getattr — получить метаданные файла/папки
-    // ════════════════════════════════════════════════════
+
 
     /**
-     * getattr вызывается ОЧЕНЬ часто — при каждом обращении к файлу.
-     * Например, при ls Nautilus вызывает getattr для каждого файла в папке.
-     * Поэтому здесь критичен кеш.
+     * Возвращает метаданные файла или директории (stat).
      *
-     * stat — структура с метаданными файла в Linux:
-     *   st_mode  — тип (файл/папка) + права доступа
-     *   st_nlink — количество жёстких ссылок (для папок = 2)
-     *   st_size  — размер в байтах
-     *   st_atime — время последнего доступа
-     *   st_mtime — время последнего изменения
-     *
-     * @return 0 при успехе, -ENOENT если не найдено
+     * @return 0 при успехе, отрицательный код ошибки (напр. -ENOENT) при сбое.
      */
     @Override
     public int getattr(String path, FileStat stat) {
@@ -141,20 +117,10 @@ public class CloudFileSystem extends FuseStubFS {
         }
     }
 
-    // ════════════════════════════════════════════════════
-    // readdir — получить список файлов в папке
-    // ════════════════════════════════════════════════════
+
 
     /**
-     * readdir вызывается когда Nautilus/ls открывает папку.
-     * Мы должны вызвать filler.apply() для каждого файла в папке.
-     *
-     * filler — callback функция FUSE. Вызываем её для каждой записи:
-     *   filler.apply(buf, "filename", null, 0)
-     *   null — мы не заполняем stat здесь (FUSE сам вызовет getattr),
-     *   0    — смещение (0 = без pagination)
-     *
-     * @return 0 при успехе
+     * Возвращает список файлов и директорий внутри указанного пути.
      */
     @Override
     public int readdir(String path, Pointer buf, FuseFillDir filler,
@@ -193,21 +159,10 @@ public class CloudFileSystem extends FuseStubFS {
         }
     }
 
-    // ════════════════════════════════════════════════════
-    // read — прочитать содержимое файла
-    // ════════════════════════════════════════════════════
+
 
     /**
-     * read вызывается когда программа читает файл (cat, open в редакторе, и т.д.).
-     *
-     * buf    — буфер, куда нужно записать прочитанные байты
-     * size   — сколько байт нужно прочитать
-     * offset — с какой позиции в файле читать
-     *
-     * FUSE может вызывать read несколько раз для одного файла (chunk by chunk).
-     * Это нормально — offset будет увеличиваться с каждым вызовом.
-     *
-     * @return количество прочитанных байт, или отрицательный errno-код
+     * Читает содержимое файла по указанному смещению.
      */
     @Override
     public int read(String path, Pointer buf, @size_t long size,
@@ -263,14 +218,10 @@ public class CloudFileSystem extends FuseStubFS {
         }
     }
 
-    // ════════════════════════════════════════════════════
-    // write / flush — запись файла
-    // ════════════════════════════════════════════════════
+
 
     /**
-     * write вызывается когда программа записывает данные в файл.
-     * Данные пишутся кусками — мы их накапливаем в writeBuffers.
-     * Реальная загрузка происходит в flush().
+     * Записывает часть данных файла во внутренний буфер (до вызова flush).
      */
     @Override
     public int write(String path, Pointer buf, @size_t long size,
@@ -307,8 +258,7 @@ public class CloudFileSystem extends FuseStubFS {
     }
 
     /**
-     * flush вызывается при закрытии файла (после последнего write).
-     * Здесь мы реально загружаем файл в облако, в том числе пустые файлы.
+     * Загружает накопленный буфер файла в облачное хранилище при закрытии дескриптора.
      */
     @Override
     public int flush(String path, FuseFileInfo fi) {
@@ -323,8 +273,7 @@ public class CloudFileSystem extends FuseStubFS {
     }
 
     /**
-     * release вызывается когда последний файловый дескриптор закрыт.
-     * Используется как резервный путь загрузки, если flush() был пропущен.
+     * Резервное освобождение дескриптора: загружает данные, если flush() не был вызван.
      */
     @Override
     public int release(String path, FuseFileInfo fi) {
@@ -372,14 +321,9 @@ public class CloudFileSystem extends FuseStubFS {
         }
     }
 
-    // ════════════════════════════════════════════════════
-    // CRUD операции (Фаза 3)
-    // ════════════════════════════════════════════════════
 
-    /**
-     * unlink — удалить файл.
-     * Вызывается командой rm или через Nautilus.
-     */
+
+    /** Удаляет файл. */
     @Override
     public int unlink(String path) {
         log.debug("unlink: {}", path);
@@ -392,10 +336,7 @@ public class CloudFileSystem extends FuseStubFS {
         }
     }
 
-    /**
-     * mkdir — создать папку.
-     * mode — права доступа (обычно 0755 — мы его игнорируем, облако само решает).
-     */
+    /** Создает директорию. */
     @Override
     public int mkdir(String path, long mode) {
         log.debug("mkdir: {}", path);
@@ -408,9 +349,7 @@ public class CloudFileSystem extends FuseStubFS {
         }
     }
 
-    /**
-     * rmdir — удалить папку.
-     */
+    /** Удаляет директорию. */
     @Override
     public int rmdir(String path) {
         log.debug("rmdir: {}", path);
@@ -423,10 +362,7 @@ public class CloudFileSystem extends FuseStubFS {
         }
     }
 
-    /**
-     * rename — переименовать/переместить файл или папку.
-     * Вызывается при mv и при drag & drop в Nautilus.
-     */
+    /** Переименовывает или перемещает файл/директорию. */
     @Override
     public int rename(String oldpath, String newpath) {
         log.debug("rename: {} → {}", oldpath, newpath);
@@ -440,10 +376,7 @@ public class CloudFileSystem extends FuseStubFS {
         }
     }
 
-    /**
-     * create — создать новый пустой файл.
-     * flags — флаги открытия файла (O_CREAT и т.д.) — игнорируем.
-     */
+    /** Создает новый пустой файл. */
     @Override
     public int create(String path, long mode, FuseFileInfo fi) {
         log.debug("create: {}", path);
@@ -452,15 +385,9 @@ public class CloudFileSystem extends FuseStubFS {
         return 0;
     }
 
-    // ════════════════════════════════════════════════════
-    // ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ
-    // ════════════════════════════════════════════════════
 
-    /**
-     * Заполнить stat для папки.
-     * S_IFDIR — константа типа "директория"
-     * 0755    — права: владелец rwx, группа r-x, остальные r-x
-     */
+
+    /** Устанавливает атрибуты директории (S_IFDIR, 0755). */
     private void fillDirStat(FileStat stat, Instant mtime) {
         stat.st_mode.set(FileStat.S_IFDIR | 0755);
         stat.st_nlink.set(2);  // Минимум 2 ссылки у любой папки (. и ..)
@@ -470,11 +397,7 @@ public class CloudFileSystem extends FuseStubFS {
         stat.st_atim.tv_sec.set(epochSeconds);
     }
 
-    /**
-     * Заполнить stat для файла.
-     * S_IFREG — константа типа "обычный файл"
-     * 0644    — права: владелец rw-, группа r--, остальные r--
-     */
+    /** Устанавливает атрибуты обычного файла (S_IFREG, 0644). */
     private void fillFileStat(FileStat stat, long size, Instant mtime) {
         stat.st_mode.set(FileStat.S_IFREG | 0644);
         stat.st_nlink.set(1);

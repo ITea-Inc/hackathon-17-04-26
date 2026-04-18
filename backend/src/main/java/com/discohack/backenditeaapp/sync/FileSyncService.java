@@ -18,14 +18,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
- * FileSyncService — фоновая загрузка файлов в дисковый кэш.
- *
- * Используется двумя путями:
- *  - ALWAYS: вызывается из RulesController сразу при сохранении правила
- *  - SCHEDULED: вызывается из ScheduledSyncJob по расписанию
- *
- * Для каждого пути скачивает все файлы (не рекурсивно — только прямые потомки),
- * сохраняет в FileCacheManager и рассылает WebSocket-события.
+ * Сервис фоновой загрузки файлов в локальный кэш (диск).
  */
 @Slf4j
 @Service
@@ -36,13 +29,11 @@ public class FileSyncService {
     private final CloudProviderRegistry providerRegistry;
     private final EventBroadcaster broadcaster;
 
-    // Пул из 3 потоков: несколько аккаунтов/папок могут синхронизироваться параллельно,
-    // но не перегружаем сеть.
+    /** Тред-пул для фоновой загрузки. */
     private final ExecutorService executor = Executors.newFixedThreadPool(3);
 
     /**
-     * Запускает синхронизацию пути в фоновом потоке.
-     * Возвращает управление немедленно.
+     * Асинхронно запускает синхронизацию указанного пути.
      */
     public void syncAsync(String accountId, String path) {
         providerRegistry.findById(accountId).ifPresentOrElse(
@@ -52,7 +43,7 @@ public class FileSyncService {
     }
 
     /**
-     * Синхронный вариант — для вызова из ScheduledSyncJob в уже фоновом потоке.
+     * Синхронно выполняет синхронизацию указанного пути.
      */
     public void syncSync(CloudProvider provider, String accountId, String path) {
         syncPath(provider, accountId, path);

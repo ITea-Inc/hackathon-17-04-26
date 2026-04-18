@@ -19,11 +19,7 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * ScheduledSyncJob — выполняет синхронизацию по расписанию.
- *
- * Каждую минуту проверяет все правила с политикой SCHEDULED.
- * Для каждого правила смотрит на cron-выражение и время последнего запуска.
- * Если пришло время — запускает синхронизацию для этой папки.
+ * Фоновое задание для выполнения синхронизации по расписанию (cron).
  */
 @Slf4j
 @Service
@@ -35,13 +31,11 @@ public class ScheduledSyncJob {
     private final EventBroadcaster broadcaster;
     private final FileSyncService fileSyncService;
 
-    // Время последней синхронизации для каждого правила (ruleId → Instant)
-    // Хранится в памяти — при рестарте все правила синхронизируются заново
+    /** Хранилище времени последней синхронизации (в памяти). */
     private final ConcurrentHashMap<String, Instant> lastSyncTime = new ConcurrentHashMap<>();
 
     /**
-     * Основной тик планировщика — каждую минуту.
-     * @EnableScheduling в BackendIteaAppApplication активирует этот метод.
+     * Основной цикл планировщика (выполняется каждую минуту).
      */
     @Scheduled(fixedDelay = 60_000)
     public void tick() {
@@ -60,10 +54,7 @@ public class ScheduledSyncJob {
     }
 
     /**
-     * Проверяет, нужно ли сейчас запускать синхронизацию для правила.
-     *
-     * Логика: берём время последнего запуска (или начало эпохи если ни разу не запускали),
-     * вычисляем следующий момент по cron-выражению, смотрим не наступил ли он.
+     * Проверяет наступление времени синхронизации на основе cron-выражения.
      */
     private boolean shouldRunNow(SyncRuleEntity rule, Instant now) {
         String cronExpr = rule.getCronExpression();
@@ -90,10 +81,7 @@ public class ScheduledSyncJob {
     }
 
     /**
-     * Выполняет синхронизацию для одного правила:
-     * — находит провайдер аккаунта
-     * — листит файлы по pathPattern
-     * — шлёт WebSocket-событие фронту
+     * Запускает синхронизацию для указанного правила.
      */
     private void performSync(SyncRuleEntity rule) {
         log.info("Scheduled sync: аккаунт={} путь={} cron={}",

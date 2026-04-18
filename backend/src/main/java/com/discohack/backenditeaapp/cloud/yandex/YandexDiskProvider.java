@@ -19,18 +19,9 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * YandexDiskProvider — реализация CloudProvider для Яндекс.Диска.
- *
- * Работает через REST API Яндекс.Диска v1:
- * https://yandex.ru/dev/disk/api/reference/
- *
- * @Slf4j (Lombok) — автоматически создаёт поле:
- *   private static final Logger log = LoggerFactory.getLogger(YandexDiskProvider.class);
- *   Потом можно писать: log.info("...", args)
- *
- * ВАЖНО: этот класс НЕ является Spring @Service.
- * Он создаётся динамически через CloudProviderRegistry при добавлении аккаунта.
- * Один экземпляр провайдера = один аккаунт (один токен).
+ * Реализация {@link CloudProvider} для Яндекс.Диска.
+ * Взаимодействует с REST API Яндекс.Диска v1.
+ * Инициализируется динамически для каждого аккаунта с индивидуальным OAuth-токеном.
  */
 @Slf4j
 public class YandexDiskProvider implements CloudProvider {
@@ -64,19 +55,7 @@ public class YandexDiskProvider implements CloudProvider {
     }
 
     /**
-     * Получить список файлов в папке через API:
-     * GET /v1/disk/resources?path=<path>&fields=_embedded
-     *
-     * Яндекс возвращает JSON вида:
-     * {
-     *   "_embedded": {
-     *     "items": [
-     *       { "name": "file.txt", "path": "disk:/file.txt", "type": "file",
-     *         "size": 1234, "modified": "2024-01-01T00:00:00+00:00" },
-     *       { "name": "folder", "path": "disk:/folder", "type": "dir" }
-     *     ]
-     *   }
-     * }
+     * Возвращает список файлов в указанной директории через GET /v1/disk/resources.
      */
     @Override
     public List<CloudFile> listDirectory(String path) {
@@ -128,14 +107,8 @@ public class YandexDiskProvider implements CloudProvider {
     }
 
     /**
-     * Скачать файл (или его кусок) через download URL.
-     *
-     * Яндекс не отдаёт файлы напрямую — сначала нужно получить
-     * временный URL скачивания, потом скачать по нему.
-     *
-     * Шаги:
-     * 1. GET /v1/disk/resources/download?path=<path> → { "href": "https://..." }
-     * 2. GET <href> с заголовком Range: bytes=<offset>-<offset+length-1>
+     * Скачивает файл (или его фрагмент). Сначала запрашивает временный URL,
+     * затем загружает данные с поддержкой заголовка Range.
      */
     @Override
     public InputStream downloadFile(String path, long offset, long length) {
@@ -183,11 +156,7 @@ public class YandexDiskProvider implements CloudProvider {
     }
 
     /**
-     * Загрузить файл в Яндекс.Диск.
-     *
-     * Шаги (как у скачивания, но наоборот):
-     * 1. GET /v1/disk/resources/upload?path=<path>&overwrite=true → { "href": "..." }
-     * 2. PUT <href> с телом файла
+     * Загружает файл в Яндекс.Диск.
      */
     @Override
     public void uploadFile(String path, InputStream content, long size) {
@@ -361,9 +330,7 @@ public class YandexDiskProvider implements CloudProvider {
         }
     }
 
-    // ════════════════════════════════════════════════════
-    // ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ
-    // ════════════════════════════════════════════════════
+
 
     /**
      * Конвертирует наш путь (начинается с /) в формат Яндекса (disk:/).

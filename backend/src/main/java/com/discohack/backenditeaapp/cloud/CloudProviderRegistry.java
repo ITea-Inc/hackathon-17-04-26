@@ -8,20 +8,16 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * CloudProviderRegistry — реестр всех активных облачных провайдеров.
+ * Реестр активных облачных провайдеров.
  *
- * Это Service-бин (singleton), который хранит все экземпляры CloudProvider.
- * CloudFileSystem и другие компоненты обращаются сюда чтобы найти нужный провайдер.
- *
- * Аналогия: это как телефонная книга. Вместо того чтобы хранить ссылку на
- * провайдер в каждом месте, все спрашивают реестр: "дай мне провайдер для яндекса".
+ * Хранит экземпляры {@link CloudProvider}. Используется компонентами системы
+ * для получения доступа к провайдерам по идентификатору аккаунта.
  */
 @Slf4j
 @Service
 public class CloudProviderRegistry {
 
-    // ConcurrentHashMap — потокобезопасно для конкурентного доступа
-    // Ключ: accountId (UUID), Значение: CloudProvider
+    /** Хранилище провайдеров (ключ: accountId, значение: CloudProvider) */
     private final ConcurrentHashMap<String, CloudProvider> providers = new ConcurrentHashMap<>();
 
     /**

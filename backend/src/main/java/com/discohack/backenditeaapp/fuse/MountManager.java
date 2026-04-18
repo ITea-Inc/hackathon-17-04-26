@@ -27,14 +27,12 @@ public class MountManager {
     private final RuleEngine ruleEngine;
     private final FileCacheManager fileCacheManager;
 
-    // Ключ — accountId, чтобы несколько аккаунтов одного провайдера
-    // монтировались каждый в свою папку.
+    /** Мапа активных FUSE соединений. */
     private final ConcurrentHashMap<String, CloudFileSystem> activeMounts = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, Path> mountPaths = new ConcurrentHashMap<>();
 
     /**
-     * Монтирует аккаунт в папку "{providerName}-{username}".
-     * Например: "yandex-ivan.petrov", "nextcloud-admin".
+     * Монтирует провайдер аккаунта в файловую систему.
      */
     public void mountProvider(CloudProvider provider, String accountId, String username) {
         if (activeMounts.containsKey(accountId)) {

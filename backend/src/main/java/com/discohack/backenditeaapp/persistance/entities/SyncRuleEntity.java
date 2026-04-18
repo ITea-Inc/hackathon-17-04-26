@@ -7,13 +7,8 @@ import lombok.*;
 import java.time.Instant;
 
 /**
- * SyncRuleEntity — правило синхронизации для файла или папки.
- *
- * Правило привязано к конкретному аккаунту ({@code accountId}) и пути ({@code pathPattern}).
- * Определяет политику синхронизации: ALWAYS, ON_DEMAND, MANUAL или SCHEDULED.
- *
- * При разрешении политики для файла движок ({@link com.discohack.backenditeaapp.domain.RuleEngine})
- * выбирает правило с наибольшим {@code priority}, чей {@code pathPattern} совпадает с путём.
+ * Сущность правила синхронизации.
+ * Содержит настройки политики синхронизации для конкретного пути в рамках аккаунта.
  */
 @Entity
 @Table(name = "sync_rules",
@@ -32,10 +27,7 @@ public class SyncRuleEntity {
     @Column(name = "account_id", nullable = false, length = 36)
     private String accountId;
 
-    /**
-     * Шаблон пути: точный путь или префикс папки.
-     * Примеры: "/Documents/report.pdf", "/Documents"
-     */
+    /** Шаблон пути (точный путь файла или префикс директории). */
     @Column(name = "path_pattern", nullable = false)
     private String pathPattern;
 
@@ -46,9 +38,7 @@ public class SyncRuleEntity {
     @Column(nullable = false)
     private int priority;
 
-    // Cron-выражение для политики SCHEDULED. Null для остальных политик.
-    // Формат Spring: "секунды минуты часы день_месяца месяц день_недели"
-    // Пример: "0 0 2 * * *" = каждый день в 02:00
+    /** Cron-выражение (используется только для политики SCHEDULED). */
     @Column(name = "cron_expression")
     private String cronExpression;
 

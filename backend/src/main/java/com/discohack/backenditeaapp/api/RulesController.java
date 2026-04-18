@@ -16,14 +16,7 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * RulesController — REST API для управления правилами синхронизации.
- *
- * Endpoints:
- *   GET    /api/rules?accountId=...           — все правила для аккаунта
- *   POST   /api/rules                         — создать или обновить правило (upsert по accountId+path)
- *   PUT    /api/rules/{id}                    — обновить правило по ID
- *   DELETE /api/rules/{id}                    — удалить правило
- *   GET    /api/rules/resolve?accountId=...&path=... — получить эффективную политику для пути
+ * REST API для управления правилами синхронизации.
  */
 @Slf4j
 @RestController
@@ -49,8 +42,7 @@ public class RulesController {
     ) {}
 
     /**
-     * GET /api/rules?accountId=...
-     * Список всех правил для аккаунта.
+     * Возвращает список всех правил для аккаунта.
      */
     @GetMapping
     public ResponseEntity<List<SyncRuleEntity>> listRules(
@@ -62,9 +54,7 @@ public class RulesController {
     }
 
     /**
-     * POST /api/rules
-     * Создать или обновить правило (upsert по accountId + pathPattern).
-     * Если правило для данного пути уже существует — обновляем политику и приоритет.
+     * Создает или обновляет правило (upsert по accountId + pathPattern).
      */
     @PostMapping
     public ResponseEntity<SyncRuleEntity> upsertRule(@RequestBody SyncRuleRequest request) {
@@ -104,13 +94,7 @@ public class RulesController {
     }
 
     /**
-     * POST /api/rules/presets
-     * Применить пресет — создать набор типовых правил одним запросом.
-     *
-     * Типы пресетов:
-     *   "documents_always"   — Documents/Документы всегда синхронизировать
-     *   "media_on_demand"    — Фото/Видео только по запросу
-     *   "backups_scheduled"  — Backup папка синхронизируется каждую ночь в 02:00
+     * Применяет пресет — создает набор типовых правил одним запросом.
      */
     @PostMapping("/presets")
     public ResponseEntity<?> applyPreset(@RequestBody PresetRequest request) {
@@ -169,8 +153,7 @@ public class RulesController {
     }
 
     /**
-     * PUT /api/rules/{id}
-     * Обновить политику и приоритет существующего правила.
+     * Обновляет политику и приоритет существующего правила.
      */
     @PutMapping("/{id}")
     public ResponseEntity<SyncRuleEntity> updateRule(
@@ -186,8 +169,7 @@ public class RulesController {
     }
 
     /**
-     * DELETE /api/rules/{id}
-     * Удалить правило.
+     * Удаляет правило.
      */
     @DeleteMapping("/{id}")
     public ResponseEntity<Map<String, String>> deleteRule(@PathVariable String id) {
@@ -200,9 +182,7 @@ public class RulesController {
     }
 
     /**
-     * GET /api/rules/resolve?accountId=...&path=...
-     * Определить эффективную политику синхронизации для конкретного файла.
-     * Используется фронтом для отображения текущего статуса синхронизации файла.
+     * Определяет эффективную политику синхронизации для конкретного файла.
      */
     @GetMapping("/resolve")
     public ResponseEntity<Map<String, String>> resolvePolicy(

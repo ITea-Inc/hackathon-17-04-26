@@ -8,21 +8,14 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 
 /**
- * SettingsController — REST API для настроек приложения.
- *
- * Хранит настройки в памяти (in-memory). Для хакатона этого достаточно;
- * при перезапуске настройки сбрасываются к дефолтам.
- *
- * Endpoints:
- * GET /api/settings — получить текущие настройки
- * PUT /api/settings — сохранить настройки
+ * REST API для управления настройками приложения.
+ * Примечание: Настройки хранятся в памяти (in-memory) и сбрасываются при перезапуске сервера.
  */
 @Slf4j
 @RestController
 @RequestMapping("/api/settings")
 public class SettingsController {
 
-    // Настройки хранятся в памяти
     @Getter
     private volatile String syncFrequency = "1d";
 
@@ -30,7 +23,6 @@ public class SettingsController {
     private volatile long cacheSizeBytes = 5_368_709_120L; // 5 ГБ по умолчанию
 
     /**
-     * GET /api/settings
      * Возвращает текущие настройки приложения.
      */
     @GetMapping
@@ -41,9 +33,8 @@ public class SettingsController {
     }
 
     /**
-     * PUT /api/settings
      * Обновляет настройки приложения.
-     * Принимает JSON с любыми из полей: syncFrequency, cacheSizeBytes.
+     * Принимает JSON с полями syncFrequency, cacheSizeBytes.
      */
     @PutMapping
     public synchronized ResponseEntity<Map<String, Object>> updateSettings(
