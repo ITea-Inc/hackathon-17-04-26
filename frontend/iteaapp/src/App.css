@@ -921,3 +921,38 @@ body {
   color: var(--text-primary);
   background: var(--hover-bg-strong);
 }
+/* ── Pin button ── */
+.pin-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  flex-shrink: 0;
+  margin-left: 4px;
+  transition: background 0.15s, color 0.15s;
+}
+
+.file-item:hover .pin-btn,
+.pin-btn--active {
+  display: flex;
+}
+
+.pin-btn:hover {
+  background: var(--hover-bg-strong);
+  color: var(--text-primary);
+}
+
+.pin-btn--active {
+  color: #f0a500;
+}
+
+.pin-btn--active:hover {
+  color: #d49000;
+}

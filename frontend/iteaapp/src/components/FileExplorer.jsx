@@ -1,7 +1,7 @@
 import React from 'react';
 import FileItem from './FileItem';
 
-const FileExplorer = ({ items, onSyncChange, onFolderClick, accountId, onRefresh, getSyncInfo }) => {
+const FileExplorer = ({ items, onSyncChange, onFolderClick, accountId, onRefresh, getSyncInfo, pinnedPaths, onPinToggle }) => {
   return (
     <div className="explorer-container">
       <div className="explorer-header">
@@ -35,6 +35,8 @@ const FileExplorer = ({ items, onSyncChange, onFolderClick, accountId, onRefresh
             onSyncChange={onSyncChange}
             onFolderClick={onFolderClick}
             syncInfo={getSyncInfo ? getSyncInfo(accountId, item.fullPath) : null}
+            isPinned={pinnedPaths ? pinnedPaths.has(item.fullPath) : false}
+            onPinToggle={onPinToggle}
           />
         ))}
       </div>

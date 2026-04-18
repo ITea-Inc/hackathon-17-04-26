@@ -18,6 +18,7 @@ function App() {
   const [selectedAccountId, setSelectedAccountId] = useState(null);
   const [activeTab, setActiveTab] = useState('accounts');
   const [syncFrequency, setSyncFrequency] = useState('1d');
+  const [pinnedPaths, setPinnedPaths] = useState(new Set());
 
   const { isSyncing, notifications, dismissNotification, getSyncInfo } = useSyncEvents();
 
@@ -37,6 +38,33 @@ function App() {
     fetch(`${API_BASE}/api/rules?accountId=${selectedAccountId}`)
       .then(res => res.json())
       .then(data => setRules(data))
+      .catch(err => console.error(err));
+  };
+
+  const fetchPinned = () => {
+    if (!selectedAccountId) return;
+    fetch(`${API_BASE}/api/pinned?accountId=${selectedAccountId}`)
+      .then(res => res.json())
+      .then(data => setPinnedPaths(new Set(data)))
+      .catch(err => console.error(err));
+  };
+
+  const handlePinToggle = (filePath, shouldPin) => {
+    if (!selectedAccountId) return;
+    const method = shouldPin ? 'POST' : 'DELETE';
+    fetch(`${API_BASE}/api/pinned`, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ accountId: selectedAccountId, path: filePath })
+    })
+      .then(res => { if (!res.ok) throw new Error('Failed'); })
+      .then(() => {
+        setPinnedPaths(prev => {
+          const next = new Set(prev);
+          if (shouldPin) next.add(filePath); else next.delete(filePath);
+          return next;
+        });
+      })
       .catch(err => console.error(err));
   };
 
@@ -71,6 +99,7 @@ function App() {
 
   useEffect(() => {
     fetchRules();
+    fetchPinned();
   }, [selectedAccountId]);
 
   useEffect(() => {
@@ -160,6 +189,8 @@ function App() {
                 accountId={selectedAccountId}
                 onRefresh={refreshFiles}
                 getSyncInfo={getSyncInfo}
+                pinnedPaths={pinnedPaths}
+                onPinToggle={handlePinToggle}
               />
             )}
           </div>

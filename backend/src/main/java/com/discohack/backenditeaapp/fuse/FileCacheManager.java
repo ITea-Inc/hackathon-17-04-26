@@ -1,6 +1,7 @@
 package com.discohack.backenditeaapp.fuse;
 
 import com.discohack.backenditeaapp.api.SettingsController;
+import com.discohack.backenditeaapp.persistance.repository.PinnedFileRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -23,6 +24,7 @@ public class FileCacheManager {
 
     private final Path cacheRoot;
     private final SettingsController settingsController;
+    private final PinnedFileRepository pinnedFileRepository;
 
     // ключ: "accountId:путь" → запись с локальным путём, размером, временем доступа
     private final ConcurrentHashMap<String, CacheEntry> index = new ConcurrentHashMap<>();
@@ -33,8 +35,10 @@ public class FileCacheManager {
     private static final Object SENTINEL = new Object();
 
     public FileCacheManager(SettingsController settingsController,
+                            PinnedFileRepository pinnedFileRepository,
                             @Value("${user.home}") String userHome) {
         this.settingsController = settingsController;
+        this.pinnedFileRepository = pinnedFileRepository;
         this.cacheRoot = Paths.get(userHome, ".cache", "discohack", "files");
     }
 
@@ -168,6 +172,16 @@ public class FileCacheManager {
 
         for (Map.Entry<String, CacheEntry> e : entries) {
             if (totalCachedBytes.get() + incomingSize <= limit) break;
+            // key format: "accountId:path"
+            int sep = e.getKey().indexOf(':');
+            if (sep > 0) {
+                String accountId = e.getKey().substring(0, sep);
+                String path = e.getKey().substring(sep + 1);
+                if (pinnedFileRepository.existsByAccountIdAndPath(accountId, path)) {
+                    log.debug("LRU-вытеснение пропущено (закреплён): {}", e.getKey());
+                    continue;
+                }
+            }
             CacheEntry removed = index.remove(e.getKey());
             if (removed != null) {
                 totalCachedBytes.addAndGet(-removed.size);
