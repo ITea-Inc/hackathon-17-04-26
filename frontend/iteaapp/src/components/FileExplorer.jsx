@@ -88,9 +88,9 @@ const FileExplorer = ({ items, onSyncChange, onFolderClick, accountId, onRefresh
             {!accountId ? 'Подключите аккаунт в разделе «Аккаунты»' : items.length === 0 ? 'Папка пуста' : 'Ничего не найдено'}
           </div>
         )}
-        {visibleItems.map((item, index) => (
+        {visibleItems.map((item) => (
           <FileItem
-            key={item.fullPath || item.path || `${item.name}-${item.directory ? 'dir' : 'file'}-${item.lastModified || 'na'}-${index}`}
+            key={item.fullPath}
             {...item}
             onSyncChange={onSyncChange}
             onFolderClick={onFolderClick}
