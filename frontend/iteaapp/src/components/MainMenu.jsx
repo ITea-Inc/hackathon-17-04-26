@@ -44,7 +44,7 @@ function MainMenu({ activeItem: controlledActive, onItemClick, isSyncing }) {
     <aside className="mainMenu_sidebar">
       <div className="mainMenu_logoBlock">
         <div className="mainMenu_logoIcon">
-          <img className="mainLogo" src="/images/logo.png" alt="logo" />
+          <img className="mainLogo" src="images/logo.png" alt="logo" />
         </div>
         <span className="mainMenu_logoText">ITeaCloud</span>
       </div>

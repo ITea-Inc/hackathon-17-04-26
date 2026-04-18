@@ -7,7 +7,7 @@ let tray;
 
 Menu.setApplicationMenu(null);
 
-const isDev = process.env.NODE_ENV !== 'production';
+const isDev = !app.isPackaged;
 
 /* ---- GNOME accent color ---- */
 function getGnomeAccentColor() {
@@ -54,7 +54,9 @@ function createWindow() {
   mainWindow = new BrowserWindow({
     width: 900,
     height: 650,
-    icon: path.join(__dirname, 'public/images/logo.png'),
+    icon: isDev 
+      ? path.join(__dirname, 'public/images/logo.png') 
+      : path.join(__dirname, 'dist/images/logo.png'),
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false
@@ -89,7 +91,9 @@ function createWindow() {
 
 function createTray() {
   // Используем обрезанную версию иконки без полей
-  const iconPath = path.join(__dirname, 'public', 'images', 'logo_tray.png');
+  const iconPath = isDev
+    ? path.join(__dirname, 'public', 'images', 'logo_tray.png')
+    : path.join(__dirname, 'dist', 'images', 'logo_tray.png');
   const icon = nativeImage.createFromPath(iconPath);
   
   // 22x22 — стандартный размер для иконок в трее Linux

@@ -28,5 +28,16 @@
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
     "sockjs-client": "^1.6.1"
+  },
+  "build": {
+    "asar": false,
+    "files": [
+      "dist/**/*",
+      "main.js",
+      "src/**/*"
+    ],
+    "directories": {
+      "output": "dist"
+    }
   }
 }

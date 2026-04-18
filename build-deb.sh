@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+# set -e
 
 echo "=== 1. Подготовка окружения ==="
 WORK_DIR=$(pwd)
@@ -28,6 +28,15 @@ npm run build
 npm run build:linux
 # Копируем распакованный electron-результат
 cp -r dist/linux-unpacked/* "$DEB_DIR/opt/iteaapp/frontend/"
+if [ -f "$DEB_DIR/opt/iteaapp/frontend/chrome-sandbox" ]; then
+    echo " → fixing chrome‑sandbox permissions"
+    chmod 4755 "$DEB_DIR/opt/iteaapp/frontend/chrome-sandbox"
+    # ownership will be set to root by dpkg during installation, no need for chown here
+fi
+
+# Установка иконки в системную тему
+cp "$WORK_DIR/frontend/iteaapp/public/images/logo.png" "$DEB_DIR/usr/share/icons/hicolor/512x512/apps/iteaapp.png"
+
 
 echo "=== 4. Копирование интеграции Nautilus ==="
 # Предполагаем, что файл у тебя сейчас лежит в ~/.local/share/nautilus-python/extensions/itea-nautilus.py
@@ -78,22 +87,38 @@ EOF
 # Скрипт POST-INSTALL (после установки пакета)
 cat <<EOF > "$DEB_DIR/DEBIAN/postinst"
 #!/bin/bash
-set -e
-# Перезагружаем демоны пользователя, чтобы подхватить новый сервис
-su - \$SUDO_USER -c "systemctl --user daemon-reload"
-su - \$SUDO_USER -c "systemctl --user enable --now iteaapp-backend.service"
-# Перезапускаем Nautilus, чтобы подхватился python-скрипт
-su - \$SUDO_USER -c "nautilus -q || true"
+# Не останавливаемся при ошибках в этом скрипте, чтобы не блокировать установку пакета
+
+SANDBOX="/opt/iteaapp/frontend/chrome-sandbox"
+
+# Регистрируем SUID через dpkg-statoverride (как это делает Google Chrome)
+# dpkg сбрасывает SUID при распаковке — statoverride восстанавливает его
+if [ -f "\$SANDBOX" ]; then
+    # Убираем старую запись если есть (при переустановке)
+    dpkg-statoverride --remove "\$SANDBOX" 2>/dev/null || true
+    # Добавляем новую запись: root root 4755
+    dpkg-statoverride --update --add root root 4755 "\$SANDBOX"
+fi
+
+if [ -n "\$SUDO_USER" ]; then
+    USER_ID=\$(id -u "\$SUDO_USER")
+    echo "Настройка сервисов для пользователя \$SUDO_USER..."
+    su - \$SUDO_USER -c "export XDG_RUNTIME_DIR=/run/user/\$USER_ID; systemctl --user daemon-reload" || true
+    su - \$SUDO_USER -c "export XDG_RUNTIME_DIR=/run/user/\$USER_ID; systemctl --user enable --now iteaapp-backend.service" || true
+    su - \$SUDO_USER -c "nautilus -q" || true
+fi
+
 exit 0
 EOF
 chmod +x "$DEB_DIR/DEBIAN/postinst"
 
-# Скрипт PRERM (перед удалением пакета)
+
 cat <<EOF > "$DEB_DIR/DEBIAN/prerm"
 #!/bin/bash
-set -e
-su - \$SUDO_USER -c "systemctl --user stop iteaapp-backend.service" || true
-su - \$SUDO_USER -c "systemctl --user disable iteaapp-backend.service" || true
+if [ -n "\$SUDO_USER" ]; then
+    su - \$SUDO_USER -c "export XDG_RUNTIME_DIR=/run/user/\$(id -u \$SUDO_USER); systemctl --user stop iteaapp-backend.service" || true
+    su - \$SUDO_USER -c "export XDG_RUNTIME_DIR=/run/user/\$(id -u \$SUDO_USER); systemctl --user disable iteaapp-backend.service" || true
+fi
 exit 0
 EOF
 chmod +x "$DEB_DIR/DEBIAN/prerm"
@@ -101,6 +126,5 @@ chmod +x "$DEB_DIR/DEBIAN/prerm"
 echo "=== 6. Упаковка в DEB ==="
 cd "$WORK_DIR"
 dpkg-deb --build iteaapp-deb
-mv iteaapp-deb.deb
 
-echo "Пакет сохранен "
+echo "Пакет собран: iteaapp-deb.deb"

@@ -17,16 +17,16 @@ const inputStyle = {
 
 const YandexIcon1 = () => (
   <div style={{ width: 48, height: 48, borderRadius: 12 }}>
-    <img width="48" height="48" src="/images/YandexDisk.png" alt="Yandex" />
+    <img width="48" height="48" src="images/YandexDisk.png" alt="Yandex" />
   </div>
 );
 const NextCloudIcon1 = () => (
   <div style={{ width: 48, height: 48, borderRadius: 12 }}>
-    <img width="48" height="48" src="/images/cloud.png" alt="NextCloud" />
+    <img width="48" height="48" src="images/cloud.png" alt="NextCloud" />
   </div>
 );
-const YandexDiskCardIcon = () => <img width="22" height="22" src="/images/YandexDisk.png" alt="Yandex" />;
-const NextCloudCardIcon = () => <img width="22" height="22" src="/images/cloud.png" alt="NextCloud" />;
+const YandexDiskCardIcon = () => <img width="22" height="22" src="images/YandexDisk.png" alt="Yandex" />;
+const NextCloudCardIcon = () => <img width="22" height="22" src="images/cloud.png" alt="NextCloud" />;
 
 const providerIcon = (provider) =>
   provider === 'yandex' ? <YandexDiskCardIcon /> : <NextCloudCardIcon />;
