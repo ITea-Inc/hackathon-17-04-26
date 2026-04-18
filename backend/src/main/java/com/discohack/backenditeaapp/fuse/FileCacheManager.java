@@ -42,9 +42,36 @@ public class FileCacheManager {
     public void init() {
         try {
             Files.createDirectories(cacheRoot);
-            log.info("Кэш файлов инициализирован: {}", cacheRoot);
+            rebuildIndex();
+            log.info("Кэш файлов инициализирован: {}, записей: {}", cacheRoot, index.size());
         } catch (IOException e) {
             log.error("Не удалось создать директорию кэша: {}", e.getMessage());
+        }
+    }
+
+    private void rebuildIndex() {
+        if (!Files.exists(cacheRoot)) return;
+        try {
+            Files.walk(cacheRoot, 2)
+                .filter(p -> p.toString().endsWith(".meta"))
+                .forEach(metaPath -> {
+                    try {
+                        String[] parts = Files.readString(metaPath).split("\n", 2);
+                        if (parts.length < 2) return;
+                        String accountId = parts[0].trim();
+                        String cloudPath = parts[1].trim();
+                        Path dataFile = Path.of(metaPath.toString().replace(".meta", ""));
+                        if (Files.exists(dataFile)) {
+                            long size = Files.size(dataFile);
+                            index.put(key(accountId, cloudPath), new CacheEntry(dataFile, size));
+                            totalCachedBytes.addAndGet(size);
+                        }
+                    } catch (IOException e) {
+                        log.warn("Пропускаем повреждённый .meta файл: {}", metaPath);
+                    }
+                });
+        } catch (IOException e) {
+            log.warn("Не удалось восстановить индекс кэша: {}", e.getMessage());
         }
     }
 
@@ -91,6 +118,9 @@ public class FileCacheManager {
             Files.copy(data, file, StandardCopyOption.REPLACE_EXISTING);
             long actualSize = Files.size(file);
 
+            Path metaFile = Path.of(file + ".meta");
+            Files.writeString(metaFile, accountId + "\n" + path);
+
             CacheEntry old = index.put(key, new CacheEntry(file, actualSize));
             if (old != null) totalCachedBytes.addAndGet(-old.size);
             totalCachedBytes.addAndGet(actualSize);
@@ -116,6 +146,7 @@ public class FileCacheManager {
             totalCachedBytes.addAndGet(-entry.size);
             try {
                 Files.deleteIfExists(entry.localPath);
+                Files.deleteIfExists(Path.of(entry.localPath + ".meta"));
                 log.debug("Инвалидирован кэш: {}", path);
             } catch (IOException ignored) {}
         }

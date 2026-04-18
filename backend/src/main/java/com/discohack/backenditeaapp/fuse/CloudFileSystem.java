@@ -43,7 +43,7 @@ public class CloudFileSystem extends FuseStubFS {
     private final ConcurrentHashMap<String, CachedEntry<List<CloudFile>>> dirCache
             = new ConcurrentHashMap<>();
 
-    private static final long CACHE_TTL_MS = 60_000;
+    private static final long CACHE_TTL_MS = 300_000; // 5 минут
 
     private final ConcurrentHashMap<String, byte[]> writeBuffers
             = new ConcurrentHashMap<>();

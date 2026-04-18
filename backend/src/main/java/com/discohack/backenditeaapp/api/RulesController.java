@@ -33,12 +33,12 @@ public class RulesController {
         String pathPattern,
         SyncPolicy policy,
         int priority,
-        String cronExpression   // только для SCHEDULED, для остальных null
+        String cronExpression
     ) {}
 
     record PresetRequest(
         String accountId,
-        String presetType   // "documents_always" | "media_on_demand" | "backups_scheduled"
+        String presetType
     ) {}
 
     /**
