@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 
 const frequencyOptions = [
-  { id: '1h', label: 'Каждый час', value: 0.04 },
-  { id: '1d', label: '1 день', value: 1 },
-  { id: '3d', label: '3 дня', value: 3 },
-  { id: '1w', label: '1 неделя', value: 7 },
-  { id: '2w', label: '2 недели', value: 14 },
+  { id: '30s', label: '30 секунд' },
+  { id: '1m', label: '1 минута' },
+  { id: '5m', label: '5 минут' },
+  { id: '30m', label: '30 минут' },
+  { id: '1d', label: '1 день' },
 ];
 
 const cacheOptions = [

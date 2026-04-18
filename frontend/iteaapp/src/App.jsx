@@ -25,11 +25,11 @@ function App() {
 
   const getCronByFrequency = (freq) => {
     switch (freq) {
-      case '1h': return '0 0 * * * *';
+      case '30s': return '*/30 * * * * *';
+      case '1m': return '0 * * * * *';
+      case '5m': return '0 */5 * * * *';
+      case '30m': return '0 */30 * * * *';
       case '1d': return '0 0 2 * * *';
-      case '3d': return '0 0 2 */3 * *';
-      case '1w': return '0 0 2 * * 0';
-      case '2w': return '0 0 2 1,15 * *';
       default: return '0 0 2 * * *';
     }
   };
