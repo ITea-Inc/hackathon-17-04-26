@@ -168,13 +168,18 @@ public class AccountController {
     @GetMapping
     public ResponseEntity<List<AccountInfo>> listAccounts() {
         List<AccountInfo> result = accountRepository.findAll().stream()
-            .map(entity -> new AccountInfo(
-                entity.getId(),
-                entity.getProvider(),
-                entity.getUsername(),
-                entity.getMountPath(),
-                mountManager.isMounted(entity.getId())
-            ))
+            .map(entity -> {
+                String actualMountPath = mountManager.isMounted(entity.getId()) 
+                                         ? mountManager.getMountPath(entity.getId()) 
+                                         : entity.getMountPath();
+                return new AccountInfo(
+                    entity.getId(),
+                    entity.getProvider(),
+                    entity.getUsername(),
+                    actualMountPath,
+                    mountManager.isMounted(entity.getId())
+                );
+            })
             .toList();
         return ResponseEntity.ok(result);
     }

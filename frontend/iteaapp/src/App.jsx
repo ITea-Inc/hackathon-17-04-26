@@ -54,7 +54,7 @@ function App() {
         const filesWithRules = data.map(file => {
           const fullPath = currentPath === '/' ? `/${file.name}` : `${currentPath}${file.name}`;
           const rule = rules.find(r => r.pathPattern === fullPath);
-          return { ...file, syncRule: rule ? rule.policy : 'NONE', fullPath };
+          return { ...file, syncRule: rule ? rule.policy : 'MANUAL', fullPath };
         });
         setFiles(filesWithRules);
         setLoading(false);

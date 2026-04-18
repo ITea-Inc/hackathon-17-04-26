@@ -1,6 +1,6 @@
 import React from 'react';
 
-const FileItem = ({ name, directory, size, lastModified, syncRule = 'NONE', onSyncChange, onFolderClick, syncInfo }) => {
+const FileItem = ({ name, directory, size, lastModified, syncRule = 'MANUAL', onSyncChange, onFolderClick, syncInfo }) => {
   const isFolder = directory === true;
   const formattedDate = lastModified ? lastModified.replace("T", " ").replace("Z", " ") : "";
 
@@ -62,11 +62,9 @@ const FileItem = ({ name, directory, size, lastModified, syncRule = 'NONE', onSy
             onChange={handleSyncChangeInternal}
             onClick={(e) => e.stopPropagation()}
           >
-            <option value="NONE">Не задано</option>
             <option value="ALWAYS">Всегда</option>
-            <option value="ON_DEMAND">По запросу</option>
-            <option value="MANUAL">Вручную</option>
             <option value="SCHEDULED">По расписанию</option>
+            <option value="MANUAL">Никогда</option>
           </select>
         )}
       </div>
