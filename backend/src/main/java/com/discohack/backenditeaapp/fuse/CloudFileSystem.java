@@ -232,27 +232,22 @@ public class CloudFileSystem extends FuseStubFS {
         log.debug("read: {} size={} offset={}", path, size, offset);
 
         try {
-            // MANUAL — файл заблокирован для автоматического скачивания
-            SyncPolicy policy = ruleEngine.resolvePolicy(accountId, path);
-            if (policy == SyncPolicy.MANUAL) {
-                log.debug("read: {} заблокирован политикой MANUAL", path);
-                return -ErrorCodes.EACCES();
-            }
-
             // Проверяем дисковый кэш
             Optional<Path> cachedPath = fileCache.get(accountId, path);
+            SyncPolicy policy = ruleEngine.resolvePolicy(accountId, path);
 
             if (cachedPath.isEmpty()) {
                 Optional<CloudFile> fileInfo = getCachedFileInfo(path);
-                boolean tooBigToCache = fileInfo.isPresent()
-                    && fileInfo.get().getSize() > fileCache.getCacheLimitBytes();
+                long fileSize = fileInfo.map(CloudFile::getSize).orElse(0L);
+                boolean tooBigToCache = fileSize > fileCache.getCacheLimitBytes();
 
-                if (tooBigToCache) {
-                    log.debug("read: {} ({} байт) больше лимита кэша, читаем Range-запросом", path, fileInfo.get().getSize());
+                // MANUAL и слишком большие файлы — читаем напрямую без сохранения на диск
+                if (policy == SyncPolicy.MANUAL || tooBigToCache) {
+                    log.debug("read: {} — прямой Range-запрос (policy={}, size={})", path, policy, fileSize);
                     return readDirect(path, buf, size, offset);
                 }
 
-                // Кэш-промах: скачиваем весь файл (offset=0, length=0 → без Range-заголовка)
+                // Кэш-промах: скачиваем весь файл и кладём в кэш
                 log.debug("read: кэш-промах для {}, скачиваем с облака", path);
                 InputStream fullStream = provider.downloadFile(path, 0, 0);
                 fileCache.put(accountId, path, fullStream);
