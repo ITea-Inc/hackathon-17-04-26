@@ -50,6 +50,10 @@ public class CloudFileSystem extends FuseStubFS {
     private final ConcurrentHashMap<String, byte[]> writeBuffers
             = new ConcurrentHashMap<>();
 
+    /** etag файла в момент открытия — используется для обнаружения конфликтов при flush. */
+    private final ConcurrentHashMap<String, String> openFileEtags
+            = new ConcurrentHashMap<>();
+
     public CloudFileSystem(CloudProvider provider, EventBroadcaster broadcaster,
                            RuleEngine ruleEngine, String accountId,
                            FileCacheManager fileCache, DirCacheStore dirCacheStore,
@@ -64,6 +68,23 @@ public class CloudFileSystem extends FuseStubFS {
     }
 
 
+
+    /**
+     * Вызывается при открытии файла. Запоминаем etag текущей версии,
+     * чтобы при flush обнаружить, если файл изменили на сервере.
+     */
+    @Override
+    public int open(String path, FuseFileInfo fi) {
+        CachedEntry<CloudFile> cached = fileInfoCache.get(path);
+        if (cached != null && !cached.isExpired(CACHE_TTL_MS)) {
+            String etag = cached.getValue().getEtag();
+            if (etag != null && !etag.isEmpty()) {
+                openFileEtags.put(path, etag);
+                log.debug("open: запомнили etag для {} = {}", path, etag);
+            }
+        }
+        return 0;
+    }
 
     /**
      * Возвращает метаданные файла или директории (stat).
@@ -345,13 +366,15 @@ public class CloudFileSystem extends FuseStubFS {
     }
 
     private int uploadBuffer(String path, byte[] data) {
+        String expectedEtag = openFileEtags.remove(path);
         try {
             if (!isTemporaryFile(path)) {
                 broadcaster.publishProgress(accountId, path, 0);
             }
             provider.uploadFile(path,
                 new java.io.ByteArrayInputStream(data),
-                data.length
+                data.length,
+                expectedEtag != null ? expectedEtag : ""
             );
             invalidateCache(path);
             if (!isTemporaryFile(path)) {
@@ -362,6 +385,14 @@ public class CloudFileSystem extends FuseStubFS {
             }
             return 0;
         } catch (CloudProviderException e) {
+            if (e.getErrorType() == CloudProviderException.ErrorType.CONFLICT) {
+                broadcaster.publishError(accountId, path,
+                    "Конфликт: файл изменён другим клиентом. Сохраните под другим именем.");
+                log.warn("uploadBuffer: конфликт версий для {}", path);
+                // Возвращаем данные обратно в буфер — пользователь не потеряет правки
+                writeBuffers.put(path, data);
+                return -ErrorCodes.EBUSY();
+            }
             broadcaster.publishError(accountId, path, e.getMessage());
             log.error("uploadBuffer ошибка для {}: {}", path, e.getMessage());
             return e.toFuseErrorCode();
@@ -505,6 +536,7 @@ public class CloudFileSystem extends FuseStubFS {
         dirCache.remove(path);
         dirCacheStore.invalidate(accountId, path);
         fileCache.invalidate(accountId, path);
+        openFileEtags.remove(path);
         invalidateParentCache(path);
     }
 

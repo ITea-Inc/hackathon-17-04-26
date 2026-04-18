@@ -18,6 +18,8 @@ public class CloudProviderException extends RuntimeException {
         PERMISSION_DENIED,
         /** Токен истёк, нужна повторная авторизация */
         AUTH_FAILED,
+        /** Файл изменён другим клиентом — конфликт версий */
+        CONFLICT,
         /** Другая ошибка */
         UNKNOWN
     }
@@ -47,6 +49,7 @@ public class CloudProviderException extends RuntimeException {
             case IO_ERROR          -> -5;   // -EIO
             case PERMISSION_DENIED -> -13;  // -EACCES
             case AUTH_FAILED       -> -13;  // -EACCES (тоже нет доступа)
+            case CONFLICT         -> -16;  // -EBUSY  (ресурс занят / изменён)
             case UNKNOWN           -> -1;   // -EPERM
         };
     }

@@ -144,7 +144,7 @@ public class NextCloudProvider implements CloudProvider {
     }
 
     @Override
-    public void uploadFile(String path, InputStream content, long size) {
+    public void uploadFile(String path, InputStream content, long size, String expectedEtag) {
         String url = toWebDavUrl(path);
         log.debug("NextCloud uploadFile: {} size={}", url, size);
 

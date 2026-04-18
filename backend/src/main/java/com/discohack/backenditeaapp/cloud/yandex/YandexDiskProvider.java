@@ -69,7 +69,7 @@ public class YandexDiskProvider implements CloudProvider {
                 + "&fields=_embedded.items.name,_embedded.items.path,"
                 + "_embedded.items.type,_embedded.items.size,"
                 + "_embedded.items.modified,_embedded.items.mime_type,"
-                + "_embedded.items.resource_id";
+                + "_embedded.items.resource_id,_embedded.items.md5";
 
         JsonNode response = executeGet(url);
 
@@ -96,7 +96,7 @@ public class YandexDiskProvider implements CloudProvider {
 
         try {
             String url = API_BASE + "/resources?path=" + urlEncode(yandexPath)
-                    + "&fields=name,path,type,size,modified,mime_type,resource_id";
+                    + "&fields=name,path,type,size,modified,mime_type,resource_id,md5";
             JsonNode response = executeGet(url);
             return Optional.of(parseCloudFile(response));
         } catch (CloudProviderException e) {
@@ -157,9 +157,24 @@ public class YandexDiskProvider implements CloudProvider {
      * Загружает файл в Яндекс.Диск.
      */
     @Override
-    public void uploadFile(String path, InputStream content, long size) {
+    public void uploadFile(String path, InputStream content, long size, String expectedEtag) {
         String yandexPath = toYandexPath(path);
         log.debug("uploadFile: {} size={}", yandexPath, size);
+
+        // ETag-проверка: убеждаемся что файл не изменился пока мы его редактировали
+        if (expectedEtag != null && !expectedEtag.isEmpty()) {
+            Optional<CloudFile> current = getFileInfo(path);
+            if (current.isPresent()) {
+                String serverEtag = current.get().getEtag();
+                if (!serverEtag.isEmpty() && !serverEtag.equals(expectedEtag)) {
+                    log.warn("uploadFile: конфликт версий для {} (ожидали {}, на сервере {})",
+                        path, expectedEtag, serverEtag);
+                    throw new CloudProviderException(
+                        "Конфликт: файл изменён другим клиентом: " + path,
+                        CloudProviderException.ErrorType.CONFLICT);
+                }
+            }
+        }
 
         // Шаг 1: получаем URL для загрузки
         String uploadUrlEndpoint = API_BASE + "/resources/upload?path="
@@ -372,6 +387,7 @@ public class YandexDiskProvider implements CloudProvider {
                 .lastModified(lastModified)
                 .mimeType(item.path("mime_type").asText(""))
                 .resourceId(item.path("resource_id").asText(""))
+                .etag(item.path("md5").asText(""))
                 .build();
     }
 

@@ -80,7 +80,11 @@ public interface CloudProvider {
      * @param content содержимое файла как поток байт
      * @param size    размер файла в байтах (нужен для заголовка Content-Length)
      */
-    void uploadFile(String path, InputStream content, long size);
+    /**
+     * @param expectedEtag etag файла на момент открытия; пустая строка = новый файл, проверку пропустить.
+     * @throws CloudProviderException с типом CONFLICT если файл изменён другим клиентом.
+     */
+    void uploadFile(String path, InputStream content, long size, String expectedEtag);
 
     /**
      * Удалить файл из облака.
