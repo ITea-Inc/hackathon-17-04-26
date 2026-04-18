@@ -305,20 +305,38 @@ public class CloudFileSystem extends FuseStubFS {
 
     private int uploadBuffer(String path, byte[] data) {
         try {
-            broadcaster.publishProgress(accountId, path, 0);
+            if (!isTemporaryFile(path)) {
+                broadcaster.publishProgress(accountId, path, 0);
+            }
             provider.uploadFile(path,
                 new java.io.ByteArrayInputStream(data),
                 data.length
             );
             invalidateCache(path);
-            broadcaster.publishFileSynced(accountId, path);
-            log.info("uploadBuffer: {} загружен в облако ({} байт)", path, data.length);
+            if (!isTemporaryFile(path)) {
+                broadcaster.publishFileSynced(accountId, path);
+                log.info("uploadBuffer: {} загружен в облако ({} байт)", path, data.length);
+            } else {
+                log.debug("uploadBuffer: временный файл {} загружен ({} байт)", path, data.length);
+            }
             return 0;
         } catch (CloudProviderException e) {
             broadcaster.publishError(accountId, path, e.getMessage());
             log.error("uploadBuffer ошибка для {}: {}", path, e.getMessage());
             return e.toFuseErrorCode();
         }
+    }
+
+    /**
+     * Проверяет, является ли файл временным (для скрытия уведомлений и исключения из логов).
+     */
+    private boolean isTemporaryFile(String path) {
+        String name = path.substring(path.lastIndexOf('/') + 1);
+        return name.startsWith(".goutputstream-") ||
+               name.startsWith(".fuse_hidden") ||
+               name.startsWith(".~tmp") ||
+               name.endsWith("~") ||
+               (name.startsWith(".") && (name.endsWith(".swp") || name.endsWith(".swpx")));
     }
 
 
@@ -362,16 +380,32 @@ public class CloudFileSystem extends FuseStubFS {
         }
     }
 
-    /** Переименовывает или перемещает файл/директорию. */
     @Override
     public int rename(String oldpath, String newpath) {
         log.debug("rename: {} → {}", oldpath, newpath);
+
+        // Если файл переименовывается, пока он открыт на запись (атомарное сохранение),
+        // нужно принудительно выгрузить буфер по старому пути, прежде чем давать команду на rename в облаке.
+        byte[] data = writeBuffers.remove(oldpath);
+        if (data != null) {
+            log.debug("rename: принудительная выгрузка буфера для {}", oldpath);
+            uploadBuffer(oldpath, data);
+        }
+
         try {
             provider.rename(oldpath, newpath);
             invalidateCache(oldpath);
             invalidateParentCache(newpath);
             return 0;
         } catch (CloudProviderException e) {
+            // Если файла нет в облаке, но он есть у нас в буфере, просто переносим буфер.
+            if (e.getErrorType() == CloudProviderException.ErrorType.NOT_FOUND && data != null) {
+                log.debug("rename: файл {} только в буфере, переносим локально в {}", oldpath, newpath);
+                writeBuffers.put(newpath, data);
+                invalidateCache(oldpath);
+                invalidateParentCache(newpath);
+                return 0;
+            }
             return e.toFuseErrorCode();
         }
     }

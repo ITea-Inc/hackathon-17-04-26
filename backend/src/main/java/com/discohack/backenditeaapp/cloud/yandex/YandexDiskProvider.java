@@ -21,7 +21,8 @@ import java.util.Optional;
 /**
  * Реализация {@link CloudProvider} для Яндекс.Диска.
  * Взаимодействует с REST API Яндекс.Диска v1.
- * Инициализируется динамически для каждого аккаунта с индивидуальным OAuth-токеном.
+ * Инициализируется динамически для каждого аккаунта с индивидуальным
+ * OAuth-токеном.
  */
 @Slf4j
 public class YandexDiskProvider implements CloudProvider {
@@ -64,7 +65,7 @@ public class YandexDiskProvider implements CloudProvider {
         log.debug("listDirectory: {}", yandexPath);
 
         String url = API_BASE + "/resources?path=" + urlEncode(yandexPath)
-                + "&limit=1000"  // максимум элементов за один запрос
+                + "&limit=1000" // максимум элементов за один запрос
                 + "&fields=_embedded.items.name,_embedded.items.path,"
                 + "_embedded.items.type,_embedded.items.size,"
                 + "_embedded.items.modified,_embedded.items.mime_type,"
@@ -122,9 +123,8 @@ public class YandexDiskProvider implements CloudProvider {
 
         if (downloadUrl.isEmpty()) {
             throw new CloudProviderException(
-                "Не удалось получить URL скачивания для: " + path,
-                ErrorType.IO_ERROR
-            );
+                    "Не удалось получить URL скачивания для: " + path,
+                    ErrorType.IO_ERROR);
         }
 
         // Шаг 2: скачиваем файл с поддержкой Range (частичная загрузка)
@@ -134,7 +134,7 @@ public class YandexDiskProvider implements CloudProvider {
         // Формат: "bytes=<start>-<end>" где end включительно.
         if (length > 0) {
             requestBuilder.header("Range",
-                "bytes=" + offset + "-" + (offset + length - 1));
+                    "bytes=" + offset + "-" + (offset + length - 1));
         }
 
         Request request = requestBuilder.build();
@@ -142,16 +142,14 @@ public class YandexDiskProvider implements CloudProvider {
             Response response = httpClient.newCall(request).execute();
             if (!response.isSuccessful()) {
                 throw new CloudProviderException(
-                    "Ошибка скачивания файла " + path + ": HTTP " + response.code(),
-                    ErrorType.IO_ERROR
-                );
+                        "Ошибка скачивания файла " + path + ": HTTP " + response.code(),
+                        ErrorType.IO_ERROR);
             }
             // Возвращаем InputStream — данные потоком, не грузим всё в память
             return response.body().byteStream();
         } catch (IOException e) {
             throw new CloudProviderException(
-                "Ошибка сети при скачивании " + path, ErrorType.IO_ERROR, e
-            );
+                    "Ошибка сети при скачивании " + path, ErrorType.IO_ERROR, e);
         }
     }
 
@@ -199,15 +197,13 @@ public class YandexDiskProvider implements CloudProvider {
             // 201 Created или 200 OK — успех
             if (response.code() != 201 && response.code() != 200) {
                 throw new CloudProviderException(
-                    "Ошибка загрузки файла " + path + ": HTTP " + response.code(),
-                    ErrorType.IO_ERROR
-                );
+                        "Ошибка загрузки файла " + path + ": HTTP " + response.code(),
+                        ErrorType.IO_ERROR);
             }
             log.debug("uploadFile: {} загружен успешно", path);
         } catch (IOException e) {
             throw new CloudProviderException(
-                "Ошибка сети при загрузке " + path, ErrorType.IO_ERROR, e
-            );
+                    "Ошибка сети при загрузке " + path, ErrorType.IO_ERROR, e);
         }
     }
 
@@ -263,7 +259,7 @@ public class YandexDiskProvider implements CloudProvider {
 
         String url = API_BASE + "/resources/move?from=" + urlEncode(toYandexPath(fromPath))
                 + "&path=" + urlEncode(toYandexPath(toPath))
-                + "&overwrite=false";
+                + "&overwrite=true";
 
         Request request = buildAuthRequest(url)
                 .post(okhttp3.RequestBody.create(new byte[0]))
@@ -330,8 +326,6 @@ public class YandexDiskProvider implements CloudProvider {
         }
     }
 
-
-
     /**
      * Конвертирует наш путь (начинается с /) в формат Яндекса (disk:/).
      * "/" → "disk:/"
@@ -352,7 +346,8 @@ public class YandexDiskProvider implements CloudProvider {
         String rawPath = item.path("path").asText("");
         // Яндекс возвращает "disk:/путь" — убираем "disk:" в начале
         String path = rawPath.startsWith("disk:") ? rawPath.substring(5) : rawPath;
-        if (path.isEmpty()) path = "/";
+        if (path.isEmpty())
+            path = "/";
 
         String type = item.path("type").asText("file");
         boolean isDirectory = "dir".equals(type);
@@ -389,8 +384,7 @@ public class YandexDiskProvider implements CloudProvider {
             return handleResponse(response, url);
         } catch (IOException e) {
             throw new CloudProviderException(
-                "Ошибка сети: " + url, ErrorType.IO_ERROR, e
-            );
+                    "Ошибка сети: " + url, ErrorType.IO_ERROR, e);
         }
     }
 
@@ -405,8 +399,7 @@ public class YandexDiskProvider implements CloudProvider {
             }
         } catch (IOException e) {
             throw new CloudProviderException(
-                "Ошибка сети для: " + path, ErrorType.IO_ERROR, e
-            );
+                    "Ошибка сети для: " + path, ErrorType.IO_ERROR, e);
         }
     }
 
@@ -428,19 +421,16 @@ public class YandexDiskProvider implements CloudProvider {
 
         if (response.code() == 404) {
             throw new CloudProviderException(
-                "Не найдено: " + url, ErrorType.NOT_FOUND
-            );
+                    "Не найдено: " + url, ErrorType.NOT_FOUND);
         }
         if (response.code() == 401 || response.code() == 403) {
             throw new CloudProviderException(
-                "Ошибка авторизации: " + url, ErrorType.AUTH_FAILED
-            );
+                    "Ошибка авторизации: " + url, ErrorType.AUTH_FAILED);
         }
         if (!response.isSuccessful()) {
             throw new CloudProviderException(
-                "HTTP " + response.code() + " для " + url + ": " + body,
-                ErrorType.IO_ERROR
-            );
+                    "HTTP " + response.code() + " для " + url + ": " + body,
+                    ErrorType.IO_ERROR);
         }
 
         return objectMapper.readTree(body);
@@ -451,8 +441,7 @@ public class YandexDiskProvider implements CloudProvider {
             throw new CloudProviderException("Не найдено: " + path, ErrorType.NOT_FOUND);
         }
         throw new CloudProviderException(
-            "HTTP " + response.code() + " для: " + path, ErrorType.IO_ERROR
-        );
+                "HTTP " + response.code() + " для: " + path, ErrorType.IO_ERROR);
     }
 
     /**
