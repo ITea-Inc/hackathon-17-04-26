@@ -15,7 +15,7 @@ mkdir -p "$DEB_DIR/opt/iteaapp/frontend"
 mkdir -p "$DEB_DIR/usr/share/applications"
 mkdir -p "$DEB_DIR/usr/share/icons/hicolor/512x512/apps"
 mkdir -p "$DEB_DIR/usr/share/nautilus-python/extensions"
-mkdir -p "$DEB_DIR/usr/lib/systemd/user"
+mkdir -p "$DEB_DIR/usr/lib/systemd/user/default.target.wants"
 mkdir -p "$DEB_DIR/usr/bin"
 
 echo "=== 2. Сборка Бэкенда (Java) ==="
@@ -40,7 +40,7 @@ cp "$WORK_DIR/frontend/iteaapp/public/images/logo.png" "$DEB_DIR/usr/share/icons
 
 echo "=== 4. Копирование интеграции Nautilus ==="
 
-cp ~/.local/share/nautilus-python/extensions/itea-nautilus.py "$DEB_DIR/usr/share/nautilus-python/extensions/"
+cp "$WORK_DIR/nautilus/itea-nautilus.py" "$DEB_DIR/usr/share/nautilus-python/extensions/"
 
 echo "=== 5. Создание служебных файлов ==="
 
@@ -72,6 +72,8 @@ RestartSec=5
 WantedBy=default.target
 EOF
 
+ln -s ../iteaapp-backend.service "$DEB_DIR/usr/lib/systemd/user/default.target.wants/iteaapp-backend.service"
+
 
 cat <<EOF > "$DEB_DIR/DEBIAN/control"
 Package: iteaapp
@@ -94,20 +96,8 @@ SANDBOX="/opt/iteaapp/frontend/chrome-sandbox"
 
 
 if [ -f "\$SANDBOX" ]; then
-
-
     dpkg-statoverride --remove "\$SANDBOX" 2>/dev/null || true
-
-
     dpkg-statoverride --update --add root root 4755 "\$SANDBOX"
-fi
-
-if [ -n "\$SUDO_USER" ]; then
-    USER_ID=\$(id -u "\$SUDO_USER")
-    echo "Настройка сервисов для пользователя \$SUDO_USER..."
-    su - \$SUDO_USER -c "export XDG_RUNTIME_DIR=/run/user/\$USER_ID; systemctl --user daemon-reload" || true
-    su - \$SUDO_USER -c "export XDG_RUNTIME_DIR=/run/user/\$USER_ID; systemctl --user enable --now iteaapp-backend.service" || true
-    su - \$SUDO_USER -c "nautilus -q" || true
 fi
 
 exit 0
@@ -117,10 +107,6 @@ chmod +x "$DEB_DIR/DEBIAN/postinst"
 
 cat <<EOF > "$DEB_DIR/DEBIAN/prerm"
 #!/bin/bash
-if [ -n "\$SUDO_USER" ]; then
-    su - \$SUDO_USER -c "export XDG_RUNTIME_DIR=/run/user/\$(id -u \$SUDO_USER); systemctl --user stop iteaapp-backend.service" || true
-    su - \$SUDO_USER -c "export XDG_RUNTIME_DIR=/run/user/\$(id -u \$SUDO_USER); systemctl --user disable iteaapp-backend.service" || true
-fi
 exit 0
 EOF
 chmod +x "$DEB_DIR/DEBIAN/prerm"
