@@ -7,6 +7,9 @@ iteaapp-deb/
 postman
 
 *.deb
+*.rpm
+build-rpm/
+extraResources/backend.jar
 
 HELP.md
 target/
@@ -183,3 +186,4 @@ jacoco.exec
 # Раскомментируй если не хочешь заливать тестовые медиафайлы
 # uploads/
 # media/
+*.rpm
