@@ -41,14 +41,11 @@ function AccountsPanel({ onAccountSelect }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // null | 'yandex' | 'nextcloud'
   const [connectingProvider, setConnectingProvider] = useState(null);
-  // Яндекс: 'open_browser' → 'enter_code'
   const [yandexStep, setYandexStep] = useState('open_browser');
   const [yandexAuthUrl, setYandexAuthUrl] = useState('');
   const [codeInput, setCodeInput] = useState('');
-
-  // NextCloud
+  
   const [ncServerUrl, setNcServerUrl] = useState('');
   const [ncUsername, setNcUsername] = useState('');
   const [ncPassword, setNcPassword] = useState('');
@@ -63,8 +60,7 @@ function AccountsPanel({ onAccountSelect }) {
     if (onAccountSelect) onAccountSelect(id);
   };
 
-  // selectId — если передан, выбираем именно его (после добавления нового аккаунта).
-  // Иначе выбираем первый только если ничего не выбрано.
+  // Выбирает новый аккаунт по ID или восстанавливает последний выбранный из localStorage.
   const fetchAccounts = (selectId = null, retryCount = 0) => {
     setLoading(true);
     setError(null);
@@ -127,7 +123,7 @@ function AccountsPanel({ onAccountSelect }) {
       .catch(err => console.error('[API] Ошибка удаления:', err));
   };
 
-  // Шаг 1: получаем URL и открываем браузер
+  // Инициализация OAuth-авторизации Яндекс.Диска
   const handleOpenYandex = () => {
     setConnecting(true);
     setConnectError(null);
@@ -145,7 +141,7 @@ function AccountsPanel({ onAccountSelect }) {
       });
   };
 
-  // Шаг 2: отправляем код на бэкенд
+  // Обмен кода авторизации OAuth на токен
   const handleYandexExchange = () => {
     if (!codeInput.trim()) return;
     setConnecting(true);
@@ -165,7 +161,7 @@ function AccountsPanel({ onAccountSelect }) {
       });
   };
 
-  // NextCloud через логин/пароль
+  // Авторизация NextCloud по логину и паролю
   const handleNextCloudConnect = () => {
     if (!ncServerUrl.trim() || !ncUsername.trim() || !ncPassword.trim()) return;
     setConnecting(true);
@@ -259,7 +255,7 @@ function AccountsPanel({ onAccountSelect }) {
         ))}
       </div>
 
-      {/* ── Modal ── */}
+      {/* Modal */}
       {connectingProvider && (
         <div style={{
           position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)',
@@ -275,7 +271,6 @@ function AccountsPanel({ onAccountSelect }) {
               Подключить {connectingProvider === 'yandex' ? 'Яндекс.Диск' : 'NextCloud'}
             </h2>
 
-            {/* ── Яндекс шаг 1 ── */}
             {connectingProvider === 'yandex' && yandexStep === 'open_browser' && (
               <>
                 <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: 13, lineHeight: 1.6 }}>
@@ -299,7 +294,6 @@ function AccountsPanel({ onAccountSelect }) {
               </>
             )}
 
-            {/* ── Яндекс шаг 2 ── */}
             {connectingProvider === 'yandex' && yandexStep === 'enter_code' && (
               <>
                 <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: 13, lineHeight: 1.6 }}>
@@ -323,7 +317,6 @@ function AccountsPanel({ onAccountSelect }) {
               </>
             )}
 
-            {/* ── NextCloud ── */}
             {connectingProvider === 'nextcloud' && (
               <>
                 <input
