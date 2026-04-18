@@ -15,6 +15,7 @@ mkdir -p "$DEB_DIR/opt/iteaapp/frontend"
 mkdir -p "$DEB_DIR/usr/share/applications"
 mkdir -p "$DEB_DIR/usr/share/icons/hicolor/512x512/apps"
 mkdir -p "$DEB_DIR/usr/share/nautilus-python/extensions"
+mkdir -p "$DEB_DIR/usr/share/nautilus/python-extensions"
 mkdir -p "$DEB_DIR/usr/lib/systemd/user/default.target.wants"
 mkdir -p "$DEB_DIR/usr/bin"
 
@@ -41,6 +42,9 @@ cp "$WORK_DIR/frontend/iteaapp/public/images/logo.png" "$DEB_DIR/usr/share/icons
 echo "=== 4. Копирование интеграции Nautilus ==="
 
 cp "$WORK_DIR/nautilus/itea-nautilus.py" "$DEB_DIR/usr/share/nautilus-python/extensions/"
+cp "$WORK_DIR/nautilus/itea-nautilus.py" "$DEB_DIR/usr/share/nautilus/python-extensions/"
+chmod 644 "$DEB_DIR/usr/share/nautilus-python/extensions/itea-nautilus.py"
+chmod 644 "$DEB_DIR/usr/share/nautilus/python-extensions/itea-nautilus.py"
 
 echo "=== 5. Создание служебных файлов ==="
 
