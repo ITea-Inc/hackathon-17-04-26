@@ -52,7 +52,7 @@ echo "=== 5. Создание служебных файлов ==="
 ln -s /opt/iteaapp/frontend/iteaapp "$DEB_DIR/usr/bin/iteaapp"
 
 cat <<EOF > "$DEB_DIR/usr/share/applications/iteaapp.desktop"
-[Desktop Entry]
+[Desktop Entry]Manual
 Name=iTea App
 Exec=/opt/iteaapp/frontend/iteaapp --no-sandbox
 Icon=iteaapp

@@ -202,6 +202,18 @@ function App() {
         {activeTab === 'sync-rules' && (
           <div className="accPanel_container">
             <h1 className="accPanel_title">Правила синхронизации</h1>
+            <div className="settings_hint_box">
+              <p className="settings_hint_text">
+                <strong>Всегда</strong> - немедленная загрузка при следующих событиях: изменение файла в облаке,
+                локального файла, правил синхронизации
+              </p>
+              <p className="settings_hint_text">
+                <strong>По расписанию</strong> - загружать файл по установленному времени
+              </p>
+              <p className="settings_hint_text">
+                <strong>Никогда</strong> - только по явному запросу пользователя
+              </p>
+            </div>
             <div className="accPanel_breadcrumb">
               <button
                 className={'accPanel_breadcrumbBack' + (currentPath === '/' ? ' accPanel_breadcrumbBack--disabled' : '')}
