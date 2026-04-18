@@ -109,9 +109,26 @@ function App() {
   };
 
   useEffect(() => {
+    // Fetch global settings
+    fetch(`${API_BASE}/api/settings`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.syncFrequency) setSyncFrequency(data.syncFrequency);
+      })
+      .catch(err => console.error('Failed to fetch settings:', err));
+
     fetchRules();
     fetchPinned();
   }, [selectedAccountId]);
+
+  const handleFrequencyChange = (newFreq) => {
+    setSyncFrequency(newFreq);
+    fetch(`${API_BASE}/api/settings`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ syncFrequency: newFreq })
+    }).catch(err => console.error('Failed to save settings:', err));
+  };
 
   useEffect(() => {
     refreshFiles();
@@ -165,7 +182,7 @@ function App() {
         {activeTab === 'settings' && (
           <SettingsPanel
             currentFrequency={syncFrequency}
-            onFrequencyChange={setSyncFrequency}
+            onFrequencyChange={handleFrequencyChange}
           />
         )}
 
