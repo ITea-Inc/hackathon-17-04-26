@@ -79,11 +79,22 @@ function App() {
         return res.json();
       })
       .then(data => {
+        const newPinned = new Set(pinnedPaths);
         const filesWithRules = data.map(file => {
           const fullPath = currentPath === '/' ? `/${file.name}` : `${currentPath}${file.name}`;
           const rule = rules.find(r => r.pathPattern === fullPath);
-          return { ...file, syncRule: rule ? rule.policy : 'MANUAL', fullPath };
+          
+          // Если бэкенд говорит, что файл закреплен (например, из офлайн-кэша), 
+          // добавляем его в локальный стейт pinnedPaths
+          if (file.pinned) newPinned.add(file.path || fullPath);
+          
+          return { ...file, syncRule: rule ? rule.policy : 'MANUAL', fullPath: file.path || fullPath };
         });
+        
+        if (newPinned.size !== pinnedPaths.size) {
+          setPinnedPaths(newPinned);
+        }
+        
         setFiles(filesWithRules);
         setLoading(false);
       })

@@ -26,17 +26,10 @@ import java.util.Map;
 public class FileController {
 
     private final CloudProviderRegistry providerRegistry;
+    private final com.discohack.backenditeaapp.persistance.repository.PinnedFileRepository pinnedFileRepository;
 
     /**
      * GET /api/files/{accountId}?path=/
-     *
-     * Возвращает список файлов и папок по указанному пути.
-     * По умолчанию path="/" — корень диска.
-     *
-     * Примеры вызовов с фронта:
-     *   /api/files/550e8400-...?path=/              — корень диска
-     *   /api/files/550e8400-...?path=/Documents     — папка Documents
-     *   /api/files/550e8400-...?path=/Photos/2024   — вложенная папка
      */
     @GetMapping("/{accountId}")
     public ResponseEntity<?> listDirectory(
@@ -47,6 +40,18 @@ public class FileController {
             .map(provider -> {
                 try {
                     List<CloudFile> files = provider.listDirectory(path);
+                    
+                    // Помечаем закрепленные файлы
+                    var pinnedPaths = pinnedFileRepository.findByAccountId(accountId).stream()
+                        .map(com.discohack.backenditeaapp.persistance.entities.PinnedFileEntity::getPath)
+                        .collect(java.util.stream.Collectors.toSet());
+                    
+                    for (CloudFile file : files) {
+                        boolean isPinned = pinnedPaths.contains(file.getPath());
+                        file.setPinned(isPinned);
+                        if (isPinned) log.debug("File is pinned: {}", file.getPath());
+                    }
+
                     log.debug("listDirectory accountId={} path={} → {} файлов", accountId, path, files.size());
                     return ResponseEntity.ok(files);
                 } catch (CloudProviderException e) {
@@ -60,9 +65,6 @@ public class FileController {
 
     /**
      * GET /api/files/{accountId}/info?path=/Documents/report.pdf
-     *
-     * Возвращает метаданные одного файла или папки.
-     * Используется для получения size, mimeType, lastModified конкретного файла.
      */
     @GetMapping("/{accountId}/info")
     public ResponseEntity<?> getFileInfo(
@@ -73,7 +75,10 @@ public class FileController {
             .map(provider -> {
                 try {
                     return provider.getFileInfo(path)
-                        .<ResponseEntity<?>>map(ResponseEntity::ok)
+                        .map(file -> {
+                            file.setPinned(pinnedFileRepository.existsByAccountIdAndPath(accountId, path));
+                            return ResponseEntity.ok(file);
+                        })
                         .orElseGet(() -> ResponseEntity.notFound().build());
                 } catch (CloudProviderException e) {
                     return ResponseEntity.status(mapErrorToStatus(e))

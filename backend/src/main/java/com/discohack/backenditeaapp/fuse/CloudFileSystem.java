@@ -38,6 +38,7 @@ public class CloudFileSystem extends FuseStubFS {
     private final String accountId;
     private final FileCacheManager fileCache;
     private final DirCacheStore dirCacheStore;
+    private final com.discohack.backenditeaapp.persistance.repository.PinnedFileRepository pinnedFileRepository;
 
     private final ConcurrentHashMap<String, CachedEntry<CloudFile>> fileInfoCache
             = new ConcurrentHashMap<>();
@@ -51,13 +52,15 @@ public class CloudFileSystem extends FuseStubFS {
 
     public CloudFileSystem(CloudProvider provider, EventBroadcaster broadcaster,
                            RuleEngine ruleEngine, String accountId,
-                           FileCacheManager fileCache, DirCacheStore dirCacheStore) {
+                           FileCacheManager fileCache, DirCacheStore dirCacheStore,
+                           com.discohack.backenditeaapp.persistance.repository.PinnedFileRepository pinnedFileRepository) {
         this.provider = provider;
         this.broadcaster = broadcaster;
         this.ruleEngine = ruleEngine;
         this.accountId = accountId;
         this.fileCache = fileCache;
         this.dirCacheStore = dirCacheStore;
+        this.pinnedFileRepository = pinnedFileRepository;
     }
 
 
@@ -114,6 +117,9 @@ public class CloudFileSystem extends FuseStubFS {
                 }
             }
 
+            // Помечаем статус закрепа (для работы офлайн-иконок)
+            file.setPinned(pinnedFileRepository.existsByAccountIdAndPath(accountId, path));
+
             // Заполняем структуру stat
             if (file.isDirectory()) {
                 fillDirStat(stat, file.getLastModified());
@@ -153,6 +159,15 @@ public class CloudFileSystem extends FuseStubFS {
             if (files == null) {
                 try {
                     files = provider.listDirectory(path);
+                    
+                    // Помечаем закрепленные файлы перед кэшированием
+                    var pinnedPaths = pinnedFileRepository.findByAccountId(accountId).stream()
+                        .map(com.discohack.backenditeaapp.persistance.entities.PinnedFileEntity::getPath)
+                        .collect(java.util.stream.Collectors.toSet());
+                    for (CloudFile f : files) {
+                        f.setPinned(pinnedPaths.contains(f.getPath()));
+                    }
+
                     dirCache.put(path, new CachedEntry<>(files));
                     dirCacheStore.save(accountId, path, files);
                 } catch (CloudProviderException e) {
@@ -485,7 +500,7 @@ public class CloudFileSystem extends FuseStubFS {
         return entry.getValue();
     }
 
-    private void invalidateCache(String path) {
+    public void invalidateCache(String path) {
         fileInfoCache.remove(path);
         dirCache.remove(path);
         dirCacheStore.invalidate(accountId, path);

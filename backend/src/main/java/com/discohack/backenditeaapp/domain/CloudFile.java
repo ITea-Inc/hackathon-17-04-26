@@ -29,4 +29,6 @@ public class CloudFile {
     private String resourceId;
 
     private String etag;
+
+    private boolean pinned;
 }

@@ -27,6 +27,7 @@ public class MountManager {
     private final RuleEngine ruleEngine;
     private final FileCacheManager fileCacheManager;
     private final DirCacheStore dirCacheStore;
+    private final com.discohack.backenditeaapp.persistance.repository.PinnedFileRepository pinnedFileRepository;
 
     /** Мапа активных FUSE соединений. */
     private final ConcurrentHashMap<String, CloudFileSystem> activeMounts = new ConcurrentHashMap<>();
@@ -52,7 +53,8 @@ public class MountManager {
             throw new RuntimeException("Ошибка создания точки монтирования", e);
         }
 
-        CloudFileSystem fs = new CloudFileSystem(provider, broadcaster, ruleEngine, accountId, fileCacheManager, dirCacheStore);
+        CloudFileSystem fs = new CloudFileSystem(provider, broadcaster, ruleEngine, accountId, 
+            fileCacheManager, dirCacheStore, pinnedFileRepository);
 
         Thread mountThread = new Thread(() -> {
             try {
@@ -71,6 +73,13 @@ public class MountManager {
         activeMounts.put(accountId, fs);
         mountPaths.put(accountId, mountPoint);
         log.info("Аккаунт {} → {}", accountId, mountPoint);
+    }
+
+    public void invalidateCache(String accountId, String path) {
+        CloudFileSystem fs = activeMounts.get(accountId);
+        if (fs != null) {
+            fs.invalidateCache(path);
+        }
     }
 
     public void unmountProvider(String accountId) {
