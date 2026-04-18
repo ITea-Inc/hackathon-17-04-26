@@ -21,12 +21,12 @@
 ./build-rpm.sh
 ```
 
-После сборки RPM лежит в папке `build/`.
+Готовый RPM находится в релизной папке `release/`.
 
-Перед установкой пакета перейдите в папку `build`, установите JDK и `libXScrnSaver`, а затем установите наш RPM:
+Перед установкой пакета перейдите в папку `release`, установите JDK и `libXScrnSaver`, а затем установите наш RPM:
 
 ```bash
-cd build
+cd release
 sudo apt-get install java-21-openjdk libXScrnSaver
 sudo rpm -i iteaapp-1.0.0.rpm
 ```
