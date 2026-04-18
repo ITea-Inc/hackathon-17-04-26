@@ -3,15 +3,16 @@ import React, { useState, useEffect } from 'react';
 const API_BASE = 'http://localhost:8080';
 
 const inputStyle = {
-  background: 'rgba(255,255,255,0.05)',
-  border: '1px solid rgba(255,255,255,0.1)',
+  background: 'var(--hover-bg)',
+  border: '1px solid var(--border-color)',
   borderRadius: 8,
   padding: '10px 14px',
-  color: '#fff',
+  color: 'var(--text-primary)',
   fontSize: 14,
   outline: 'none',
   width: '100%',
   boxSizing: 'border-box',
+  transition: 'border-color 0.2s',
 };
 
 const YandexIcon1 = () => (
@@ -261,15 +262,16 @@ function AccountsPanel({ onAccountSelect }) {
       {/* ── Modal ── */}
       {connectingProvider && (
         <div style={{
-          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)',
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)',
           display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100,
         }}>
           <div style={{
-            background: '#1e1e2e', border: '1px solid rgba(255,255,255,0.1)',
-            borderRadius: 16, padding: 32, width: 440,
+            background: 'var(--card-bg)', border: '1px solid var(--card-border)',
+            borderRadius: 12, padding: 24, width: 440,
             display: 'flex', flexDirection: 'column', gap: 16,
+            boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
           }}>
-            <h2 style={{ margin: 0, color: '#e2d9f3', fontSize: 18 }}>
+            <h2 style={{ margin: 0, color: 'var(--text-primary)', fontSize: 18, fontWeight: 600 }}>
               Подключить {connectingProvider === 'yandex' ? 'Яндекс.Диск' : 'NextCloud'}
             </h2>
 
@@ -284,10 +286,13 @@ function AccountsPanel({ onAccountSelect }) {
                   onClick={handleOpenYandex}
                   disabled={connecting}
                   style={{
-                    padding: '11px 18px', background: '#fc3f1d', border: 'none',
+                    padding: '11px 18px', background: 'var(--accent-color)', border: 'none',
                     borderRadius: 8, color: '#fff', cursor: 'pointer',
                     fontWeight: 600, fontSize: 14, opacity: connecting ? 0.6 : 1,
+                    transition: 'filter 0.2s, opacity 0.2s',
                   }}
+                  onMouseEnter={(e) => { (!connecting) && (e.target.style.filter = 'brightness(1.1)'); }}
+                  onMouseLeave={(e) => { e.target.style.filter = 'none'; }}
                 >
                   {connecting ? 'Загрузка...' : 'Открыть страницу Яндекса'}
                 </button>
@@ -310,11 +315,8 @@ function AccountsPanel({ onAccountSelect }) {
                 />
                 <button
                   onClick={() => window.open(yandexAuthUrl, '_blank')}
-                  style={{
-                    padding: '6px 14px', background: 'transparent',
-                    border: '1px solid rgba(255,255,255,0.15)', borderRadius: 8,
-                    color: '#aaa', cursor: 'pointer', fontSize: 12, alignSelf: 'flex-start',
-                  }}
+                  className="accPanel_actionBtn"
+                  style={{ alignSelf: 'flex-start', fontSize: 13, padding: '7px 14px' }}
                 >
                   Открыть страницу снова
                 </button>
@@ -353,11 +355,8 @@ function AccountsPanel({ onAccountSelect }) {
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 4 }}>
               <button
                 onClick={closeModal}
-                style={{
-                  padding: '8px 18px', background: 'transparent',
-                  border: '1px solid rgba(255,255,255,0.15)', borderRadius: 8,
-                  color: '#aaa', cursor: 'pointer',
-                }}
+                className="accPanel_actionBtn"
+                style={{ padding: '9px 18px', fontSize: 13 }}
               >
                 Отмена
               </button>
@@ -367,10 +366,14 @@ function AccountsPanel({ onAccountSelect }) {
                   onClick={handleYandexExchange}
                   disabled={connecting || !codeInput.trim()}
                   style={{
-                    padding: '8px 18px', background: '#fc3f1d', border: 'none',
+                    padding: '9px 18px', background: 'var(--accent-color)', border: 'none',
                     borderRadius: 8, color: '#fff', cursor: 'pointer',
                     opacity: (connecting || !codeInput.trim()) ? 0.5 : 1,
+                    fontWeight: 500, fontSize: 13,
+                    transition: 'filter 0.2s, opacity 0.2s',
                   }}
+                  onMouseEnter={(e) => { (!(connecting || !codeInput.trim())) && (e.target.style.filter = 'brightness(1.1)'); }}
+                  onMouseLeave={(e) => { e.target.style.filter = 'none'; }}
                 >
                   {connecting ? 'Подключение...' : 'Подключить'}
                 </button>
@@ -381,10 +384,14 @@ function AccountsPanel({ onAccountSelect }) {
                   onClick={handleNextCloudConnect}
                   disabled={connecting || !ncServerUrl.trim() || !ncUsername.trim() || !ncPassword.trim()}
                   style={{
-                    padding: '8px 18px', background: '#6d28d9', border: 'none',
+                    padding: '9px 18px', background: 'var(--accent-color)', border: 'none',
                     borderRadius: 8, color: '#fff', cursor: 'pointer',
                     opacity: (connecting || !ncServerUrl.trim() || !ncUsername.trim() || !ncPassword.trim()) ? 0.5 : 1,
+                    fontWeight: 500, fontSize: 13,
+                    transition: 'filter 0.2s, opacity 0.2s',
                   }}
+                  onMouseEnter={(e) => { (!(connecting || !ncServerUrl.trim() || !ncUsername.trim() || !ncPassword.trim())) && (e.target.style.filter = 'brightness(1.1)'); }}
+                  onMouseLeave={(e) => { e.target.style.filter = 'none'; }}
                 >
                   {connecting ? 'Подключение...' : 'Подключить'}
                 </button>
