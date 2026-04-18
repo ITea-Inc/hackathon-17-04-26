@@ -1,6 +1,6 @@
 import React from 'react';
 
-const FileItem = ({ name, directory, size, lastModified, syncRule = 'NONE', onSyncChange, onFolderClick }) => {
+const FileItem = ({ name, directory, size, lastModified, syncRule = 'NONE', onSyncChange, onFolderClick, syncInfo }) => {
   const isFolder = directory === true;
   const formattedDate = lastModified ? lastModified.replace("T", " ").replace("Z", " ") : "";
 
@@ -14,9 +14,7 @@ const FileItem = ({ name, directory, size, lastModified, syncRule = 'NONE', onSy
   };
 
   const handleRowDoubleClick = () => {
-    if (isFolder && onFolderClick) {
-      onFolderClick(name);
-    }
+    if (isFolder && onFolderClick) onFolderClick(name);
   };
 
   const handleSyncChangeInternal = (e) => {
@@ -25,7 +23,7 @@ const FileItem = ({ name, directory, size, lastModified, syncRule = 'NONE', onSy
   };
 
   return (
-    <div className="file-item" onDoubleClick={handleRowDoubleClick}>
+    <div className={`file-item${syncInfo ? ' file-item--syncing' : ''}`} onDoubleClick={handleRowDoubleClick}>
       <div className="file-name-container">
         <div className="file-icon">
           {isFolder ? (
@@ -39,24 +37,38 @@ const FileItem = ({ name, directory, size, lastModified, syncRule = 'NONE', onSy
             </svg>
           )}
         </div>
-        <div className="file-name">{name}</div>
+        <div className="file-name-wrap">
+          <div className="file-name">{name}</div>
+          {syncInfo && (
+            <div className="file-sync-bar">
+              <div className="file-sync-bar__fill" style={{ width: `${syncInfo.percent}%` }} />
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="file-size">{isFolder ? '--' : formatSize(size)}</div>
       <div className="file-modified">{formattedDate}</div>
       <div className="file-sync" onDoubleClick={(e) => e.stopPropagation()}>
-        <select
-          className={`sync-select ${syncRule}`}
-          value={syncRule}
-          onChange={handleSyncChangeInternal}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <option value="NONE">Не задано</option>
-          <option value="ALWAYS">Всегда</option>
-          <option value="ON_DEMAND">По запросу</option>
-          <option value="MANUAL">Вручную</option>
-          <option value="SCHEDULED">По расписанию</option>
-        </select>
+        {syncInfo ? (
+          <div className="file-sync-badge">
+            <span className="file-sync-spinner" />
+            <span>{syncInfo.percent}%</span>
+          </div>
+        ) : (
+          <select
+            className={`sync-select ${syncRule}`}
+            value={syncRule}
+            onChange={handleSyncChangeInternal}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <option value="NONE">Не задано</option>
+            <option value="ALWAYS">Всегда</option>
+            <option value="ON_DEMAND">По запросу</option>
+            <option value="MANUAL">Вручную</option>
+            <option value="SCHEDULED">По расписанию</option>
+          </select>
+        )}
       </div>
     </div>
   );

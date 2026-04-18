@@ -1,7 +1,7 @@
 import React from 'react';
 import FileItem from './FileItem';
 
-const FileExplorer = ({ items, onSyncChange, onFolderClick, accountId, onRefresh }) => {
+const FileExplorer = ({ items, onSyncChange, onFolderClick, accountId, onRefresh, getSyncInfo }) => {
   return (
     <div className="explorer-container">
       <div className="explorer-header">
@@ -11,11 +11,7 @@ const FileExplorer = ({ items, onSyncChange, onFolderClick, accountId, onRefresh
         <div className="header-sync" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           Синхр.
           {onRefresh && (
-            <button
-              className="refresh_btn"
-              onClick={onRefresh}
-              title="Обновить"
-            >
+            <button className="refresh_btn" onClick={onRefresh} title="Обновить">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="23 4 23 10 17 10" />
                 <polyline points="1 20 1 14 7 14" />
@@ -33,7 +29,13 @@ const FileExplorer = ({ items, onSyncChange, onFolderClick, accountId, onRefresh
           </div>
         )}
         {items.map((item, index) => (
-          <FileItem key={index} {...item} onSyncChange={onSyncChange} onFolderClick={onFolderClick} />
+          <FileItem
+            key={index}
+            {...item}
+            onSyncChange={onSyncChange}
+            onFolderClick={onFolderClick}
+            syncInfo={getSyncInfo ? getSyncInfo(accountId, item.fullPath) : null}
+          />
         ))}
       </div>
     </div>

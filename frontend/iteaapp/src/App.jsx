@@ -3,6 +3,8 @@ import FileExplorer from './components/FileExplorer';
 import MainMenu from './components/MainMenu';
 import AccountsPanel from './components/AccountsPanel';
 import SettingsPanel from './components/SettingsPanel';
+import SyncToast from './components/SyncToast';
+import { useSyncEvents } from './hooks/useSyncEvents';
 import './App.css';
 
 const API_BASE = 'http://localhost:8080';
@@ -16,6 +18,8 @@ function App() {
   const [selectedAccountId, setSelectedAccountId] = useState(null);
   const [activeTab, setActiveTab] = useState('accounts');
   const [syncFrequency, setSyncFrequency] = useState('1d');
+
+  const { isSyncing, notifications, dismissNotification, getSyncInfo } = useSyncEvents();
 
   const getCronByFrequency = (freq) => {
     switch (freq) {
@@ -50,7 +54,7 @@ function App() {
         const filesWithRules = data.map(file => {
           const fullPath = currentPath === '/' ? `/${file.name}` : `${currentPath}${file.name}`;
           const rule = rules.find(r => r.pathPattern === fullPath);
-          return { ...file, syncRule: rule ? rule.policy : 'NONE' };
+          return { ...file, syncRule: rule ? rule.policy : 'NONE', fullPath };
         });
         setFiles(filesWithRules);
         setLoading(false);
@@ -94,12 +98,8 @@ function App() {
         if (!res.ok) throw new Error('Failed to save rule');
         return res.json();
       })
-      .then(() => {
-        fetchRules();
-      })
-      .catch(err => {
-        alert(err.message);
-      });
+      .then(() => fetchRules())
+      .catch(err => alert(err.message));
   };
 
   const handleFolderClick = (folderName) => {
@@ -115,20 +115,17 @@ function App() {
     setCurrentPath(newPath);
   };
 
-  const handleFrequencyChange = (newFreq) => {
-    setSyncFrequency(newFreq);
-  };
-
   return (
     <div className="app_layout">
-      <MainMenu activeItem={activeTab} onItemClick={setActiveTab} />
+      <MainMenu activeItem={activeTab} onItemClick={setActiveTab} isSyncing={isSyncing} />
+      <SyncToast notifications={notifications} onDismiss={dismissNotification} />
 
       <main className="content-area" style={{ flex: 1, overflowY: 'auto', position: 'relative' }}>
         {activeTab === 'accounts' && <AccountsPanel onAccountSelect={setSelectedAccountId} />}
         {activeTab === 'settings' && (
           <SettingsPanel
             currentFrequency={syncFrequency}
-            onFrequencyChange={handleFrequencyChange}
+            onFrequencyChange={setSyncFrequency}
           />
         )}
 
@@ -162,6 +159,7 @@ function App() {
                 onFolderClick={handleFolderClick}
                 accountId={selectedAccountId}
                 onRefresh={refreshFiles}
+                getSyncInfo={getSyncInfo}
               />
             )}
           </div>

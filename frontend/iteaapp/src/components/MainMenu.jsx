@@ -31,7 +31,7 @@ const menuItems = [
   { id: 'settings',   label: 'Настройки',            icon: <IconSettings /> },
 ];
 
-function MainMenu({ activeItem: controlledActive, onItemClick }) {
+function MainMenu({ activeItem: controlledActive, onItemClick, isSyncing }) {
   const [internalActive, setInternalActive] = useState('accounts');
   const activeItem = controlledActive ?? internalActive;
 
@@ -54,10 +54,7 @@ function MainMenu({ activeItem: controlledActive, onItemClick }) {
           {menuItems.map((item) => (
             <li key={item.id}>
               <button
-                className={
-                  'mainMenu_navItem' +
-                  (activeItem === item.id ? ' mainMenu_navItem--active' : '')
-                }
+                className={'mainMenu_navItem' + (activeItem === item.id ? ' mainMenu_navItem--active' : '')}
                 onClick={() => handleClick(item.id)}
               >
                 <span className="mainMenu_navIcon">{item.icon}</span>
@@ -69,6 +66,13 @@ function MainMenu({ activeItem: controlledActive, onItemClick }) {
       </nav>
 
       <div className="mainMenu_spacer" />
+
+      {isSyncing && (
+        <div className="mainMenu_syncStatus">
+          <span className="mainMenu_syncDot" />
+          <span className="mainMenu_syncLabel">Синхронизация...</span>
+        </div>
+      )}
     </aside>
   );
 }

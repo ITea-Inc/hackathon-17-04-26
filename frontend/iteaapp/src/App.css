@@ -742,3 +742,182 @@ body {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
+
+/* ── Sync status in sidebar ── */
+.mainMenu_syncStatus {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-top: 1px solid var(--border-color);
+}
+
+.mainMenu_syncDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent-color);
+  flex-shrink: 0;
+  animation: syncPulse 1.4s ease-in-out infinite;
+}
+
+.mainMenu_syncLabel {
+  font-size: 11px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+@keyframes syncPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.75); }
+}
+
+/* ── File-level sync progress bar ── */
+.file-name-wrap {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 3px;
+}
+
+.file-sync-bar {
+  height: 2px;
+  border-radius: 1px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.file-sync-bar__fill {
+  height: 100%;
+  border-radius: 1px;
+  background: var(--accent-color);
+  transition: width 0.3s ease;
+}
+
+.file-item--syncing .file-name {
+  color: var(--accent-color);
+}
+
+/* ── Sync badge in the Sync column while downloading ── */
+.file-sync-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--accent-color);
+  padding: 4px 10px;
+  border-radius: 100px;
+  background: var(--accent-bg);
+  white-space: nowrap;
+}
+
+.file-sync-spinner {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border: 1.5px solid color-mix(in srgb, var(--accent-color) 30%, transparent);
+  border-top-color: var(--accent-color);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  flex-shrink: 0;
+}
+
+/* ── Toast notifications ── */
+.sync-toasts {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.sync-toast {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  min-width: 260px;
+  max-width: 340px;
+  pointer-events: all;
+  animation: toastIn 0.2s ease;
+}
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.sync-toast--done {
+  border-color: color-mix(in srgb, var(--success) 35%, transparent);
+}
+
+.sync-toast--error {
+  border-color: color-mix(in srgb, var(--destructive) 35%, transparent);
+}
+
+.sync-toast__icon {
+  flex-shrink: 0;
+  margin-top: 1px;
+  display: flex;
+}
+
+.sync-toast--done .sync-toast__icon {
+  color: var(--success);
+}
+
+.sync-toast--error .sync-toast__icon {
+  color: var(--destructive);
+}
+
+.sync-toast__content {
+  flex: 1;
+  min-width: 0;
+}
+
+.sync-toast__title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+
+.sync-toast__path {
+  font-size: 11px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sync-toast__detail {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.sync-toast__close {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-secondary);
+  padding: 2px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.1s ease, background 0.1s ease;
+}
+
+.sync-toast__close:hover {
+  color: var(--text-primary);
+  background: var(--hover-bg-strong);
+}
