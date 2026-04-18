@@ -70,9 +70,9 @@ function App() {
       .catch(err => console.error(err));
   };
 
-  const refreshFiles = useCallback((retryCount = 0) => {
+  const refreshFiles = useCallback((retryCount = 0, silent = false) => {
     if (!selectedAccountId) return;
-    setLoading(true);
+    if (!silent) setLoading(true);
     setError(null);
 
     fetch(`${API_BASE}/api/files/${selectedAccountId}?path=${encodeURIComponent(currentPath)}`)
@@ -86,8 +86,6 @@ function App() {
           const fullPath = currentPath === '/' ? `/${file.name}` : `${currentPath}${file.name}`;
           const rule = rules.find(r => r.pathPattern === fullPath);
           
-          // Если бэкенд говорит, что файл закреплен (например, из офлайн-кэша), 
-          // добавляем его в локальный стейт pinnedPaths
           if (file.pinned) newPinned.add(file.path || fullPath);
           
           return { ...file, syncRule: rule ? rule.policy : 'MANUAL', fullPath: file.path || fullPath };
@@ -98,14 +96,14 @@ function App() {
         }
         
         setFiles(filesWithRules);
-        setLoading(false);
+        if (!silent) setLoading(false);
       })
       .catch(err => {
         if (retryCount < 3 && (err.name === 'TypeError' || err.message.includes('fetch'))) {
-          setTimeout(() => refreshFiles(retryCount + 1), 2000);
+          setTimeout(() => refreshFiles(retryCount + 1, silent), 2000);
         } else {
           setError(err.message);
-          setLoading(false);
+          if (!silent) setLoading(false);
         }
       });
   }, [selectedAccountId, currentPath, pinnedPaths, rules]);
@@ -158,7 +156,7 @@ function App() {
 
   useEffect(() => {
     if (activeTab !== 'sync-rules' || !selectedAccountId) return;
-    const interval = setInterval(() => refreshFiles(), explorerRefreshSeconds * 1000);
+    const interval = setInterval(() => refreshFiles(0, true), explorerRefreshSeconds * 1000);
     return () => clearInterval(interval);
   }, [activeTab, selectedAccountId, explorerRefreshSeconds, refreshFiles]);
 
