@@ -22,10 +22,10 @@ const explorerRefreshOptions = [
   { id: '1m', label: '1 минута', value: 60 },
 ];
 
-function SettingsPanel({ 
-  currentFrequency = '1d', 
-  onFrequencyChange, 
-  currentCacheSize = 5368709120, 
+function SettingsPanel({
+  currentFrequency = '1d',
+  onFrequencyChange,
+  currentCacheSize = 5368709120,
   onCacheSizeChange,
   currentExplorerRefreshSeconds = 30,
   onExplorerRefreshChange
@@ -41,18 +41,18 @@ function SettingsPanel({
   return (
     <div className="accPanel_container" style={{ paddingBottom: '2rem' }}>
       <h1 className="accPanel_title">Настройки</h1>
-      
+
       <div className="settings_group">
         <h2 className="accPanel_sectionTitle">Периодичность синхронизации (Тайминг)</h2>
         <p className="settings_description">
-          Выберите интервал для файлов и папок с политикой «По расписанию». 
+          Выберите интервал для файлов и папок с политикой «По расписанию».
           Новые правила будут использовать это значение.
         </p>
-        
+
         <div className="settings_options_list">
           {frequencyOptions.map((opt) => (
-            <div 
-              key={opt.id} 
+            <div
+              key={opt.id}
               className={`settings_option_item ${frequency === opt.id ? 'active' : ''}`}
               onClick={() => {
                 setFrequency(opt.id);
@@ -73,11 +73,11 @@ function SettingsPanel({
         <p className="settings_description">
           Интервал, с которым проводник проверяет изменения файлов в облаке.
         </p>
-        
+
         <div className="settings_options_list">
           {explorerRefreshOptions.map((opt) => (
-            <div 
-              key={opt.id} 
+            <div
+              key={opt.id}
               className={`settings_option_item ${explorerRefresh === opt.value ? 'active' : ''}`}
               onClick={() => {
                 setExplorerRefresh(opt.value);
@@ -96,14 +96,14 @@ function SettingsPanel({
       <div className="settings_group" style={{ marginTop: '2.5rem' }}>
         <h2 className="accPanel_sectionTitle">Лимит кэша на диске</h2>
         <p className="settings_description">
-          Максимальное пространство, которое приложение может использовать для временных файлов. 
+          Максимальное пространство, которое приложение может использовать для временных файлов.
           При превышении старые файлы будут удалены.
         </p>
-        
+
         <div className="settings_options_list">
           {cacheOptions.map((opt) => (
-            <div 
-              key={opt.id} 
+            <div
+              key={opt.id}
               className={`settings_option_item ${cacheSize === opt.id || cacheSize === opt.value ? 'active' : ''}`}
               onClick={() => {
                 setCacheSize(opt.value);
@@ -117,12 +117,6 @@ function SettingsPanel({
             </div>
           ))}
         </div>
-      </div>
-
-      <div className="settings_info_box">
-        <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-          <strong>Совет:</strong> Политика «По расписанию» полезна для больших папок с бэкапами, которые не нужно синхронизировать в реальном времени.
-        </p>
       </div>
     </div>
   );
