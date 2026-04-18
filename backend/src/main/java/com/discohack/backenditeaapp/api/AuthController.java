@@ -78,7 +78,7 @@ public class AuthController {
         String username = provider.getLogin();
 
         providerRegistry.register(accountId, provider);
-        mountManager.mountProvider(provider, accountId);
+        mountManager.mountProvider(provider, accountId, username);
 
         String mountPath = mountManager.getMountPath(accountId);
 
