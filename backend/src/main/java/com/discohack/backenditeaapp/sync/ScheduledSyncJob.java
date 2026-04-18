@@ -35,9 +35,9 @@ public class ScheduledSyncJob {
     private final ConcurrentHashMap<String, Instant> lastSyncTime = new ConcurrentHashMap<>();
 
     /**
-     * Основной цикл планировщика (выполняется каждую минуту).
+     * Основной цикл планировщика (выполняется каждые 10 секунд).
      */
-    @Scheduled(fixedDelay = 60_000)
+    @Scheduled(fixedDelay = 10_000)
     public void tick() {
         List<SyncRuleEntity> scheduledRules = ruleRepository.findByPolicy(SyncPolicy.SCHEDULED);
         if (scheduledRules.isEmpty()) return;
