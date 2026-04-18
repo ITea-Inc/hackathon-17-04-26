@@ -956,3 +956,18 @@ body {
 .pin-btn--active:hover {
   color: #d49000;
 }
+
+.settings_description {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  margin-bottom: 1.5rem;
+  line-height: 1.4;
+}
+
+.settings_info_box {
+  margin-top: 2rem;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+}

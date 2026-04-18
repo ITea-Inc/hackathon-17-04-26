@@ -19,6 +19,7 @@ function App() {
   const [activeTab, setActiveTab] = useState('accounts');
   const [syncFrequency, setSyncFrequency] = useState('1d');
   const [pinnedPaths, setPinnedPaths] = useState(new Set());
+  const [cacheSize, setCacheSize] = useState(5368709120); // 5 GB
 
   const { isSyncing, notifications, dismissNotification, getSyncInfo } = useSyncEvents();
 
@@ -114,6 +115,7 @@ function App() {
       .then(res => res.json())
       .then(data => {
         if (data.syncFrequency) setSyncFrequency(data.syncFrequency);
+        if (data.cacheSizeBytes) setCacheSize(data.cacheSizeBytes);
       })
       .catch(err => console.error('Failed to fetch settings:', err));
 
@@ -127,6 +129,15 @@ function App() {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ syncFrequency: newFreq })
+    }).catch(err => console.error('Failed to save settings:', err));
+  };
+
+  const handleCacheSizeChange = (newLimit) => {
+    setCacheSize(newLimit);
+    fetch(`${API_BASE}/api/settings`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cacheSizeBytes: newLimit })
     }).catch(err => console.error('Failed to save settings:', err));
   };
 
@@ -183,6 +194,8 @@ function App() {
           <SettingsPanel
             currentFrequency={syncFrequency}
             onFrequencyChange={handleFrequencyChange}
+            currentCacheSize={cacheSize}
+            onCacheSizeChange={handleCacheSizeChange}
           />
         )}
 
