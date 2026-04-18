@@ -58,6 +58,7 @@ function AccountsPanel({ onAccountSelect }) {
 
   const selectAccount = (id) => {
     setSelectedId(id);
+    localStorage.setItem('selectedAccountId', id);
     if (onAccountSelect) onAccountSelect(id);
   };
 
@@ -78,7 +79,13 @@ function AccountsPanel({ onAccountSelect }) {
         if (selectId && data.find(a => a.id === selectId)) {
           selectAccount(selectId);
         } else if (!selectedId) {
-          selectAccount(data[0].id);
+          const savedId = localStorage.getItem('selectedAccountId');
+          const savedAccount = data.find(a => String(a.id) === String(savedId));
+          if (savedAccount) {
+            selectAccount(savedAccount.id);
+          } else {
+            selectAccount(data[0].id);
+          }
         }
       })
       .catch(err => {
@@ -110,7 +117,10 @@ function AccountsPanel({ onAccountSelect }) {
     const wasSelected = id === selectedId;
     fetch(`${API_BASE}/api/accounts/${id}`, { method: 'DELETE' })
       .then(() => {
-        if (wasSelected) setSelectedId(null);
+        if (wasSelected) {
+          setSelectedId(null);
+          localStorage.removeItem('selectedAccountId');
+        }
         fetchAccounts(null);
       })
       .catch(err => console.error('[API] Ошибка удаления:', err));
