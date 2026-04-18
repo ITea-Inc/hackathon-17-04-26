@@ -64,7 +64,8 @@
       "category": "Utility"
     },
     "rpm": {
-      "afterInstall": "scripts/after-install.sh"
+      "afterInstall": "scripts/after-install.sh",
+      "afterRemove": "scripts/after-remove.sh"
     }
   }
 }
