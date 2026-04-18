@@ -27,7 +27,7 @@ const FileExplorer = ({ items, onSyncChange, onFolderClick, accountId, onRefresh
 
       let result = 0;
       if (sortBy === 'name') {
-        result = (a.name || '').localeCompare(b.name || '', 'ru', { sensitivity: 'base' });
+        result = (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' });
       } else if (sortBy === 'size') {
         result = (a.size || 0) - (b.size || 0);
       } else if (sortBy === 'date') {
