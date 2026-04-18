@@ -20,20 +20,13 @@ const YandexIcon1 = () => (
     <img width="48" height="48" src="/images/YandexDisk.png" alt="Yandex" />
   </div>
 );
-const NextCloudIcon1 = () => (
-  <div style={{ width: 48, height: 48, borderRadius: 12 }}>
-    <img width="48" height="48" src="/images/cloud.png" alt="NextCloud" />
-  </div>
-);
 const YandexDiskCardIcon = () => <img width="22" height="22" src="/images/YandexDisk.png" alt="Yandex" />;
-const NextCloudCardIcon = () => <img width="22" height="22" src="/images/cloud.png" alt="NextCloud" />;
 
 const providerIcon = (provider) =>
-  provider === 'yandex' ? <YandexDiskCardIcon /> : <NextCloudCardIcon />;
+  provider === 'yandex' ? <YandexDiskCardIcon /> : null;
 
 const availableProviders = [
-  { id: 'yandex', name: 'Яндекс.Диск', icon: <YandexIcon1 /> },
-  { id: 'nextcloud', name: 'NextCloud', icon: <NextCloudIcon1 /> },
+  { id: 'yandex', name: 'Яндекс.Диск', icon: <YandexIcon1 /> }
 ];
 
 function AccountsPanel({ onAccountSelect }) {
@@ -45,10 +38,6 @@ function AccountsPanel({ onAccountSelect }) {
   const [yandexStep, setYandexStep] = useState('open_browser');
   const [yandexAuthUrl, setYandexAuthUrl] = useState('');
   const [codeInput, setCodeInput] = useState('');
-  
-  const [ncServerUrl, setNcServerUrl] = useState('');
-  const [ncUsername, setNcUsername] = useState('');
-  const [ncPassword, setNcPassword] = useState('');
 
   const [selectedId, setSelectedId] = useState(null);
   const [connecting, setConnecting] = useState(false);
@@ -103,9 +92,6 @@ function AccountsPanel({ onAccountSelect }) {
     setYandexStep('open_browser');
     setYandexAuthUrl('');
     setCodeInput('');
-    setNcServerUrl('');
-    setNcUsername('');
-    setNcPassword('');
     setConnectError(null);
     setConnecting(false);
   };
@@ -161,33 +147,7 @@ function AccountsPanel({ onAccountSelect }) {
       });
   };
 
-  // Авторизация NextCloud по логину и паролю
-  const handleNextCloudConnect = () => {
-    if (!ncServerUrl.trim() || !ncUsername.trim() || !ncPassword.trim()) return;
-    setConnecting(true);
-    setConnectError(null);
-    fetch(`${API_BASE}/api/accounts/nextcloud`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        serverUrl: ncServerUrl.trim(),
-        username: ncUsername.trim(),
-        password: ncPassword.trim(),
-      }),
-    })
-      .then(res => {
-        if (!res.ok) throw new Error(`Ошибка сервера: ${res.status}`);
-        return res.json();
-      })
-      .then(data => {
-        closeModal();
-        fetchAccounts(data.id);
-      })
-      .catch(err => {
-        setConnectError(err.message);
-        setConnecting(false);
-      });
-  };
+
 
   return (
     <div className="accPanel_container">
@@ -268,7 +228,7 @@ function AccountsPanel({ onAccountSelect }) {
             boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
           }}>
             <h2 style={{ margin: 0, color: 'var(--text-primary)', fontSize: 18, fontWeight: 600 }}>
-              Подключить {connectingProvider === 'yandex' ? 'Яндекс.Диск' : 'NextCloud'}
+              Подключить Яндекс.Диск
             </h2>
 
             {connectingProvider === 'yandex' && yandexStep === 'open_browser' && (
@@ -317,29 +277,7 @@ function AccountsPanel({ onAccountSelect }) {
               </>
             )}
 
-            {connectingProvider === 'nextcloud' && (
-              <>
-                <input
-                  placeholder="URL сервера (https://cloud.example.com)"
-                  value={ncServerUrl}
-                  onChange={e => setNcServerUrl(e.target.value)}
-                  style={inputStyle}
-                />
-                <input
-                  placeholder="Имя пользователя"
-                  value={ncUsername}
-                  onChange={e => setNcUsername(e.target.value)}
-                  style={inputStyle}
-                />
-                <input
-                  placeholder="Пароль"
-                  type="password"
-                  value={ncPassword}
-                  onChange={e => setNcPassword(e.target.value)}
-                  style={inputStyle}
-                />
-              </>
-            )}
+
 
             {connectError && (
               <p style={{ color: '#f87171', fontSize: 13, margin: 0 }}>⚠️ {connectError}</p>
@@ -372,23 +310,7 @@ function AccountsPanel({ onAccountSelect }) {
                 </button>
               )}
 
-              {connectingProvider === 'nextcloud' && (
-                <button
-                  onClick={handleNextCloudConnect}
-                  disabled={connecting || !ncServerUrl.trim() || !ncUsername.trim() || !ncPassword.trim()}
-                  style={{
-                    padding: '9px 18px', background: 'var(--accent-color)', border: 'none',
-                    borderRadius: 8, color: '#fff', cursor: 'pointer',
-                    opacity: (connecting || !ncServerUrl.trim() || !ncUsername.trim() || !ncPassword.trim()) ? 0.5 : 1,
-                    fontWeight: 500, fontSize: 13,
-                    transition: 'filter 0.2s, opacity 0.2s',
-                  }}
-                  onMouseEnter={(e) => { (!(connecting || !ncServerUrl.trim() || !ncUsername.trim() || !ncPassword.trim())) && (e.target.style.filter = 'brightness(1.1)'); }}
-                  onMouseLeave={(e) => { e.target.style.filter = 'none'; }}
-                >
-                  {connecting ? 'Подключение...' : 'Подключить'}
-                </button>
-              )}
+
             </div>
           </div>
         </div>
