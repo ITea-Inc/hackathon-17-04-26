@@ -1,7 +1,6 @@
 package com.discohack.backenditeaapp.sync;
 
 import com.discohack.backenditeaapp.cloud.CloudProvider;
-import com.discohack.backenditeaapp.cloud.CloudProviderException;
 import com.discohack.backenditeaapp.cloud.CloudProviderRegistry;
 import com.discohack.backenditeaapp.domain.SyncPolicy;
 import com.discohack.backenditeaapp.persistance.entities.SyncRuleEntity;
@@ -17,7 +16,6 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -35,6 +33,7 @@ public class ScheduledSyncJob {
     private final SyncRuleRepository ruleRepository;
     private final CloudProviderRegistry providerRegistry;
     private final EventBroadcaster broadcaster;
+    private final FileSyncService fileSyncService;
 
     // Время последней синхронизации для каждого правила (ruleId → Instant)
     // Хранится в памяти — при рестарте все правила синхронизируются заново
@@ -107,21 +106,6 @@ public class ScheduledSyncJob {
     }
 
     private void syncPath(CloudProvider provider, SyncRuleEntity rule) {
-        try {
-            int fileCount = provider.listDirectory(rule.getPathPattern()).size();
-
-            broadcaster.publish(com.discohack.backenditeaapp.ws.SyncEvent.builder()
-                .type("scheduled_sync_done")
-                .accountId(rule.getAccountId())
-                .path(rule.getPathPattern())
-                .data(Map.of("fileCount", fileCount, "cron", rule.getCronExpression()))
-                .build());
-
-            log.info("Scheduled sync завершён: {} файлов в {}", fileCount, rule.getPathPattern());
-
-        } catch (CloudProviderException e) {
-            broadcaster.publishError(rule.getAccountId(), rule.getPathPattern(), e.getMessage());
-            log.error("Scheduled sync ошибка для {}: {}", rule.getPathPattern(), e.getMessage());
-        }
+        fileSyncService.syncSync(provider, rule.getAccountId(), rule.getPathPattern());
     }
 }

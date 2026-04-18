@@ -4,6 +4,7 @@ import com.discohack.backenditeaapp.domain.RuleEngine;
 import com.discohack.backenditeaapp.domain.SyncPolicy;
 import com.discohack.backenditeaapp.persistance.entities.SyncRuleEntity;
 import com.discohack.backenditeaapp.persistance.repository.SyncRuleRepository;
+import com.discohack.backenditeaapp.sync.FileSyncService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -32,6 +33,7 @@ public class RulesController {
 
     private final SyncRuleRepository ruleRepository;
     private final RuleEngine ruleEngine;
+    private final FileSyncService fileSyncService;
 
     record SyncRuleRequest(
         String accountId,
@@ -83,7 +85,11 @@ public class RulesController {
         rule.setCronExpression(request.cronExpression());
 
         try {
-            return ResponseEntity.ok(ruleRepository.save(rule));
+            SyncRuleEntity saved = ruleRepository.save(rule);
+            if (saved.getPolicy() == SyncPolicy.ALWAYS) {
+                fileSyncService.syncAsync(saved.getAccountId(), saved.getPathPattern());
+            }
+            return ResponseEntity.ok(saved);
         } catch (DataIntegrityViolationException e) {
             log.warn("upsertRule: конкурентная вставка для {}/{}, повторная попытка", request.accountId(), request.pathPattern());
             return ruleRepository.findByAccountIdAndPathPattern(request.accountId(), request.pathPattern())
