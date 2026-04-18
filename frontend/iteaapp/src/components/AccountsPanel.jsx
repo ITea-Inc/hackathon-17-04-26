@@ -232,8 +232,6 @@ function AccountsPanel({ onAccountSelect }) {
               if (!quota) return null;
 
               const isLowSpace = quota.freePercent < 10;
-              const clampedPercent = Math.max(0, Math.min(100, quota.freePercent));
-
               return (
                 <div className="accPanel_storageInfo">
                   <span className={`accPanel_storageText${isLowSpace ? ' accPanel_storageText--warn' : ''}`}>
@@ -242,7 +240,7 @@ function AccountsPanel({ onAccountSelect }) {
                   <div className="accPanel_progressBar">
                     <div
                       className={`accPanel_progressFill${isLowSpace ? ' accPanel_progressFill--warn' : ''}`}
-                      style={{ width: `${clampedPercent}%` }}
+                      style={{ width: `${quota.freePercent}%` }}
                     />
                   </div>
                 </div>

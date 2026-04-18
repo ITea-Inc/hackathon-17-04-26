@@ -127,7 +127,12 @@ public class AccountController {
                                          : entity.getMountPath();
                 Optional<YandexDiskProvider.DiskUsage> diskUsage = Optional.empty();
                 if ("yandex".equals(entity.getProvider())) {
-                    YandexDiskProvider provider = new YandexDiskProvider(entity.getAccessToken());
+                    Optional<YandexDiskProvider> providerFromRegistry = providerRegistry.findById(entity.getId())
+                        .filter(YandexDiskProvider.class::isInstance)
+                        .map(YandexDiskProvider.class::cast);
+
+                    YandexDiskProvider provider = providerFromRegistry
+                        .orElseGet(() -> new YandexDiskProvider(entity.getAccessToken()));
                     diskUsage = provider.getDiskUsage();
                 }
 
