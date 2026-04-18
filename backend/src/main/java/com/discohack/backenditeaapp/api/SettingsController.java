@@ -22,6 +22,7 @@ public class SettingsController {
 
     private static final String KEY_SYNC_FREQ = "syncFrequency";
     private static final String KEY_CACHE_SIZE = "cacheSizeBytes";
+    private static final String KEY_EXPLORER_REFRESH = "explorerRefreshSeconds";
 
     /**
      * Возвращает текущие настройки приложения.
@@ -31,10 +32,12 @@ public class SettingsController {
         AppSettingsFileStore.SettingsData settings = settingsFileStore.read();
         String freq = settings.syncFrequency();
         long cache = settings.cacheSizeBytes();
+        long refreshSeconds = settings.explorerRefreshSeconds();
 
         return ResponseEntity.ok(Map.of(
                 "syncFrequency", freq,
-                "cacheSizeBytes", cache));
+                "cacheSizeBytes", cache,
+                "explorerRefreshSeconds", refreshSeconds));
     }
 
     public long getCacheSizeBytes() {
@@ -50,6 +53,7 @@ public class SettingsController {
         AppSettingsFileStore.SettingsData current = settingsFileStore.read();
         String syncFrequency = current.syncFrequency();
         long cacheSizeBytes = current.cacheSizeBytes();
+        long explorerRefreshSeconds = current.explorerRefreshSeconds();
 
         if (body.containsKey("syncFrequency")) {
             syncFrequency = String.valueOf(body.get("syncFrequency"));
@@ -65,7 +69,21 @@ public class SettingsController {
             }
         }
 
-        settingsFileStore.write(new AppSettingsFileStore.SettingsData(syncFrequency, cacheSizeBytes));
+        if (body.containsKey(KEY_EXPLORER_REFRESH)) {
+            try {
+                long requested = Long.parseLong(String.valueOf(body.get(KEY_EXPLORER_REFRESH)));
+                if (AppSettingsFileStore.isAllowedExplorerRefreshSeconds(requested)) {
+                    explorerRefreshSeconds = requested;
+                    log.info("Настройка explorerRefreshSeconds сохранена в файл: {}", explorerRefreshSeconds);
+                } else {
+                    log.warn("Некорректное значение explorerRefreshSeconds: {}", body.get(KEY_EXPLORER_REFRESH));
+                }
+            } catch (NumberFormatException e) {
+                log.warn("Некорректное значение explorerRefreshSeconds: {}", body.get(KEY_EXPLORER_REFRESH));
+            }
+        }
+
+        settingsFileStore.write(new AppSettingsFileStore.SettingsData(syncFrequency, cacheSizeBytes, explorerRefreshSeconds));
 
         return getSettings();
     }

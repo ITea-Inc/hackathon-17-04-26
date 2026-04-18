@@ -5,6 +5,7 @@ import com.discohack.backenditeaapp.cloud.CloudProviderException;
 import com.discohack.backenditeaapp.domain.CloudFile;
 import com.discohack.backenditeaapp.domain.RuleEngine;
 import com.discohack.backenditeaapp.domain.SyncPolicy;
+import com.discohack.backenditeaapp.persistance.settings.AppSettingsFileStore;
 import com.discohack.backenditeaapp.ws.EventBroadcaster;
 import jnr.ffi.Pointer;
 import jnr.ffi.types.off_t;
@@ -39,13 +40,14 @@ public class CloudFileSystem extends FuseStubFS {
     private final FileCacheManager fileCache;
     private final DirCacheStore dirCacheStore;
     private final com.discohack.backenditeaapp.persistance.repository.PinnedFileRepository pinnedFileRepository;
+    private final AppSettingsFileStore settingsFileStore;
 
     private final ConcurrentHashMap<String, CachedEntry<CloudFile>> fileInfoCache
             = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, CachedEntry<List<CloudFile>>> dirCache
             = new ConcurrentHashMap<>();
 
-    private static final long CACHE_TTL_MS = 300_000; // 5 минут
+    private static final long DEFAULT_CACHE_TTL_MS = 30_000; // 30 секунд
 
     private final ConcurrentHashMap<String, byte[]> writeBuffers
             = new ConcurrentHashMap<>();
@@ -57,7 +59,8 @@ public class CloudFileSystem extends FuseStubFS {
     public CloudFileSystem(CloudProvider provider, EventBroadcaster broadcaster,
                            RuleEngine ruleEngine, String accountId,
                            FileCacheManager fileCache, DirCacheStore dirCacheStore,
-                           com.discohack.backenditeaapp.persistance.repository.PinnedFileRepository pinnedFileRepository) {
+                           com.discohack.backenditeaapp.persistance.repository.PinnedFileRepository pinnedFileRepository,
+                           AppSettingsFileStore settingsFileStore) {
         this.provider = provider;
         this.broadcaster = broadcaster;
         this.ruleEngine = ruleEngine;
@@ -65,6 +68,7 @@ public class CloudFileSystem extends FuseStubFS {
         this.fileCache = fileCache;
         this.dirCacheStore = dirCacheStore;
         this.pinnedFileRepository = pinnedFileRepository;
+        this.settingsFileStore = settingsFileStore;
     }
 
 
@@ -76,7 +80,7 @@ public class CloudFileSystem extends FuseStubFS {
     @Override
     public int open(String path, FuseFileInfo fi) {
         CachedEntry<CloudFile> cached = fileInfoCache.get(path);
-        if (cached != null && !cached.isExpired(CACHE_TTL_MS)) {
+        if (cached != null && !cached.isExpired(getCacheTtlMs())) {
             String etag = cached.getValue().getEtag();
             if (etag != null && !etag.isEmpty()) {
                 openFileEtags.put(path, etag);
@@ -534,7 +538,7 @@ public class CloudFileSystem extends FuseStubFS {
 
     private Optional<CloudFile> getCachedFileInfo(String path) {
         CachedEntry<CloudFile> entry = fileInfoCache.get(path);
-        if (entry == null || entry.isExpired(CACHE_TTL_MS)) {
+        if (entry == null || entry.isExpired(getCacheTtlMs())) {
             return Optional.empty();
         }
         return Optional.of(entry.getValue());
@@ -542,10 +546,20 @@ public class CloudFileSystem extends FuseStubFS {
 
     private List<CloudFile> getCachedDirListing(String path) {
         CachedEntry<List<CloudFile>> entry = dirCache.get(path);
-        if (entry == null || entry.isExpired(CACHE_TTL_MS)) {
+        if (entry == null || entry.isExpired(getCacheTtlMs())) {
             return null;
         }
         return entry.getValue();
+    }
+
+    private long getCacheTtlMs() {
+        try {
+            long seconds = settingsFileStore.read().explorerRefreshSeconds();
+            if (AppSettingsFileStore.isAllowedExplorerRefreshSeconds(seconds)) {
+                return seconds * 1000L;
+            }
+        } catch (Exception ignored) {}
+        return DEFAULT_CACHE_TTL_MS;
     }
 
     public void invalidateCache(String path) {

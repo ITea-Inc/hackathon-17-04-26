@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
+import java.util.Set;
 
 @Slf4j
 @Component
@@ -18,6 +19,8 @@ public class AppSettingsFileStore {
 
     private static final String DEFAULT_SYNC_FREQUENCY = "1d";
     private static final long DEFAULT_CACHE_SIZE_BYTES = 5_368_709_120L;
+    private static final long DEFAULT_EXPLORER_REFRESH_SECONDS = 30L;
+    private static final Set<Long> ALLOWED_EXPLORER_REFRESH_SECONDS = Set.of(10L, 15L, 30L, 60L);
 
     private final ObjectMapper objectMapper;
     private final Object lock = new Object();
@@ -75,15 +78,24 @@ public class AppSettingsFileStore {
         }
     }
 
-    public record SettingsData(String syncFrequency, Long cacheSizeBytes) {
+    public static boolean isAllowedExplorerRefreshSeconds(long seconds) {
+        return ALLOWED_EXPLORER_REFRESH_SECONDS.contains(seconds);
+    }
+
+    public record SettingsData(String syncFrequency, Long cacheSizeBytes, Long explorerRefreshSeconds) {
         public static SettingsData defaults() {
-            return new SettingsData(DEFAULT_SYNC_FREQUENCY, DEFAULT_CACHE_SIZE_BYTES);
+            return new SettingsData(
+                DEFAULT_SYNC_FREQUENCY,
+                DEFAULT_CACHE_SIZE_BYTES,
+                DEFAULT_EXPLORER_REFRESH_SECONDS
+            );
         }
 
         public SettingsData withDefaults() {
             return new SettingsData(
                 Objects.requireNonNullElse(syncFrequency, DEFAULT_SYNC_FREQUENCY),
-                Objects.requireNonNullElse(cacheSizeBytes, DEFAULT_CACHE_SIZE_BYTES)
+                Objects.requireNonNullElse(cacheSizeBytes, DEFAULT_CACHE_SIZE_BYTES),
+                Objects.requireNonNullElse(explorerRefreshSeconds, DEFAULT_EXPLORER_REFRESH_SECONDS)
             );
         }
     }

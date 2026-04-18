@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import FileExplorer from './components/FileExplorer';
 import MainMenu from './components/MainMenu';
 import AccountsPanel from './components/AccountsPanel';
@@ -20,6 +20,7 @@ function App() {
   const [syncFrequency, setSyncFrequency] = useState('1d');
   const [pinnedPaths, setPinnedPaths] = useState(new Set());
   const [cacheSize, setCacheSize] = useState(5368709120); // 5 GB
+  const [explorerRefreshSeconds, setExplorerRefreshSeconds] = useState(30);
 
   const { isSyncing, notifications, dismissNotification, getSyncInfo } = useSyncEvents();
 
@@ -69,7 +70,7 @@ function App() {
       .catch(err => console.error(err));
   };
 
-  const refreshFiles = (retryCount = 0) => {
+  const refreshFiles = useCallback((retryCount = 0) => {
     if (!selectedAccountId) return;
     setLoading(true);
     setError(null);
@@ -107,7 +108,7 @@ function App() {
           setLoading(false);
         }
       });
-  };
+  }, [selectedAccountId, currentPath, pinnedPaths, rules]);
 
   useEffect(() => {
     // Fetch global settings
@@ -116,6 +117,7 @@ function App() {
       .then(data => {
         if (data.syncFrequency) setSyncFrequency(data.syncFrequency);
         if (data.cacheSizeBytes) setCacheSize(data.cacheSizeBytes);
+        if (data.explorerRefreshSeconds) setExplorerRefreshSeconds(data.explorerRefreshSeconds);
       })
       .catch(err => console.error('Failed to fetch settings:', err));
 
@@ -141,9 +143,24 @@ function App() {
     }).catch(err => console.error('Failed to save settings:', err));
   };
 
+  const handleExplorerRefreshChange = (newSeconds) => {
+    setExplorerRefreshSeconds(newSeconds);
+    fetch(`${API_BASE}/api/settings`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ explorerRefreshSeconds: newSeconds })
+    }).catch(err => console.error('Failed to save settings:', err));
+  };
+
   useEffect(() => {
     refreshFiles();
-  }, [currentPath, selectedAccountId, rules]);
+  }, [refreshFiles]);
+
+  useEffect(() => {
+    if (activeTab !== 'sync-rules' || !selectedAccountId) return;
+    const interval = setInterval(() => refreshFiles(), explorerRefreshSeconds * 1000);
+    return () => clearInterval(interval);
+  }, [activeTab, selectedAccountId, explorerRefreshSeconds, refreshFiles]);
 
   const handleSyncChange = (fileName, newPolicy) => {
     if (!selectedAccountId) return;
@@ -196,6 +213,8 @@ function App() {
             onFrequencyChange={handleFrequencyChange}
             currentCacheSize={cacheSize}
             onCacheSizeChange={handleCacheSizeChange}
+            currentExplorerRefreshSeconds={explorerRefreshSeconds}
+            onExplorerRefreshChange={handleExplorerRefreshChange}
           />
         )}
 
