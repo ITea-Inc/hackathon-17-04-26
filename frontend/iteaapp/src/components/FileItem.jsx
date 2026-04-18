@@ -4,6 +4,15 @@ const FileItem = ({ name, directory, size, lastModified, syncRule = 'NONE', onSy
   const isFolder = directory === true;
   const formattedDate = lastModified ? lastModified.replace("T", " ").replace("Z", " ") : "";
 
+  const formatSize = (bytes) => {
+    if (bytes === 0) return '0 B';
+    if (!bytes) return '--';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+  };
+
   const handleRowDoubleClick = () => {
     if (isFolder && onFolderClick) {
       onFolderClick(name);
@@ -33,12 +42,12 @@ const FileItem = ({ name, directory, size, lastModified, syncRule = 'NONE', onSy
         <div className="file-name">{name}</div>
       </div>
 
-      <div className="file-size">{isFolder ? '--' : Math.trunc(size / 1024) + 'Kb'}</div>
+      <div className="file-size">{isFolder ? '--' : formatSize(size)}</div>
       <div className="file-modified">{formattedDate}</div>
       <div className="file-sync" onDoubleClick={(e) => e.stopPropagation()}>
-        <select 
-          className={`sync-select ${syncRule}`} 
-          value={syncRule} 
+        <select
+          className={`sync-select ${syncRule}`}
+          value={syncRule}
           onChange={handleSyncChangeInternal}
           onClick={(e) => e.stopPropagation()}
         >
