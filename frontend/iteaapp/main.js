@@ -138,13 +138,14 @@ function setupLocalServer() {
       return;
     }
 
-    if (req.method === 'POST' && req.url === '/api/share-from-nautilus') {
+    if (req.method === 'POST' && (req.url === '/api/share-from-nautilus' || req.url === '/api/share-edit-from-nautilus')) {
+      const isEditMode = req.url === '/api/share-edit-from-nautilus';
       let body = '';
       req.on('data', chunk => { body += chunk.toString(); });
       req.on('end', async () => {
         const params = new URLSearchParams(body);
         const filePath = params.get('file_path');
-        console.log('\n[Nautilus Hook] Пользователь хочет поделиться файлом:', filePath);
+        console.log(`\n[Nautilus Hook] Действие: ${isEditMode ? 'Правка прав' : 'Поделиться'}, Путь:`, filePath);
         
         try {
           const accountsRes = await fetch('http://localhost:8080/api/accounts');
@@ -165,25 +166,36 @@ function setupLocalServer() {
             res.writeHead(200); res.end('Account not found');
             return;
           }
-          
-          const shareRes = await fetch(`http://localhost:8080/api/share/${matchedAcc.id}?path=${encodeURIComponent(relPath)}`, { method: 'POST' });
-          if (!shareRes.ok) throw new Error(`Share failed with status ${shareRes.status}`);
-          const shareData = await shareRes.json();
-          
-          if (shareData.url) {
-             const { clipboard, Notification } = require('electron');
-             const { exec } = require('child_process');
-             clipboard.writeText(shareData.url);
-             try { exec(`echo -n "${shareData.url}" | wl-copy`, () => {}); } catch(e) {}
-             try { exec(`echo -n "${shareData.url}" | xclip -selection clipboard`, () => {}); } catch(e) {}
-             new Notification({ title: 'iTea App', body: 'Ссылка скопирована в буфер обмена!' }).show();
+
+          if (isEditMode) {
+             // Для Яндекса открываем веб-интерфейс
+             if (matchedAcc.provider === 'yandex') {
+               const webUrl = `https://disk.yandex.ru/client/disk${encodeURI(relPath)}`;
+               const { shell, Notification } = require('electron');
+               shell.openExternal(webUrl);
+               new Notification({ title: 'iTea App', body: 'Открываем страницу управления доступом...' }).show();
+             }
+          } else {
+             // Обычный шаринг - публичная ссылка
+             const shareRes = await fetch(`http://localhost:8080/api/share/${matchedAcc.id}?path=${encodeURIComponent(relPath)}`, { method: 'POST' });
+             if (!shareRes.ok) throw new Error(`Share failed with status ${shareRes.status}`);
+             const shareData = await shareRes.json();
+             
+             if (shareData.url) {
+                const { clipboard, Notification } = require('electron');
+                const { exec } = require('child_process');
+                clipboard.writeText(shareData.url);
+                try { exec(`echo -n "${shareData.url}" | wl-copy`, () => {}); } catch(e) {}
+                try { exec(`echo -n "${shareData.url}" | xclip -selection clipboard`, () => {}); } catch(e) {}
+                new Notification({ title: 'iTea App', body: 'Ссылка скопирована в буфер обмена!' }).show();
+             }
           }
         } catch(e) {
-          console.log('[Nautilus Hook] Ошибка при шаринге:', e.message);
+          console.log('[Nautilus Hook] Ошибка:', e.message);
         }
 
         res.writeHead(200);
-        res.end('Shared');
+        res.end('OK');
       });
       return;
     }
