@@ -6,6 +6,7 @@ import com.discohack.backenditeaapp.cloud.CloudProviderRegistry;
 import com.discohack.backenditeaapp.domain.CloudFile;
 import com.discohack.backenditeaapp.fuse.FileCacheManager;
 import com.discohack.backenditeaapp.ws.EventBroadcaster;
+import com.discohack.backenditeaapp.ws.SyncEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -87,7 +88,7 @@ public class FileSyncService {
                 }
             }
 
-            broadcaster.publish(com.discohack.backenditeaapp.ws.SyncEvent.builder()
+            broadcaster.publish(SyncEvent.builder()
                 .type("sync_done")
                 .accountId(accountId)
                 .path(path)
