@@ -75,10 +75,10 @@ function App() {
 
   const handleSyncChange = (fileName, newPolicy) => {
     if (!selectedAccountId) return;
-    
+
     const fullPath = currentPath === '/' ? `/${fileName}` : `${currentPath}${fileName}`;
     const cron = newPolicy === 'SCHEDULED' ? getCronByFrequency(syncFrequency) : null;
-    
+
     fetch(`${API_BASE}/api/rules`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -90,16 +90,16 @@ function App() {
         cronExpression: cron
       })
     })
-    .then(res => {
-      if (!res.ok) throw new Error('Failed to save rule');
-      return res.json();
-    })
-    .then(() => {
-      fetchRules();
-    })
-    .catch(err => {
-      alert(err.message);
-    });
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to save rule');
+        return res.json();
+      })
+      .then(() => {
+        fetchRules();
+      })
+      .catch(err => {
+        alert(err.message);
+      });
   };
 
   const handleFolderClick = (folderName) => {
@@ -156,12 +156,12 @@ function App() {
             </div>
             {loading && <div style={{ textAlign: 'center', padding: '1rem' }}><div className="spinner"></div></div>}
             {!loading && (
-              <FileExplorer 
-                items={files} 
-                onSyncChange={handleSyncChange} 
-                onFolderClick={handleFolderClick} 
-                accountId={selectedAccountId} 
-                onRefresh={refreshFiles} 
+              <FileExplorer
+                items={files}
+                onSyncChange={handleSyncChange}
+                onFolderClick={handleFolderClick}
+                accountId={selectedAccountId}
+                onRefresh={refreshFiles}
               />
             )}
           </div>

@@ -5,6 +5,8 @@ node_modules/
 .postman
 postman
 
+*.deb
+
 HELP.md
 target/
 .mvn/wrapper/maven-wrapper.jar

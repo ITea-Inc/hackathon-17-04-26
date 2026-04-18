@@ -14,8 +14,8 @@ import java.util.Map;
  * при перезапуске настройки сбрасываются к дефолтам.
  *
  * Endpoints:
- *   GET /api/settings          — получить текущие настройки
- *   PUT /api/settings          — сохранить настройки
+ * GET /api/settings — получить текущие настройки
+ * PUT /api/settings — сохранить настройки
  */
 @Slf4j
 @RestController
@@ -36,9 +36,8 @@ public class SettingsController {
     @GetMapping
     public ResponseEntity<Map<String, Object>> getSettings() {
         return ResponseEntity.ok(Map.of(
-            "syncFrequency", syncFrequency,
-            "cacheSizeBytes", cacheSizeBytes
-        ));
+                "syncFrequency", syncFrequency,
+                "cacheSizeBytes", cacheSizeBytes));
     }
 
     /**
@@ -48,8 +47,7 @@ public class SettingsController {
      */
     @PutMapping
     public synchronized ResponseEntity<Map<String, Object>> updateSettings(
-        @RequestBody Map<String, Object> body
-    ) {
+            @RequestBody Map<String, Object> body) {
         if (body.containsKey("syncFrequency")) {
             syncFrequency = String.valueOf(body.get("syncFrequency"));
             log.info("Настройка syncFrequency обновлена: {}", syncFrequency);

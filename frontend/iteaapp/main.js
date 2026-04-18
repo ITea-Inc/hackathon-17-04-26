@@ -5,7 +5,7 @@ const { execSync } = require('child_process');
 let mainWindow;
 let tray;
 
-// Menu.setApplicationMenu(null);
+Menu.setApplicationMenu(null);
 
 const isDev = process.env.NODE_ENV !== 'production';
 
