@@ -3,6 +3,7 @@ import FileExplorer from './components/FileExplorer';
 import MainMenu from './components/MainMenu';
 import AccountsPanel from './components/AccountsPanel';
 import SettingsPanel from './components/SettingsPanel';
+import AppearancePanel from './components/AppearancePanel';
 import SyncToast from './components/SyncToast';
 import { useSyncEvents } from './hooks/useSyncEvents';
 import './App.css';
@@ -23,6 +24,59 @@ function App() {
   const [explorerRefreshSeconds, setExplorerRefreshSeconds] = useState(30);
 
   const { isSyncing, notifications, dismissNotification, getSyncInfo } = useSyncEvents();
+
+  useEffect(() => {
+    // Monitor system accent color live
+    let monitor;
+    if (window.require) {
+      const { execSync, spawn } = window.require('child_process');
+      const colorMap = {
+        blue: '#78aeed', teal: '#4a9a8e', green: '#8cb854', yellow: '#d4a54a',
+        orange: '#e5843a', red: '#e55c5c', pink: '#d56199', purple: '#9141ac',
+        slate: '#6f8396', bark: '#b27b4f', sage: '#6f8372', lavender: '#9141ac',
+        magenta: '#d56199',
+      };
+
+      const fetchAccent = () => {
+        try {
+          let accent = execSync('gsettings get org.gnome.desktop.interface accent-color 2>/dev/null').toString().trim().replace(/'/g, '');
+          if (accent && colorMap[accent]) {
+            document.documentElement.style.setProperty('--gnome-accent', colorMap[accent]);
+            return;
+          }
+        } catch(e) {}
+        
+        try {
+          let theme = execSync('gsettings get org.gnome.desktop.interface gtk-theme 2>/dev/null').toString().trim().replace(/'/g, '');
+          if (theme) {
+            const match = theme.match(/[Yy]aru-(\w+)/);
+            if (match && match[1]) {
+              const colorName = match[1].replace(/-?dark$/, '').replace(/-?light$/, '');
+              if (colorName && colorMap[colorName]) {
+                document.documentElement.style.setProperty('--gnome-accent', colorMap[colorName]);
+              }
+            }
+          }
+        } catch(e) {}
+      };
+
+      fetchAccent(); // Initial fetch
+      
+      try {
+        monitor = spawn('gsettings', ['monitor', 'org.gnome.desktop.interface']);
+        let timeoutId;
+        monitor.stdout.on('data', () => {
+          clearTimeout(timeoutId);
+          timeoutId = setTimeout(() => fetchAccent(), 300);
+        });
+      } catch (e) {
+        console.error('Failed to start gnome interface monitor', e);
+      }
+    }
+    return () => {
+      if (monitor) monitor.kill();
+    };
+  }, []);
 
   const getCronByFrequency = (freq) => {
     switch (freq) {
@@ -215,6 +269,7 @@ function App() {
             onExplorerRefreshChange={handleExplorerRefreshChange}
           />
         )}
+        {activeTab === 'appearance' && <AppearancePanel />}
 
         {activeTab === 'sync-rules' && (
           <div className="accPanel_container">
@@ -266,7 +321,7 @@ function App() {
           </div>
         )}
 
-        {activeTab !== 'accounts' && activeTab !== 'sync-rules' && activeTab !== 'settings' && (
+        {activeTab !== 'accounts' && activeTab !== 'sync-rules' && activeTab !== 'settings' && activeTab !== 'appearance' && (
           <div className="accPanel_container">
             <h1 className="accPanel_title">{activeTab.replace('-', ' ').replace(/\b\w/g, c => c.toUpperCase())}</h1>
             <p className="accPanel_subtitle">Этот раздел находится в разработке...</p>
