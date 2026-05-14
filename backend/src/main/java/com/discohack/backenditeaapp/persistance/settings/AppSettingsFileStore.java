@@ -20,7 +20,6 @@ public class AppSettingsFileStore {
     private static final String DEFAULT_SYNC_FREQUENCY = "1d";
     private static final long DEFAULT_CACHE_SIZE_BYTES = 5_368_709_120L;
     private static final long DEFAULT_EXPLORER_REFRESH_SECONDS = 30L;
-    private static final Set<Long> ALLOWED_EXPLORER_REFRESH_SECONDS = Set.of(10L, 15L, 30L, 60L);
 
     private final ObjectMapper objectMapper;
     private final Object lock = new Object();
@@ -79,7 +78,7 @@ public class AppSettingsFileStore {
     }
 
     public static boolean isAllowedExplorerRefreshSeconds(long seconds) {
-        return ALLOWED_EXPLORER_REFRESH_SECONDS.contains(seconds);
+        return seconds >= 1L;
     }
 
     public record SettingsData(String syncFrequency, Long cacheSizeBytes, Long explorerRefreshSeconds) {
