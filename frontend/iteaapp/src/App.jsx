@@ -1,9 +1,11 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import FileExplorer from './components/FileExplorer';
 import MainMenu from './components/MainMenu';
 import AccountsPanel from './components/AccountsPanel';
 import SettingsPanel from './components/SettingsPanel';
 import AppearancePanel from './components/AppearancePanel';
+import ActivityPanel from './components/ActivityPanel';
+import AboutPanel from './components/AboutPanel';
 import SyncToast from './components/SyncToast';
 import { useSyncEvents } from './hooks/useSyncEvents';
 import './App.css';
@@ -22,8 +24,91 @@ function App() {
   const [pinnedPaths, setPinnedPaths] = useState(new Set());
   const [cacheSize, setCacheSize] = useState(5368709120); // 5 GB
   const [explorerRefreshSeconds, setExplorerRefreshSeconds] = useState(30);
+  const [seenActivityCount, setSeenActivityCount] = useState(0);
+  const [transitionClass, setTransitionClass] = useState('');
 
-  const { isSyncing, notifications, dismissNotification, getSyncInfo } = useSyncEvents();
+  const searchRef = useRef(null);
+  const prevTabRef = useRef(activeTab);
+
+  const { isSyncing, notifications, dismissNotification, getSyncInfo, activityLog, clearActivityLog } = useSyncEvents();
+
+  // Track unseen activity count
+  const unreadActivityCount = activityLog.length - seenActivityCount;
+
+  // Mark activity as seen when switching to activity tab
+  useEffect(() => {
+    if (activeTab === 'activity') {
+      setSeenActivityCount(activityLog.length);
+    }
+  }, [activeTab, activityLog.length]);
+
+  // Transition animation on tab switch
+  const handleTabChange = useCallback((newTab) => {
+    if (newTab === activeTab) return;
+    const transition = localStorage.getItem('app-transition') || 'none';
+    if (transition === 'none') {
+      setActiveTab(newTab);
+      return;
+    }
+    // Trigger exit animation
+    setTransitionClass(`content-exit content-exit--${transition}`);
+    setTimeout(() => {
+      setActiveTab(newTab);
+      setTransitionClass(`content-enter content-enter--${transition}`);
+      setTimeout(() => setTransitionClass(''), 200);
+    }, 150);
+  }, [activeTab]);
+
+  // Initialize transition attribute on mount
+  useEffect(() => {
+    const saved = localStorage.getItem('app-transition') || 'none';
+    document.documentElement.setAttribute('data-transition', saved);
+  }, []);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Ignore if typing in an input/select/textarea
+      const tag = e.target.tagName;
+      const isInput = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT';
+
+      // Ctrl+R — Refresh files
+      if (e.ctrlKey && e.key === 'r') {
+        e.preventDefault();
+        if (activeTab === 'sync-rules') refreshFiles();
+      }
+
+      // Ctrl+F — Focus search (only in sync-rules tab)
+      if (e.ctrlKey && e.key === 'f') {
+        if (activeTab === 'sync-rules') {
+          e.preventDefault();
+          searchRef.current?.focus();
+        }
+      }
+
+      // Backspace — Navigate up (only if not in input)
+      if (e.key === 'Backspace' && !isInput) {
+        if (activeTab === 'sync-rules' && currentPath !== '/') {
+          e.preventDefault();
+          navigateUp();
+        }
+      }
+
+      // Ctrl+, — Open settings
+      if (e.ctrlKey && e.key === ',') {
+        e.preventDefault();
+        handleTabChange('settings');
+      }
+
+      // Escape — Close any focused element
+      if (e.key === 'Escape' && isInput) {
+        e.target.blur();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [activeTab, currentPath]);
 
   useEffect(() => {
     // Monitor system accent color live
@@ -252,12 +337,22 @@ function App() {
     setCurrentPath(newPath);
   };
 
+  const handleClearActivity = () => {
+    clearActivityLog();
+    setSeenActivityCount(0);
+  };
+
   return (
     <div className="app_layout">
-      <MainMenu activeItem={activeTab} onItemClick={setActiveTab} isSyncing={isSyncing} />
+      <MainMenu
+        activeItem={activeTab}
+        onItemClick={handleTabChange}
+        isSyncing={isSyncing}
+        activityCount={unreadActivityCount > 0 ? unreadActivityCount : 0}
+      />
       <SyncToast notifications={notifications} onDismiss={dismissNotification} />
 
-      <main className="content-area" style={{ flex: 1, overflowY: 'auto', position: 'relative' }}>
+      <main className={`content-area ${transitionClass}`} style={{ flex: 1, overflowY: 'auto', position: 'relative' }}>
         {activeTab === 'accounts' && <AccountsPanel onAccountSelect={setSelectedAccountId} />}
         {activeTab === 'settings' && (
           <SettingsPanel
@@ -270,6 +365,13 @@ function App() {
           />
         )}
         {activeTab === 'appearance' && <AppearancePanel />}
+        {activeTab === 'activity' && (
+          <ActivityPanel
+            activityLog={activityLog}
+            onClear={handleClearActivity}
+          />
+        )}
+        {activeTab === 'about' && <AboutPanel />}
 
         {activeTab === 'sync-rules' && (
           <div className="accPanel_container">
@@ -305,23 +407,22 @@ function App() {
                 ))}
               </span>
             </div>
-            {loading && <div style={{ textAlign: 'center', padding: '1rem' }}><div className="spinner"></div></div>}
-            {!loading && (
-              <FileExplorer
-                items={files}
-                onSyncChange={handleSyncChange}
-                onFolderClick={handleFolderClick}
-                accountId={selectedAccountId}
-                onRefresh={refreshFiles}
-                getSyncInfo={getSyncInfo}
-                pinnedPaths={pinnedPaths}
-                onPinToggle={handlePinToggle}
-              />
-            )}
+            <FileExplorer
+              items={files}
+              onSyncChange={handleSyncChange}
+              onFolderClick={handleFolderClick}
+              accountId={selectedAccountId}
+              onRefresh={refreshFiles}
+              getSyncInfo={getSyncInfo}
+              pinnedPaths={pinnedPaths}
+              onPinToggle={handlePinToggle}
+              loading={loading}
+              searchRef={searchRef}
+            />
           </div>
         )}
 
-        {activeTab !== 'accounts' && activeTab !== 'sync-rules' && activeTab !== 'settings' && activeTab !== 'appearance' && (
+        {activeTab !== 'accounts' && activeTab !== 'sync-rules' && activeTab !== 'settings' && activeTab !== 'appearance' && activeTab !== 'activity' && activeTab !== 'about' && (
           <div className="accPanel_container">
             <h1 className="accPanel_title">{activeTab.replace('-', ' ').replace(/\b\w/g, c => c.toUpperCase())}</h1>
             <p className="accPanel_subtitle">Этот раздел находится в разработке...</p>

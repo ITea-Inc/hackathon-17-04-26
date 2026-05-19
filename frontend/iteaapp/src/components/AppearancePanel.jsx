@@ -19,10 +19,20 @@ const accentOptions = [
   { id: 'slate', label: 'Серый', value: '#77767b' },
 ];
 
+const transitionOptions = [
+  { id: 'none', label: 'Без анимации', desc: 'Мгновенное переключение' },
+  { id: 'fade', label: 'Затухание', desc: 'Плавное появление/исчезновение' },
+  { id: 'slide-left', label: 'Сдвиг влево', desc: 'Контент выезжает слева' },
+  { id: 'slide-up', label: 'Сдвиг вверх', desc: 'Контент выезжает снизу' },
+  { id: 'scale', label: 'Масштаб', desc: 'Плавное увеличение из центра' },
+  { id: 'fade-slide', label: 'Затухание + сдвиг', desc: 'Комбинация затухания и движения' },
+];
+
 function AppearancePanel() {
   const [theme, setTheme] = useState(localStorage.getItem('app-theme') || 'system');
   const [accent, setAccent] = useState(localStorage.getItem('app-accent') || 'system');
   const [wallpaperUrl, setWallpaperUrl] = useState('');
+  const [transition, setTransition] = useState(localStorage.getItem('app-transition') || 'none');
   
   const [useCustomColors, setUseCustomColors] = useState(localStorage.getItem('app-use-custom-colors') === 'true');
   const [customBg, setCustomBg] = useState(localStorage.getItem('app-custom-bg') || '');
@@ -139,6 +149,11 @@ function AppearancePanel() {
     }
   }, [customBg, useCustomColors]);
 
+  useEffect(() => {
+    localStorage.setItem('app-transition', transition);
+    document.documentElement.setAttribute('data-transition', transition);
+  }, [transition]);
+
   const bgStyle = wallpaperUrl ? { 
     backgroundImage: `url("${wallpaperUrl}"), url('/images/cloud.jpg'), linear-gradient(135deg, #2a5298 0%, #1e3c72 100%)`,
     backgroundBlendMode: 'normal, overlay, normal'
@@ -170,6 +185,31 @@ function AppearancePanel() {
                 </div>
               </div>
               <span className="theme_label">{opt.label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="settings_group" style={{ marginTop: '2.5rem' }}>
+        <h2 className="accPanel_sectionTitle">Анимация переходов</h2>
+        <p className="settings_description">
+          Эффект при переключении между разделами приложения.
+        </p>
+
+        <div className="transition_picker">
+          {transitionOptions.map((opt) => (
+            <div
+              key={opt.id}
+              className={`transition_card ${transition === opt.id ? 'active' : ''}`}
+              onClick={() => setTransition(opt.id)}
+            >
+              <div className={`transition_preview transition_preview--${opt.id}`}>
+                <div className="transition_mock" />
+              </div>
+              <div className="transition_info">
+                <span className="transition_label">{opt.label}</span>
+                <span className="transition_desc">{opt.desc}</span>
+              </div>
             </div>
           ))}
         </div>

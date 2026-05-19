@@ -5,12 +5,15 @@ import SockJS from 'sockjs-client';
 export function useSyncEvents() {
   const [syncingPaths, setSyncingPaths] = useState(new Map());
   const [notifications, setNotifications] = useState([]);
+  const [activityLog, setActivityLog] = useState([]);
   const notifIdRef = useRef(0);
   const handlerRef = useRef(null);
 
   const addNotification = (type, event) => {
     const id = ++notifIdRef.current;
+    const timestamp = Date.now();
     setNotifications(prev => [...prev.slice(-3), { id, type, event }]);
+    setActivityLog(prev => [...prev, { id, type, event, timestamp }]);
   };
 
   // Updated every render so the STOMP callback always sees fresh state setters
@@ -74,10 +77,16 @@ export function useSyncEvents() {
     return syncingPaths.get(`${accountId}:${path}`) ?? null;
   }, [syncingPaths]);
 
+  const clearActivityLog = useCallback(() => {
+    setActivityLog([]);
+  }, []);
+
   return {
     isSyncing: syncingPaths.size > 0,
     notifications,
     dismissNotification,
     getSyncInfo,
+    activityLog,
+    clearActivityLog,
   };
 }
