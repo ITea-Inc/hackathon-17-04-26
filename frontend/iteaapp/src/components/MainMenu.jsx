@@ -32,14 +32,31 @@ const IconAppearance = () => (
   </svg>
 );
 
+const IconActivity = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+    <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+  </svg>
+);
+
+const IconAbout = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="10" />
+    <line x1="12" y1="16" x2="12" y2="12" />
+    <line x1="12" y1="8" x2="12.01" y2="8" />
+  </svg>
+);
+
 const menuItems = [
   { id: 'accounts',   label: 'Аккаунты',             icon: <IconAccounts /> },
   { id: 'sync-rules', label: 'Правила синхронизации', icon: <IconSyncRules /> },
+  { id: 'activity',   label: 'Журнал',               icon: <IconActivity /> },
   { id: 'appearance', label: 'Оформление',           icon: <IconAppearance /> },
   { id: 'settings',   label: 'Настройки',            icon: <IconSettings /> },
+  { id: 'about',      label: 'О программе',          icon: <IconAbout /> },
 ];
 
-function MainMenu({ activeItem: controlledActive, onItemClick, isSyncing }) {
+function MainMenu({ activeItem: controlledActive, onItemClick, isSyncing, activityCount = 0 }) {
   const [internalActive, setInternalActive] = useState('accounts');
   const activeItem = controlledActive ?? internalActive;
 
@@ -67,6 +84,9 @@ function MainMenu({ activeItem: controlledActive, onItemClick, isSyncing }) {
               >
                 <span className="mainMenu_navIcon">{item.icon}</span>
                 <span className="mainMenu_navLabel">{item.label}</span>
+                {item.id === 'activity' && activityCount > 0 && (
+                  <span className="mainMenu_badge">{activityCount > 99 ? '99+' : activityCount}</span>
+                )}
               </button>
             </li>
           ))}

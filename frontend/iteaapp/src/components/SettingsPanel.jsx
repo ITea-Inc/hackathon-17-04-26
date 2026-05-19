@@ -315,6 +315,36 @@ function SettingsPanel({
           </div>
         </div>
       </div>
+
+      <div className="settings_group" style={{ marginTop: '2rem' }}>
+        <h2 className="accPanel_sectionTitle">Горячие клавиши</h2>
+        <p className="settings_description">
+          Доступные сочетания клавиш для быстрого управления.
+        </p>
+
+        <div className="shortcuts_list">
+          <div className="shortcut_row">
+            <span className="shortcut_keys"><kbd>Ctrl</kbd> + <kbd>R</kbd></span>
+            <span className="shortcut_desc">Обновить список файлов</span>
+          </div>
+          <div className="shortcut_row">
+            <span className="shortcut_keys"><kbd>Ctrl</kbd> + <kbd>F</kbd></span>
+            <span className="shortcut_desc">Поиск в текущей папке</span>
+          </div>
+          <div className="shortcut_row">
+            <span className="shortcut_keys"><kbd>Backspace</kbd></span>
+            <span className="shortcut_desc">Перейти в родительскую папку</span>
+          </div>
+          <div className="shortcut_row">
+            <span className="shortcut_keys"><kbd>Ctrl</kbd> + <kbd>,</kbd></span>
+            <span className="shortcut_desc">Открыть настройки</span>
+          </div>
+          <div className="shortcut_row">
+            <span className="shortcut_keys"><kbd>Escape</kbd></span>
+            <span className="shortcut_desc">Снять фокус / закрыть контекстное меню</span>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

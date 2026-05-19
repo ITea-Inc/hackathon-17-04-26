@@ -7,7 +7,7 @@ const PinIcon = ({ pinned }) => (
   </svg>
 );
 
-const FileItem = ({ name, directory, size, lastModified, syncRule = 'MANUAL', onSyncChange, onFolderClick, syncInfo, isPinned, onPinToggle, fullPath }) => {
+const FileItem = ({ name, directory, size, lastModified, syncRule = 'MANUAL', onSyncChange, onFolderClick, syncInfo, isPinned, onPinToggle, fullPath, isSelected, onContextMenu }) => {
   const isFolder = directory === true;
   const formattedDate = lastModified ? lastModified.replace("T", " ").replace("Z", " ") : "";
 
@@ -24,6 +24,12 @@ const FileItem = ({ name, directory, size, lastModified, syncRule = 'MANUAL', on
     if (isFolder && onFolderClick) onFolderClick(name);
   };
 
+  const handleRightClick = (e) => {
+    if (onContextMenu) {
+      onContextMenu(e, { name, directory, size, lastModified, syncRule, fullPath });
+    }
+  };
+
   const handleSyncChangeInternal = (e) => {
     e.stopPropagation();
     onSyncChange(name, e.target.value);
@@ -35,7 +41,11 @@ const FileItem = ({ name, directory, size, lastModified, syncRule = 'MANUAL', on
   };
 
   return (
-    <div className={`file-item${syncInfo ? ' file-item--syncing' : ''}`} onDoubleClick={handleRowDoubleClick}>
+    <div
+      className={`file-item${syncInfo ? ' file-item--syncing' : ''}${isSelected ? ' file-item--selected' : ''}`}
+      onDoubleClick={handleRowDoubleClick}
+      onContextMenu={handleRightClick}
+    >
       <div className="file-name-container">
         <div className="file-icon">
           {isFolder ? (
