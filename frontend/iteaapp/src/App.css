@@ -1518,7 +1518,7 @@ body {
 .activity_list {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 8px;
 }
 
 .activity_dateLabel {
@@ -2222,4 +2222,712 @@ body {
 .shortcut_desc {
   font-size: 13px;
   color: var(--text-primary);
+}
+
+/* ═══════════════════════════════════════════════════
+   HYPRLAND DE THEME — Cyberpunk / Tiling WM Aesthetic
+   ═══════════════════════════════════════════════════ */
+
+:root[data-de="hyprland"] {
+  --bg-color: #0d1117;
+  --sidebar-bg: rgba(13, 17, 23, 0.92);
+  --headerbar-bg: rgba(22, 27, 34, 0.9);
+  --card-bg: rgba(22, 27, 34, 0.55);
+  --card-border: rgba(125, 207, 255, 0.1);
+  --text-primary: #c9d1d9;
+  --text-secondary: #6e7681;
+  --border-color: rgba(125, 207, 255, 0.08);
+  --hover-bg: rgba(125, 207, 255, 0.06);
+  --hover-bg-strong: rgba(125, 207, 255, 0.12);
+  --accent-color: var(--hypr-accent, #7dcfff);
+  --accent-bg: color-mix(in srgb, var(--accent-color) 12%, transparent);
+  --accent-bg-strong: color-mix(in srgb, var(--accent-color) 22%, transparent);
+  --destructive: #f47067;
+  --success: #56d364;
+  --warning: #e3b341;
+  --hypr-glow-color: var(--hypr-accent, #7dcfff);
+  --hypr-glow: 0 0 15px color-mix(in srgb, var(--hypr-glow-color) 30%, transparent);
+  --hypr-glow-strong: 0 0 25px color-mix(in srgb, var(--hypr-glow-color) 45%, transparent);
+  --hypr-accent2-color: var(--hypr-accent2, #bb9af7);
+}
+
+[data-de="hyprland"] body {
+  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'SF Mono', monospace;
+  font-size: 13px;
+  letter-spacing: 0.01em;
+}
+
+/* ── Hyprland Sidebar ── */
+[data-de="hyprland"] .mainMenu_sidebar {
+  width: 58px;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-right: 1px solid rgba(125, 207, 255, 0.12);
+  background: var(--sidebar-bg);
+  transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  z-index: 100;
+  position: relative;
+}
+
+[data-de="hyprland"] .mainMenu_sidebar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 1px;
+  height: 100%;
+  background: linear-gradient(180deg, var(--hypr-glow-color), var(--hypr-accent2-color), transparent);
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+[data-de="hyprland"] .mainMenu_sidebar:hover,
+[data-de="hyprland"] .mainMenu_sidebar.hypr-expanded {
+  width: 210px;
+}
+
+[data-de="hyprland"] .mainMenu_logoBlock {
+  padding: 10px 12px 6px;
+  gap: 8px;
+  justify-content: center;
+}
+
+[data-de="hyprland"] .mainMenu_sidebar:hover .mainMenu_logoBlock,
+[data-de="hyprland"] .mainMenu_sidebar.hypr-expanded .mainMenu_logoBlock {
+  justify-content: flex-start;
+}
+
+[data-de="hyprland"] .mainMenu_logoIcon {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+[data-de="hyprland"] .mainMenu_logoText {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0;
+  transition: opacity 0.2s ease 0.05s;
+  white-space: nowrap;
+  color: var(--hypr-glow-color);
+}
+
+[data-de="hyprland"] .mainMenu_sidebar:hover .mainMenu_logoText,
+[data-de="hyprland"] .mainMenu_sidebar.hypr-expanded .mainMenu_logoText {
+  opacity: 1;
+}
+
+[data-de="hyprland"] .mainMenu_navItem {
+  border-radius: 4px;
+  padding: 8px 10px;
+  justify-content: center;
+  font-size: 12.5px;
+  font-family: inherit;
+  transition: background 0.15s ease, color 0.15s ease, box-shadow 0.2s ease;
+}
+
+[data-de="hyprland"] .mainMenu_sidebar:hover .mainMenu_navItem,
+[data-de="hyprland"] .mainMenu_sidebar.hypr-expanded .mainMenu_navItem {
+  justify-content: flex-start;
+}
+
+[data-de="hyprland"] .mainMenu_navLabel {
+  opacity: 0;
+  width: 0;
+  transition: opacity 0.2s ease 0.05s, width 0.25s ease;
+  overflow: hidden;
+}
+
+[data-de="hyprland"] .mainMenu_sidebar:hover .mainMenu_navLabel,
+[data-de="hyprland"] .mainMenu_sidebar.hypr-expanded .mainMenu_navLabel {
+  opacity: 1;
+  width: auto;
+}
+
+[data-de="hyprland"] .mainMenu_navItem--active {
+  background: var(--accent-bg);
+  box-shadow: var(--hypr-glow);
+  border-left: 2px solid var(--accent-color);
+}
+
+[data-de="hyprland"] .mainMenu_navItem:hover {
+  background: var(--hover-bg-strong);
+}
+
+[data-de="hyprland"] .mainMenu_navItem--active:hover {
+  background: var(--accent-bg-strong);
+  box-shadow: var(--hypr-glow-strong);
+}
+
+[data-de="hyprland"] .mainMenu_badge {
+  font-size: 9px;
+  font-family: inherit;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  position: absolute;
+  top: 2px;
+  right: 2px;
+}
+
+[data-de="hyprland"] .mainMenu_navItem {
+  position: relative;
+}
+
+[data-de="hyprland"] .mainMenu_sidebar:hover .mainMenu_badge,
+[data-de="hyprland"] .mainMenu_sidebar.hypr-expanded .mainMenu_badge {
+  position: static;
+  margin-left: auto;
+}
+
+/* ── Hyprland Cards ── */
+[data-de="hyprland"] .settings_group,
+[data-de="hyprland"] .accPanel_card {
+  border-radius: 6px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  transition: border-color 0.2s ease, box-shadow 0.3s ease;
+}
+
+[data-de="hyprland"] .settings_group:hover,
+[data-de="hyprland"] .accPanel_card:hover {
+  border-color: rgba(125, 207, 255, 0.2);
+}
+
+[data-de="hyprland"] .accPanel_card--active {
+  border-color: var(--accent-color);
+  box-shadow: var(--hypr-glow);
+}
+
+[data-de="hyprland"] .accPanel_title {
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-size: 16px;
+}
+
+[data-de="hyprland"] .accPanel_sectionTitle {
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  font-size: 13px;
+  text-transform: uppercase;
+  color: var(--hypr-glow-color);
+}
+
+/* ── Hyprland File Explorer ── */
+[data-de="hyprland"] .file-item {
+  border-radius: 3px;
+  border-bottom: 1px solid rgba(125, 207, 255, 0.04);
+  transition: background 0.1s ease, box-shadow 0.2s ease;
+}
+
+[data-de="hyprland"] .file-item:hover {
+  background: rgba(125, 207, 255, 0.06);
+  box-shadow: inset 2px 0 0 var(--accent-color);
+}
+
+[data-de="hyprland"] .file-item:active {
+  background: var(--accent-bg);
+}
+
+[data-de="hyprland"] .file-item--selected {
+  background: var(--accent-bg) !important;
+  box-shadow: inset 2px 0 0 var(--accent-color), var(--hypr-glow);
+}
+
+[data-de="hyprland"] .file-item--focused {
+  outline: 1px solid var(--accent-color);
+  outline-offset: -1px;
+  background: rgba(125, 207, 255, 0.05);
+}
+
+[data-de="hyprland"] .explorer-search {
+  border-radius: 4px;
+  font-family: inherit;
+  background: rgba(13, 17, 23, 0.8);
+  border: 1px solid rgba(125, 207, 255, 0.15);
+}
+
+[data-de="hyprland"] .explorer-search:focus {
+  border-color: var(--accent-color);
+  box-shadow: var(--hypr-glow);
+  background: rgba(13, 17, 23, 0.95);
+}
+
+/* ── Hyprland Buttons ── */
+[data-de="hyprland"] .accPanel_actionBtn,
+[data-de="hyprland"] .accPanel_backBtn,
+[data-de="hyprland"] .accPanel_providerBtn {
+  border-radius: 4px;
+  font-family: inherit;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  font-size: 11px;
+}
+
+[data-de="hyprland"] .accPanel_providerBtn {
+  border: 1px solid color-mix(in srgb, var(--accent-color) 30%, transparent);
+  background: transparent;
+}
+
+[data-de="hyprland"] .accPanel_providerBtn:hover {
+  background: var(--accent-bg);
+  box-shadow: var(--hypr-glow);
+}
+
+/* ── Hyprland Theme Picker ── */
+[data-de="hyprland"] .theme_preview {
+  border-radius: 6px;
+}
+
+[data-de="hyprland"] .theme_card.active .theme_preview {
+  box-shadow: var(--hypr-glow-strong);
+}
+
+/* ── Hyprland Sync Select ── */
+[data-de="hyprland"] .sync-select {
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* ── Hyprland Toast ── */
+[data-de="hyprland"] .sync-toast {
+  border-radius: 4px;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  background: rgba(22, 27, 34, 0.85);
+  border: 1px solid var(--card-border);
+}
+
+[data-de="hyprland"] .sync-toast--done {
+  border-color: color-mix(in srgb, var(--success) 40%, transparent);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--success) 15%, transparent);
+}
+
+[data-de="hyprland"] .sync-toast--error {
+  border-color: color-mix(in srgb, var(--destructive) 40%, transparent);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--destructive) 15%, transparent);
+}
+
+/* ── Hyprland Context Menu ── */
+[data-de="hyprland"] .ctx_menu {
+  border-radius: 4px;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  background: rgba(22, 27, 34, 0.9);
+  border: 1px solid rgba(125, 207, 255, 0.15);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6), var(--hypr-glow);
+}
+
+[data-de="hyprland"] .ctx_item {
+  border-radius: 3px;
+  font-family: inherit;
+  font-size: 12px;
+}
+
+/* ── Hyprland Scrollbars ── */
+[data-de="hyprland"] ::-webkit-scrollbar {
+  width: 4px;
+}
+
+[data-de="hyprland"] ::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+[data-de="hyprland"] ::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--hypr-glow-color) 25%, transparent);
+  border-radius: 2px;
+}
+
+[data-de="hyprland"] ::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--hypr-glow-color) 45%, transparent);
+}
+
+/* ── Hyprland Breadcrumb ── */
+[data-de="hyprland"] .accPanel_breadcrumb {
+  border-radius: 4px;
+  background: rgba(13, 17, 23, 0.6);
+  border: 1px solid rgba(125, 207, 255, 0.08);
+  font-family: inherit;
+}
+
+/* ── Hyprland Skeleton ── */
+[data-de="hyprland"] .skeleton_icon,
+[data-de="hyprland"] .skeleton_text {
+  animation: hyprShimmer 1.6s ease-in-out infinite;
+}
+
+@keyframes hyprShimmer {
+  0%, 100% { opacity: 0.15; }
+  50% { opacity: 0.4; background: color-mix(in srgb, var(--hypr-glow-color) 15%, var(--hover-bg-strong)); }
+}
+
+/* ── Hyprland Sync Pulse ── */
+[data-de="hyprland"] .mainMenu_syncDot {
+  background: var(--hypr-glow-color);
+  box-shadow: 0 0 8px var(--hypr-glow-color);
+  animation: hyprSyncPulse 1.2s ease-in-out infinite;
+}
+
+@keyframes hyprSyncPulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 8px var(--hypr-glow-color); }
+  50% { opacity: 0.5; box-shadow: 0 0 16px var(--hypr-glow-color); }
+}
+
+/* ── Hyprland Settings Radio ── */
+[data-de="hyprland"] .settings_radio {
+  border-radius: 3px;
+  border-width: 1.5px;
+}
+
+[data-de="hyprland"] .settings_radio_inner {
+  border-radius: 2px;
+}
+
+[data-de="hyprland"] .settings_option_item {
+  border-radius: 4px;
+}
+
+/* ── Hyprland About ── */
+[data-de="hyprland"] .about_techBadge {
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 11px;
+  letter-spacing: 0.03em;
+  border: 1px solid var(--card-border);
+  background: var(--card-bg);
+}
+
+[data-de="hyprland"] .about_featureCard {
+  border-radius: 4px;
+  border: 1px solid transparent;
+  transition: border-color 0.2s, background 0.15s;
+}
+
+[data-de="hyprland"] .about_featureCard:hover {
+  border-color: var(--card-border);
+}
+
+/* ── Hyprland Transition Cards ── */
+[data-de="hyprland"] .transition_card {
+  border-radius: 4px;
+}
+
+[data-de="hyprland"] .transition_preview {
+  border-radius: 3px;
+}
+
+/* ── Hyprland Accent Circles ── */
+[data-de="hyprland"] .accent_circle_wrapper {
+  border-radius: 4px;
+}
+
+[data-de="hyprland"] .accent_circle {
+  border-radius: 3px;
+}
+
+/* ── Hyprland Preview Panel ── */
+[data-de="hyprland"] .preview_panel {
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  background: rgba(22, 27, 34, 0.85);
+}
+
+[data-de="hyprland"] .preview_fileIcon {
+  border-radius: 6px;
+}
+
+[data-de="hyprland"] .preview_shareBtn {
+  border-radius: 4px;
+  font-family: inherit;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  font-size: 12px;
+}
+
+/* ── Hyprland Kbd ── */
+[data-de="hyprland"] .shortcut_keys kbd {
+  border-radius: 3px;
+  font-family: inherit;
+  background: rgba(125, 207, 255, 0.08);
+  border-color: rgba(125, 207, 255, 0.15);
+  color: var(--hypr-glow-color);
+}
+
+/* ── DE Picker Cards (in AppearancePanel) ── */
+.de_picker {
+  display: flex;
+  gap: 14px;
+  margin-top: 15px;
+  flex-wrap: wrap;
+}
+
+.de_card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  flex: 1;
+  min-width: 160px;
+  max-width: 260px;
+}
+
+.de_preview {
+  width: 100%;
+  height: 120px;
+  border-radius: 10px;
+  position: relative;
+  border: 2px solid transparent;
+  transition: all 0.25s ease;
+  overflow: hidden;
+}
+
+.de_card.active .de_preview {
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-color) 30%, transparent);
+}
+
+[data-de="hyprland"] .de_card.active .de_preview {
+  box-shadow: var(--hypr-glow-strong);
+}
+
+.de_card:hover .de_preview {
+  transform: translateY(-2px);
+}
+
+.de_preview--gnome {
+  background: linear-gradient(135deg, #1a73e8 0%, #303030 40%, #242424 100%);
+}
+
+.de_preview--gnome .de_mock_sidebar {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 28%;
+  background: rgba(48, 48, 48, 0.95);
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.de_preview--gnome .de_mock_card {
+  position: absolute;
+  right: 12px;
+  top: 18px;
+  width: 50%;
+  height: 35px;
+  border-radius: 8px;
+  background: rgba(48, 48, 48, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.de_preview--gnome .de_mock_card2 {
+  position: absolute;
+  right: 12px;
+  top: 60px;
+  width: 50%;
+  height: 35px;
+  border-radius: 8px;
+  background: rgba(48, 48, 48, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.de_preview--hyprland {
+  background: linear-gradient(135deg, #0d1117 0%, #161b22 60%, #1a1f2e 100%);
+}
+
+.de_preview--hyprland .de_mock_sidebar {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 14%;
+  background: rgba(13, 17, 23, 0.95);
+  border-right: 1px solid rgba(125, 207, 255, 0.2);
+}
+
+.de_preview--hyprland .de_mock_sidebar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 1px;
+  height: 100%;
+  background: linear-gradient(180deg, #7dcfff, #bb9af7, transparent);
+  opacity: 0.6;
+}
+
+.de_preview--hyprland .de_mock_card {
+  position: absolute;
+  right: 10px;
+  top: 16px;
+  width: 55%;
+  height: 32px;
+  border-radius: 4px;
+  background: rgba(22, 27, 34, 0.6);
+  border: 1px solid rgba(125, 207, 255, 0.15);
+  box-shadow: 0 0 8px rgba(125, 207, 255, 0.1);
+}
+
+.de_preview--hyprland .de_mock_card2 {
+  position: absolute;
+  right: 10px;
+  top: 56px;
+  width: 55%;
+  height: 32px;
+  border-radius: 4px;
+  background: rgba(22, 27, 34, 0.4);
+  border: 1px solid rgba(125, 207, 255, 0.08);
+}
+
+.de_preview--hyprland .de_mock_glow {
+  position: absolute;
+  bottom: -10px;
+  left: 20%;
+  width: 60%;
+  height: 20px;
+  background: radial-gradient(ellipse, rgba(125, 207, 255, 0.15), transparent);
+  pointer-events: none;
+}
+
+.de_label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  transition: color 0.2s;
+}
+
+.de_card.active .de_label {
+  color: var(--text-primary);
+}
+
+.de_desc {
+  font-size: 11px;
+  color: var(--text-secondary);
+  text-align: center;
+  line-height: 1.3;
+  opacity: 0.8;
+}
+
+/* ── Hyprland vim mode indicator ── */
+.hypr_mode_indicator {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 26px;
+  background: rgba(13, 17, 23, 0.97);
+  border-top: 1px solid rgba(125, 207, 255, 0.1);
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  z-index: 200;
+  gap: 12px;
+}
+
+.hypr_mode_tag {
+  padding: 1px 8px;
+  border-radius: 2px;
+  font-weight: 700;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.hypr_mode_tag--normal {
+  background: var(--hypr-accent, #7dcfff);
+  color: #0d1117;
+}
+
+.hypr_mode_tag--nav {
+  background: #bb9af7;
+  color: #0d1117;
+}
+
+.hypr_mode_tag--cmd {
+  background: #56d364;
+  color: #0d1117;
+}
+
+.hypr_mode_hint {
+  color: var(--text-secondary);
+  font-size: 10px;
+}
+
+.hypr_mode_hint kbd {
+  display: inline;
+  padding: 0 3px;
+  color: var(--hypr-glow-color, #7dcfff);
+  font-weight: 600;
+}
+
+/* ── DE Toggle Button (sidebar bottom) ── */
+.de_toggle_btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 6px 8px 8px;
+  padding: 6px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.12s ease, color 0.12s ease, border-color 0.2s ease;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.de_toggle_btn:hover {
+  background: var(--hover-bg-strong);
+  color: var(--text-primary);
+  border-color: var(--accent-color);
+}
+
+[data-de="hyprland"] .de_toggle_btn {
+  border-radius: 3px;
+  font-family: inherit;
+  letter-spacing: 0.04em;
+}
+
+.de_toggle_label {
+  opacity: 1;
+  transition: opacity 0.2s ease 0.05s;
+}
+
+[data-de="hyprland"] .de_toggle_label {
+  opacity: 0;
+  width: 0;
+  overflow: hidden;
+}
+
+[data-de="hyprland"] .mainMenu_sidebar:hover .de_toggle_label,
+[data-de="hyprland"] .mainMenu_sidebar.hypr-expanded .de_toggle_label {
+  opacity: 1;
+  width: auto;
+}
+
+/* Hyprland: reserve space for bottom status bar */
+[data-de="hyprland"] .app_layout {
+  height: calc(100vh - 27px);
+}
+
+[data-de="hyprland"] .mainMenu_sidebar {
+  height: calc(100vh - 27px);
 }

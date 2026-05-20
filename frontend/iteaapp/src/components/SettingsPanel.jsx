@@ -345,6 +345,78 @@ function SettingsPanel({
           </div>
         </div>
       </div>
+
+      <div className="settings_group" style={{ marginTop: '2rem' }}>
+        <h2 className="accPanel_sectionTitle">Переключение окружения</h2>
+        <p className="settings_description">
+          Горячие клавиши для быстрого переключения стиля интерфейса.
+        </p>
+
+        <div className="shortcuts_list">
+          <div className="shortcut_row">
+            <span className="shortcut_keys"><kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>G</kbd></span>
+            <span className="shortcut_desc">Переключить на GNOME</span>
+          </div>
+          <div className="shortcut_row">
+            <span className="shortcut_keys"><kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>H</kbd></span>
+            <span className="shortcut_desc">Переключить на Hyprland</span>
+          </div>
+          <div className="shortcut_row">
+            <span className="shortcut_keys"><kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>D</kbd></span>
+            <span className="shortcut_desc">Циклическая смена окружения</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="settings_group" style={{ marginTop: '2rem' }}>
+        <h2 className="accPanel_sectionTitle">Vim-навигация (Hyprland)</h2>
+        <p className="settings_description">
+          Клавиши активны только в режиме Hyprland, когда курсор не в поле ввода.
+        </p>
+
+        <div className="shortcuts_list">
+          <div className="shortcut_row">
+            <span className="shortcut_keys"><kbd>j</kbd> / <kbd>k</kbd></span>
+            <span className="shortcut_desc">Навигация вниз / вверх по файлам</span>
+          </div>
+          <div className="shortcut_row">
+            <span className="shortcut_keys"><kbd>l</kbd> / <kbd>Enter</kbd></span>
+            <span className="shortcut_desc">Открыть папку</span>
+          </div>
+          <div className="shortcut_row">
+            <span className="shortcut_keys"><kbd>h</kbd></span>
+            <span className="shortcut_desc">Перейти в родительскую папку</span>
+          </div>
+          <div className="shortcut_row">
+            <span className="shortcut_keys"><kbd>g</kbd> / <kbd>G</kbd></span>
+            <span className="shortcut_desc">Перейти к первому / последнему файлу</span>
+          </div>
+          <div className="shortcut_row">
+            <span className="shortcut_keys"><kbd>/</kbd></span>
+            <span className="shortcut_desc">Фокус на поиск</span>
+          </div>
+          <div className="shortcut_row">
+            <span className="shortcut_keys"><kbd>s</kbd></span>
+            <span className="shortcut_desc">Циклическая смена политики синхронизации</span>
+          </div>
+          <div className="shortcut_row">
+            <span className="shortcut_keys"><kbd>p</kbd></span>
+            <span className="shortcut_desc">Закрепить / открепить файл</span>
+          </div>
+          <div className="shortcut_row">
+            <span className="shortcut_keys"><kbd>r</kbd></span>
+            <span className="shortcut_desc">Обновить список файлов</span>
+          </div>
+          <div className="shortcut_row">
+            <span className="shortcut_keys"><kbd>1</kbd> – <kbd>6</kbd></span>
+            <span className="shortcut_desc">Быстрое переключение вкладок</span>
+          </div>
+          <div className="shortcut_row">
+            <span className="shortcut_keys"><kbd>~</kbd></span>
+            <span className="shortcut_desc">Показать помощь (эта страница)</span>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

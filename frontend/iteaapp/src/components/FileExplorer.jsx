@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useRef, useEffect } from 'react';
+import React, { useMemo, useState, useRef, useEffect, useCallback } from 'react';
 import FileItem from './FileItem';
 import FilePreviewPanel from './FilePreviewPanel';
 
@@ -57,7 +57,7 @@ const ContextMenu = ({ x, y, items, onClose }) => {
   );
 };
 
-const FileExplorer = ({ items, onSyncChange, onFolderClick, accountId, onRefresh, getSyncInfo, pinnedPaths, onPinToggle, loading, searchRef }) => {
+const FileExplorer = ({ items, onSyncChange, onFolderClick, accountId, onRefresh, getSyncInfo, pinnedPaths, onPinToggle, loading, searchRef, focusedIndex = -1 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('name');
   const [sortDirection, setSortDirection] = useState('asc');
@@ -117,14 +117,15 @@ const FileExplorer = ({ items, onSyncChange, onFolderClick, accountId, onRefresh
         action: () => setSelectedFile(prev => prev?.fullPath === file.fullPath ? null : file),
       },
       {
-        label: isPinnedFile(file) ? 'Открепить' : 'Закрепить офлайн',
+        label: isPinnedFile(file) 
+          ? (file.directory ? 'Открепить папку' : 'Открепить') 
+          : (file.directory ? 'Закрепить папку (всё содержимое)' : 'Закрепить офлайн'),
         icon: <svg width="14" height="14" viewBox="0 0 24 24" fill={isPinnedFile(file) ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg>,
         action: () => {
           if (onPinToggle && file.fullPath) {
             onPinToggle(file.fullPath, !isPinnedFile(file));
           }
         },
-        disabled: file.directory,
       },
     ];
     setContextMenu({ x: e.clientX, y: e.clientY, items: menuItems });
@@ -179,7 +180,7 @@ const FileExplorer = ({ items, onSyncChange, onFolderClick, accountId, onRefresh
               {!accountId ? 'Подключите аккаунт в разделе «Аккаунты»' : items.length === 0 ? 'Папка пуста' : 'Ничего не найдено'}
             </div>
           ) : (
-            visibleItems.map((item) => (
+            visibleItems.map((item, idx) => (
               <FileItem
                 key={item.fullPath}
                 {...item}
@@ -189,6 +190,7 @@ const FileExplorer = ({ items, onSyncChange, onFolderClick, accountId, onRefresh
                 isPinned={pinnedPaths ? pinnedPaths.has(item.fullPath) : false}
                 onPinToggle={onPinToggle}
                 isSelected={selectedFile?.fullPath === item.fullPath}
+                isFocused={idx === focusedIndex}
                 onContextMenu={handleContextMenu}
               />
             ))

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 
 const PinIcon = ({ pinned }) => (
   <svg width="14" height="14" viewBox="0 0 24 24" fill={pinned ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -7,7 +7,17 @@ const PinIcon = ({ pinned }) => (
   </svg>
 );
 
-const FileItem = ({ name, directory, size, lastModified, syncRule = 'MANUAL', onSyncChange, onFolderClick, syncInfo, isPinned, onPinToggle, fullPath, isSelected, onContextMenu }) => {
+const FolderPinIcon = ({ pinned }) => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M10 4H4C2.895 4 2 4.895 2 6V18C2 19.105 2.895 20 4 20H20C21.105 20 22 19.105 22 18V8C22 6.895 21.105 6 20 6H12L10 4Z" fill={pinned ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.5" />
+    {pinned && (
+      <polyline points="9 13 11 15 15 11" stroke="#fff" strokeWidth="2" fill="none" />
+    )}
+  </svg>
+);
+
+const FileItem = ({ name, directory, size, lastModified, syncRule = 'MANUAL', onSyncChange, onFolderClick, syncInfo, isPinned, onPinToggle, fullPath, isSelected, isFocused, onContextMenu }) => {
+  const rowRef = useRef(null);
   const isFolder = directory === true;
   const formattedDate = lastModified ? lastModified.replace("T", " ").replace("Z", " ") : "";
 
@@ -40,9 +50,52 @@ const FileItem = ({ name, directory, size, lastModified, syncRule = 'MANUAL', on
     if (onPinToggle && fullPath) onPinToggle(fullPath, !isPinned);
   };
 
+  // Auto-scroll focused item into view
+  useEffect(() => {
+    if (isFocused && rowRef.current) {
+      rowRef.current.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }
+  }, [isFocused]);
+
+  // Build sync display for folders
+  const renderSyncColumn = () => {
+    if (syncInfo) {
+      if (isFolder) {
+        // Folder sync: show "Кэширование папки" with items count
+        const cached = syncInfo.cached || 0;
+        const total = syncInfo.fileCount || syncInfo.total || 0;
+        return (
+          <div className="file-sync-badge">
+            <span className="file-sync-spinner" />
+            <span>{total > 0 ? `${cached}/${total}` : 'Папка...'}</span>
+          </div>
+        );
+      }
+      return (
+        <div className="file-sync-badge">
+          <span className="file-sync-spinner" />
+          <span>{syncInfo.percent}%</span>
+        </div>
+      );
+    }
+    return (
+      <select
+        className={`sync-select ${syncRule}`}
+        value={syncRule}
+        onChange={handleSyncChangeInternal}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <option value="ALWAYS">Всегда</option>
+        <option value="SCHEDULED">По расписанию</option>
+        <option value="MANUAL">Никогда</option>
+      </select>
+    );
+  };
+
   return (
     <div
-      className={`file-item${syncInfo ? ' file-item--syncing' : ''}${isSelected ? ' file-item--selected' : ''}`}
+      ref={rowRef}
+      className={`file-item${syncInfo ? ' file-item--syncing' : ''}${isSelected ? ' file-item--selected' : ''}${isFocused ? ' file-item--focused' : ''}`}
       onDoubleClick={handleRowDoubleClick}
       onContextMenu={handleRightClick}
     >
@@ -61,43 +114,37 @@ const FileItem = ({ name, directory, size, lastModified, syncRule = 'MANUAL', on
         </div>
         <div className="file-name-wrap">
           <div className="file-name">{name}</div>
-          {syncInfo && (
+          {syncInfo && !isFolder && (
             <div className="file-sync-bar">
               <div className="file-sync-bar__fill" style={{ width: `${syncInfo.percent}%` }} />
             </div>
           )}
+          {syncInfo && isFolder && (
+            <div className="file-sync-bar">
+              <div className="file-sync-bar__fill" style={{ 
+                width: (syncInfo.fileCount || syncInfo.total) > 0 
+                  ? `${Math.round(((syncInfo.cached || 0) / (syncInfo.fileCount || syncInfo.total || 1)) * 100)}%` 
+                  : '100%' 
+              }} />
+            </div>
+          )}
         </div>
-        {!isFolder && (
-          <button
-            className={`pin-btn${isPinned ? ' pin-btn--active' : ''}`}
-            onClick={handlePinClick}
-            title={isPinned ? 'Открепить' : 'Закрепить офлайн'}
-          >
-            <PinIcon pinned={isPinned} />
-          </button>
-        )}
+        <button
+          className={`pin-btn${isPinned ? ' pin-btn--active' : ''}`}
+          onClick={handlePinClick}
+          title={isPinned 
+            ? (isFolder ? 'Открепить папку (и всё содержимое)' : 'Открепить') 
+            : (isFolder ? 'Закрепить папку (всё содержимое)' : 'Закрепить офлайн')
+          }
+        >
+          {isFolder ? <FolderPinIcon pinned={isPinned} /> : <PinIcon pinned={isPinned} />}
+        </button>
       </div>
 
       <div className="file-size">{isFolder ? '--' : formatSize(size)}</div>
       <div className="file-modified">{formattedDate}</div>
       <div className="file-sync" onDoubleClick={(e) => e.stopPropagation()}>
-        {syncInfo ? (
-          <div className="file-sync-badge">
-            <span className="file-sync-spinner" />
-            <span>{syncInfo.percent}%</span>
-          </div>
-        ) : (
-          <select
-            className={`sync-select ${syncRule}`}
-            value={syncRule}
-            onChange={handleSyncChangeInternal}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <option value="ALWAYS">Всегда</option>
-            <option value="SCHEDULED">По расписанию</option>
-            <option value="MANUAL">Никогда</option>
-          </select>
-        )}
+        {renderSyncColumn()}
       </div>
     </div>
   );

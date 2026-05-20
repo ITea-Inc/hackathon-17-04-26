@@ -142,7 +142,7 @@ function AboutPanel() {
         <div className="about_links">
           <a
             className="about_link"
-            href="https://github.com/ITea-Inc/hackathon-17-04-26"
+            href="https://github.com/ITea-Inc/"
             target="_blank"
             rel="noopener noreferrer"
             onClick={(e) => {
