@@ -101,7 +101,13 @@ function ActivityPanel({ activityLog = [], onClear }) {
                     <div className="activity_itemPath">{entry.event.path}</div>
                     {entry.type === 'done' && entry.event.data && (
                       <div className="activity_itemDetail">
-                        {entry.event.data.cached} из {entry.event.data.fileCount} файлов закэшировано
+                        {entry.event.path?.endsWith('/') || (entry.event.data.fileCount === 0 && entry.event.data.cached === 0) ? (
+                          entry.event.data.fileCount > 0 
+                            ? `Папка закэширована (${entry.event.data.cached} из ${entry.event.data.fileCount} файлов)`
+                            : 'Папка закэширована'
+                        ) : (
+                          `${entry.event.data.cached} из ${entry.event.data.fileCount} файлов закэшировано`
+                        )}
                       </div>
                     )}
                     {entry.type === 'error' && entry.event.data?.message && (

@@ -8,11 +8,15 @@ import ActivityPanel from './components/ActivityPanel';
 import AboutPanel from './components/AboutPanel';
 import SyncToast from './components/SyncToast';
 import { useSyncEvents } from './hooks/useSyncEvents';
+import { DEThemeProvider, useDETheme } from './contexts/DEThemeContext';
 import './App.css';
 
 const API_BASE = 'http://localhost:8080';
 
-function App() {
+/* Tab order for number-key navigation */
+const TAB_ORDER = ['accounts', 'sync-rules', 'activity', 'appearance', 'settings', 'about'];
+
+function AppContent() {
   const [files, setFiles] = useState([]);
   const [rules, setRules] = useState([]);
   const [currentPath, setCurrentPath] = useState('/');
@@ -26,10 +30,12 @@ function App() {
   const [explorerRefreshSeconds, setExplorerRefreshSeconds] = useState(30);
   const [seenActivityCount, setSeenActivityCount] = useState(0);
   const [transitionClass, setTransitionClass] = useState('');
+  const [focusedFileIndex, setFocusedFileIndex] = useState(-1);
 
   const searchRef = useRef(null);
   const prevTabRef = useRef(activeTab);
 
+  const { deTheme, setDETheme, cycleTheme, isHyprland } = useDETheme();
   const { isSyncing, notifications, dismissNotification, getSyncInfo, activityLog, clearActivityLog } = useSyncEvents();
 
   // Track unseen activity count
@@ -65,21 +71,46 @@ function App() {
     document.documentElement.setAttribute('data-transition', saved);
   }, []);
 
-  // Keyboard shortcuts
+  // Reset focused file when path or tab changes
+  useEffect(() => {
+    setFocusedFileIndex(-1);
+  }, [currentPath, activeTab]);
+
+  // ── Keyboard shortcuts (universal + Hyprland vim-mode) ──
   useEffect(() => {
     const handleKeyDown = (e) => {
-      // Ignore if typing in an input/select/textarea
       const tag = e.target.tagName;
       const isInput = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT';
 
+      // ── DE switching shortcuts (always active, use e.code for layout independence) ──
+      // Ctrl+Shift+G → GNOME
+      if (e.ctrlKey && e.shiftKey && e.code === 'KeyG') {
+        e.preventDefault();
+        setDETheme('gnome');
+        return;
+      }
+      // Ctrl+Shift+H → Hyprland
+      if (e.ctrlKey && e.shiftKey && e.code === 'KeyH') {
+        e.preventDefault();
+        setDETheme('hyprland');
+        return;
+      }
+      // Ctrl+Shift+D → Cycle DE theme
+      if (e.ctrlKey && e.shiftKey && e.code === 'KeyD') {
+        e.preventDefault();
+        cycleTheme();
+        return;
+      }
+
+      // ── Universal shortcuts ──
       // Ctrl+R — Refresh files
-      if (e.ctrlKey && e.key === 'r') {
+      if (e.ctrlKey && e.code === 'KeyR') {
         e.preventDefault();
         if (activeTab === 'sync-rules') refreshFiles();
       }
 
       // Ctrl+F — Focus search (only in sync-rules tab)
-      if (e.ctrlKey && e.key === 'f') {
+      if (e.ctrlKey && e.code === 'KeyF') {
         if (activeTab === 'sync-rules') {
           e.preventDefault();
           searchRef.current?.focus();
@@ -104,11 +135,113 @@ function App() {
       if (e.key === 'Escape' && isInput) {
         e.target.blur();
       }
+
+      // ── Hyprland-specific vim keybindings (use e.code for Russian layout support) ──
+      if (!isHyprland || isInput) return;
+
+      // Number keys 1-6 to switch tabs
+      const numKey = parseInt(e.key);
+      if (numKey >= 1 && numKey <= TAB_ORDER.length && !e.ctrlKey && !e.shiftKey && !e.altKey) {
+        e.preventDefault();
+        handleTabChange(TAB_ORDER[numKey - 1]);
+        return;
+      }
+
+      // File navigation in sync-rules tab
+      if (activeTab === 'sync-rules') {
+        // j / ArrowDown — Move focus down
+        if (e.code === 'KeyJ' || (e.key === 'ArrowDown' && !e.ctrlKey)) {
+          e.preventDefault();
+          setFocusedFileIndex(prev => Math.min(prev + 1, files.length - 1));
+          return;
+        }
+
+        // k / ArrowUp — Move focus up
+        if (e.code === 'KeyK' || (e.key === 'ArrowUp' && !e.ctrlKey)) {
+          e.preventDefault();
+          setFocusedFileIndex(prev => Math.max(prev - 1, 0));
+          return;
+        }
+
+        // l / Enter — Open folder
+        if (e.code === 'KeyL' || e.key === 'Enter') {
+          e.preventDefault();
+          if (focusedFileIndex >= 0 && focusedFileIndex < files.length) {
+            const f = files[focusedFileIndex];
+            if (f.directory === true) {
+              handleFolderClick(f.name);
+            }
+          }
+          return;
+        }
+
+        // h — Go up a directory
+        if (e.code === 'KeyH') {
+          e.preventDefault();
+          if (currentPath !== '/') navigateUp();
+          return;
+        }
+
+        // g — Go to top (without Shift)
+        if (e.code === 'KeyG' && !e.shiftKey && !e.ctrlKey) {
+          e.preventDefault();
+          setFocusedFileIndex(0);
+          return;
+        }
+
+        // G (Shift+G) — Go to bottom
+        if (e.code === 'KeyG' && e.shiftKey) {
+          e.preventDefault();
+          setFocusedFileIndex(files.length - 1);
+          return;
+        }
+
+        // / — Focus search (Slash key or Shift+Slash)
+        if (e.code === 'Slash') {
+          e.preventDefault();
+          searchRef.current?.focus();
+          return;
+        }
+
+        // p — Toggle pin on focused file
+        if (e.code === 'KeyP' && focusedFileIndex >= 0 && focusedFileIndex < files.length) {
+          e.preventDefault();
+          const f = files[focusedFileIndex];
+          const fp = f.fullPath || (currentPath === '/' ? `/${f.name}` : `${currentPath}${f.name}`);
+          handlePinToggle(fp, !pinnedPaths.has(fp));
+          return;
+        }
+
+        // s — Cycle sync policy on focused file
+        if (e.code === 'KeyS' && focusedFileIndex >= 0 && focusedFileIndex < files.length) {
+          e.preventDefault();
+          const f = files[focusedFileIndex];
+          const policies = ['MANUAL', 'ALWAYS', 'SCHEDULED', 'ON_DEMAND'];
+          const currentIdx = policies.indexOf(f.syncRule || 'MANUAL');
+          const nextPolicy = policies[(currentIdx + 1) % policies.length];
+          handleSyncChange(f.name, nextPolicy);
+          return;
+        }
+
+        // r — Refresh
+        if (e.code === 'KeyR' && !e.ctrlKey) {
+          e.preventDefault();
+          refreshFiles();
+          return;
+        }
+      }
+
+      // ~ (Backquote / Ё) — Show help (go to settings to see shortcuts)
+      if (e.code === 'Backquote') {
+        e.preventDefault();
+        handleTabChange('settings');
+        return;
+      }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [activeTab, currentPath]);
+  }, [activeTab, currentPath, isHyprland, files, focusedFileIndex, pinnedPaths]);
 
   useEffect(() => {
     // Monitor system accent color live
@@ -418,6 +551,7 @@ function App() {
               onPinToggle={handlePinToggle}
               loading={loading}
               searchRef={searchRef}
+              focusedIndex={focusedFileIndex}
             />
           </div>
         )}
@@ -429,7 +563,31 @@ function App() {
           </div>
         )}
       </main>
+
+      {/* Hyprland vim mode status bar */}
+      {isHyprland && (
+        <div className="hypr_mode_indicator">
+          <span className="hypr_mode_tag hypr_mode_tag--normal">NORMAL</span>
+          <span className="hypr_mode_hint">
+            <kbd>j</kbd>/<kbd>k</kbd> навигация
+            <kbd style={{ marginLeft: '6px' }}>l</kbd> открыть
+            <kbd style={{ marginLeft: '6px' }}>h</kbd> назад
+            <kbd style={{ marginLeft: '6px' }}>s</kbd> синхр
+            <kbd style={{ marginLeft: '6px' }}>p</kbd> пин
+            <kbd style={{ marginLeft: '6px' }}>1-6</kbd> вкладки
+            <kbd style={{ marginLeft: '6px' }}>~</kbd> помощь
+          </span>
+        </div>
+      )}
     </div>
+  );
+}
+
+function App() {
+  return (
+    <DEThemeProvider>
+      <AppContent />
+    </DEThemeProvider>
   );
 }
 

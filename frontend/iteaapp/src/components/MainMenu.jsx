@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useDETheme } from '../contexts/DEThemeContext';
 
 const IconAccounts = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -47,6 +48,14 @@ const IconAbout = () => (
   </svg>
 );
 
+const IconDE = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+    <line x1="8" y1="21" x2="16" y2="21" />
+    <line x1="12" y1="17" x2="12" y2="21" />
+  </svg>
+);
+
 const menuItems = [
   { id: 'accounts',   label: 'Аккаунты',             icon: <IconAccounts /> },
   { id: 'sync-rules', label: 'Правила синхронизации', icon: <IconSyncRules /> },
@@ -59,6 +68,7 @@ const menuItems = [
 function MainMenu({ activeItem: controlledActive, onItemClick, isSyncing, activityCount = 0 }) {
   const [internalActive, setInternalActive] = useState('accounts');
   const activeItem = controlledActive ?? internalActive;
+  const { deTheme, cycleTheme } = useDETheme();
 
   const handleClick = (id) => {
     setInternalActive(id);
@@ -101,6 +111,17 @@ function MainMenu({ activeItem: controlledActive, onItemClick, isSyncing, activi
           <span className="mainMenu_syncLabel">Синхронизация...</span>
         </div>
       )}
+
+      <button 
+        className="de_toggle_btn" 
+        onClick={cycleTheme}
+        title={`Текущее: ${deTheme === 'gnome' ? 'GNOME' : 'Hyprland'} (Ctrl+Shift+D)`}
+      >
+        <IconDE />
+        <span className="de_toggle_label">
+          {deTheme === 'gnome' ? 'GNOME' : 'Hyprland'}
+        </span>
+      </button>
     </aside>
   );
 }

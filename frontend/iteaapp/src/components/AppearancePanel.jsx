@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useDETheme } from '../contexts/DEThemeContext';
 
 const themeOptions = [
   { id: 'system', label: 'Системная' },
@@ -29,6 +30,7 @@ const transitionOptions = [
 ];
 
 function AppearancePanel() {
+  const { deTheme, setDETheme, availableThemes, hyprColors } = useDETheme();
   const [theme, setTheme] = useState(localStorage.getItem('app-theme') || 'system');
   const [accent, setAccent] = useState(localStorage.getItem('app-accent') || 'system');
   const [wallpaperUrl, setWallpaperUrl] = useState('');
@@ -159,10 +161,90 @@ function AppearancePanel() {
     backgroundBlendMode: 'normal, overlay, normal'
   } : {};
 
+  const DEPreviewContent = ({ themeId }) => {
+    if (themeId === 'gnome') {
+      return (
+        <div className="de_preview de_preview--gnome">
+          <div className="de_mock_sidebar" />
+          <div className="de_mock_card" />
+          <div className="de_mock_card2" />
+        </div>
+      );
+    }
+    if (themeId === 'hyprland') {
+      return (
+        <div className="de_preview de_preview--hyprland">
+          <div className="de_mock_sidebar" />
+          <div className="de_mock_card" />
+          <div className="de_mock_card2" />
+          <div className="de_mock_glow" />
+        </div>
+      );
+    }
+    return <div className="de_preview" style={{ background: 'var(--card-bg)' }} />;
+  };
+
   return (
     <div className="accPanel_container" style={{ paddingBottom: '2rem' }}>
       <h1 className="accPanel_title">Оформление</h1>
 
+      {/* ── DE Environment Picker ── */}
+      <div className="settings_group">
+        <h2 className="accPanel_sectionTitle">Окружение рабочего стола</h2>
+        <p className="settings_description">
+          Выберите стиль интерфейса, соответствующий вашему окружению рабочего стола.
+          {deTheme === 'hyprland' && (
+            <span style={{ display: 'block', marginTop: '6px', color: 'var(--hypr-glow-color, var(--accent-color))', fontSize: '12px' }}>
+              ⌨ Vim-навигация активна. Нажмите <kbd style={{ padding: '1px 5px', borderRadius: '3px', background: 'rgba(125,207,255,0.1)', border: '1px solid rgba(125,207,255,0.2)', fontSize: '11px', fontFamily: 'inherit' }}>~</kbd> для списка клавиш.
+            </span>
+          )}
+        </p>
+
+        <div className="de_picker">
+          {availableThemes.map((de) => (
+            <div
+              key={de.id}
+              className={`de_card ${deTheme === de.id ? 'active' : ''}`}
+              onClick={() => setDETheme(de.id)}
+            >
+              <DEPreviewContent themeId={de.id} />
+              <span className="de_label">{de.icon} {de.label}</span>
+              <span className="de_desc">{de.description}</span>
+            </div>
+          ))}
+        </div>
+
+        {deTheme === 'hyprland' && (
+          <div className="settings_info_box" style={{ marginTop: '15px' }}>
+            <div style={{ fontSize: '12px', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
+              <div style={{ marginBottom: '6px', color: 'var(--hypr-glow-color, #7dcfff)', fontWeight: 600, fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                Цвета из Hyprland
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
+                <span>Основной:</span>
+                <span style={{ 
+                  display: 'inline-block', width: '16px', height: '16px', borderRadius: '3px', 
+                  background: hyprColors.primary, border: '1px solid rgba(255,255,255,0.1)' 
+                }} />
+                <code style={{ fontSize: '11px', color: 'var(--text-primary)' }}>{hyprColors.primary}</code>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span>Вторичный:</span>
+                <span style={{ 
+                  display: 'inline-block', width: '16px', height: '16px', borderRadius: '3px', 
+                  background: hyprColors.secondary, border: '1px solid rgba(255,255,255,0.1)' 
+                }} />
+                <code style={{ fontSize: '11px', color: 'var(--text-primary)' }}>{hyprColors.secondary}</code>
+              </div>
+              <div style={{ marginTop: '8px', fontSize: '11px', opacity: 0.7 }}>
+                Цвета берутся из ~/.config/hypr/hyprland.conf
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {deTheme !== 'hyprland' && (
       <div className="settings_group">
         <h2 className="accPanel_sectionTitle">Стиль</h2>
         <p className="settings_description">
@@ -189,6 +271,7 @@ function AppearancePanel() {
           ))}
         </div>
       </div>
+      )}
 
       <div className="settings_group" style={{ marginTop: '2.5rem' }}>
         <h2 className="accPanel_sectionTitle">Анимация переходов</h2>
@@ -215,6 +298,7 @@ function AppearancePanel() {
         </div>
       </div>
 
+      {deTheme !== 'hyprland' && (
       <div className="settings_group" style={{ marginTop: '2.5rem' }}>
         <h2 className="accPanel_sectionTitle">Акцентный цвет</h2>
         <p className="settings_description">
@@ -308,6 +392,7 @@ function AppearancePanel() {
           </div>
         )}
       </div>
+      )}
     </div>
   );
 }
